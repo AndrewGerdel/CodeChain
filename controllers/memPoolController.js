@@ -16,34 +16,25 @@ var AddCodeFileToMemPool = ((fileContents, signedMessage, publicKey, privateKey)
   return base64data;
 });
 
-var GetMemPoolItem = (() => {
+var GetMemPoolItems = (() => {
 
-  var url = 'mongodb://localhost/CodeChain';
-
-  MongoClient.connect(url, (error, client) => {
-    debugger;
-    if(error){
-      console.log('Unable to connect tp Mongo');
-      return;
-    }
-    console.log('Connected to Mongo DB');
-    var db = client.db('CodeChain');
-
-    //find returns a cursor, not actual records... just fyi
-    //The query is the parameter of the find function below.
-    db.collection('mempools').find({}).toArray().then((docs) => {
-        console.log('Todos');
-        docs.forEach((a) => {
-          console.log(a);
-        })
-    }, (error) => {
-      console.log('Error', error);
+  var promise = new Promise((resolve, reject) => {
+    var url = 'mongodb://localhost/CodeChain';
+    MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+      if(error){
+        console.log('Unable to connect to Mongo');
+        return;
+      }
+      var db = client.db('CodeChain');
+      debugger;
+      resolve(db.collection('mempools').find().sort({dateAdded: 1}).toArray());
+      client.close();
     });
-    client.close();
   });
+  return promise;
 });
 
 module.exports = {
    AddCodeFileToMemPool:AddCodeFileToMemPool,
-   GetMemPoolItem
+   GetMemPoolItems
 }

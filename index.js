@@ -8,6 +8,6 @@ let fileContents = "These contents were created at " + new Date();
 
 var signedMessage = keyController.SignMessage(fileContents, new Buffer(privateKey, 'hex'));
 var memPool = memPoolController.AddCodeFileToMemPool(fileContents, signedMessage.Signature, publicKey, privateKey);
-console.log(memPool);
 
-memPoolController.GetMemPoolItem();
+memPoolController.GetMemPoolItems().then((result) => console.log(result.length));
+ 
