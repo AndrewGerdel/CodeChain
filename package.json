@@ -1,0 +1,26 @@
+{
+  "name": "codechain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test-debug": "mocha --inspect-brk tests/*.js",
+    "test": "mocha tests/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndrewGerdel/CodeChain.git"
+  },
+  "author": "Andrew Gerdel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndrewGerdel/CodeChain/issues"
+  },
+  "homepage": "https://github.com/AndrewGerdel/CodeChain#readme",
+  "dependencies": {
+    "mongoose": "^5.4.1"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
+  }
+}
