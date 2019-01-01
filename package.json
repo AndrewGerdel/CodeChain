@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/AndrewGerdel/CodeChain#readme",
   "dependencies": {
+    "binstring": "^0.2.1",
     "mongoose": "^5.4.1"
   },
   "devDependencies": {

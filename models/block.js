@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/CodeChain', { useNewUrlParser: true });
+// mongoose.connect('mongodb://localhost/CodeChain', { useNewUrlParser: true });
 
 var Block = mongoose.model('Block', {
   blockNumber: {

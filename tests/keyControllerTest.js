@@ -6,6 +6,8 @@ describe('keyController', function() {
     it('should generate a keypair', function() {
       var key = keyController.GenerateKeyPair();
       assert((key.PublicKey.toString("hex")).length > 0);
+      console.log(`Public key: ${key.PublicKey.toString("hex")}`);
+      console.log(`Private key: ${key.PrivateKey.toString("hex")}`);
     });
   });
   describe('#SignMessageTest()', function() {
