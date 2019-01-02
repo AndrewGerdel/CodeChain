@@ -3,23 +3,25 @@ var {MongoClient} = require('mongodb');
 var keyController = require('./keyController.js');
 
 var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
-  let buff = new Buffer(fileContents);
-  let base64data = buff.toString('base64');
-  if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){
-    console.log('Message not verified!  Not adding to mempool.');
-    return '';
-  }
-
-  var memPool = new MemPool({
-    fileName: fileName,
-    fileContents: base64data,
-    signedMessage: signedMessage.Signature.toString('hex'),
-    dateAdded: new Date(),
-    publicKey: publicKey
+  var promise = new Promise((resolve, reject) => {
+    let buff = new Buffer(fileContents);
+    let base64data = buff.toString('base64');
+    if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){
+      reject('Message not verified!  Not adding to mempool.');
+    }
+    var memPool = new MemPool({
+      fileName: fileName,
+      fileContents: base64data,
+      signedMessage: signedMessage.Signature.toString('hex'),
+      dateAdded: new Date(),
+      publicKey: publicKey
+    });
+    memPool.save();
+    resolve(base64data);
   });
-  memPool.save();
-  return base64data;
+  return promise;
 });
+
 
 var GetMemPoolItems = (() => {
   var promise = new Promise((resolve, reject) => {
