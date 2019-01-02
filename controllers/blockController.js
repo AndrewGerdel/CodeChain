@@ -54,12 +54,7 @@ var GetLastBlock = (() => {
       }
       var db = client.db('CodeChain');
       var lastBlock = db.collection('blocks').find().sort({blockNumber:-1}).limit(1).toArray();
-      debugger;
-      if(lastBlock.length == 0){
-          //there are no blocks.  Create one.
-          var newBlock = CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None');
-          lastBlock.push(newBlock);
-      }
+
       resolve(lastBlock);
     });
   });
