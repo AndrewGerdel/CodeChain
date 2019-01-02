@@ -10,8 +10,7 @@ var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey, p
     fileContents: base64data,
     signedMessage: signedMessage.toString('hex'),
     dateAdded: new Date(),
-    publicKey: publicKey,
-    privateKey: privateKey
+    publicKey: publicKey
   });
   memPool.save();
   return base64data;

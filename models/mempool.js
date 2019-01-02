@@ -12,11 +12,6 @@ var MemPool = mongoose.model('MemPool', {
     required: true,
     trim: true
   },
-  privateKey: {
-    type: String,
-    required: true,
-    trim: true
-  },
   dateAdded: {
     type: Date,
     required: true

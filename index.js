@@ -14,7 +14,7 @@ var signedMessage = keyController.SignMessage(fileContents, new Buffer(privateKe
 if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){
   throw "Message not verified.";
 }
-var memPool = memPoolController.AddCodeFileToMemPool("MyCode.cs", fileContents, signedMessage.Signature, publicKey, privateKey);
+var memPool = memPoolController.AddCodeFileToMemPool("MyCode.cs", fileContents, signedMessage.Signature, publicKey);
 
 var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
