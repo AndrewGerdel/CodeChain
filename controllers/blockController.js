@@ -1,4 +1,5 @@
 var {MemPool} = require('../models/mempool.js');
+var MemPoolController = require('./memPoolController.js');
 var {MongoClient} = require('mongodb');
 var {Block} = require('../models/block.js');
 var crypto = require('crypto');
@@ -42,6 +43,11 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems) => {
     data: memPoolItems
   });
   newBlock.save();
+
+  MemPoolController.DeleteMemPoolItems(memPoolItems)
+    .then((result) => { console.log('Cleared mempool items');})
+    .catch((error) => { console.log('Error clearing mempool', error);})
+
   return newBlock;
 });
 

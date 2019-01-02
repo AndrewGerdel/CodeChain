@@ -31,7 +31,26 @@ var GetMemPoolItems = (() => {
   return promise;
 });
 
+var DeleteMemPoolItems = ((memPoolItems) => {
+  var promise = new Promise((resolve, reject) => {
+    var url = 'mongodb://localhost/CodeChain';
+    MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+      if(error){
+        console.log('Unable to connect to Mongo');
+        return;
+      }
+      var db = client.db('CodeChain');
+      for(i=0;i<memPoolItems.length;i++){
+        db.collection('mempools').deleteOne({_id : memPoolItems[i]._id});
+      }
+      resolve(true);
+    });
+  });
+  return promise;
+});
+
 module.exports = {
    AddCodeFileToMemPool:AddCodeFileToMemPool,
-   GetMemPoolItems
+   GetMemPoolItems,
+   DeleteMemPoolItems
 }
