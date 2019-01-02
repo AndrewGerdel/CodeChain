@@ -11,10 +11,8 @@ let fileContents = "These contents were created at: " + new Date();
 const maxBlockSizeBytes = 1000000;
 
 var signedMessage = keyController.SignMessage(fileContents, new Buffer(privateKey, 'hex'));
-if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){
-  throw "Message not verified.";
-}
-var memPool = memPoolController.AddCodeFileToMemPool("MyCode.cs", fileContents, signedMessage.Signature, publicKey);
+
+var memPool = memPoolController.AddCodeFileToMemPool("MyCode.cs", fileContents, signedMessage, publicKey);
 
 var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
