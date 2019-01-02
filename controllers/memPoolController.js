@@ -4,6 +4,7 @@ var keyController = require('./keyController.js');
 
 var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
   var promise = new Promise((resolve, reject) => {
+    debugger;
     let buff = new Buffer(fileContents);
     let base64data = buff.toString('base64');
     if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){

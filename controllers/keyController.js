@@ -25,6 +25,7 @@ var SignMessage = ((message, privateKey) => {
 });
 
 var VerifySignedMessage = ((digest, signature, publicKey) => {
+  debugger
   let verified = secp256k1.verify(digest, signature, publicKey);
   return verified;
 });

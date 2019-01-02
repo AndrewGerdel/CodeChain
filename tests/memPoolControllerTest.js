@@ -9,11 +9,18 @@ describe('memPoolController', function() {
       var key = keyController.GenerateKeyPair();
       var signedMessage = keyController.SignMessage(fileContents, key.PrivateKey);
       //console.log(signedMessage.Signature.toString("hex"));
-      var result = memPoolController.AddCodeFileToMemPool(fileContents, signedMessage.Signature);
-      assert.equal(result, 'Y29uc29sZS53cml0ZWxpbmUoImhlbGxvIHdvcmxkIik7', result);
-      debugger;
-      let verified = keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, key.PublicKey);
-      assert.equal(verified, true);
+      // var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
+      memPoolController.AddCodeFileToMemPool("Myfile.txt", fileContents, signedMessage, key.PublicKey.toString("hex"))
+        .then(
+          (result) => {
+            assert.equal(result, 'Y29uc29sZS53cml0ZWxpbmUoImhlbGxvIHdvcmxkIik7', result);
+            let verified = keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, key.PublicKey);
+            assert.equal(verified, true);
+          }, (error) => {
+            console.log(error);
+          })
+        .catch((ex) => {console.log(ex);})
+
     });
   });
 });
