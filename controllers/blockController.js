@@ -20,7 +20,7 @@ var HashBlock = ((difficulty, previousBlock) => {
       var hashAsDecimal = hexToDec(hash);
       if(hashAsDecimal <= difficulty)  {
         var endingDateTime = new Date();
-        var newBlock = CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash)
+        var newBlock = CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, memPoolItems)
         resolve({ Block : newBlock, Nonce: nonce, Now: effectiveDate, TotalMilliseconds: (endingDateTime-startingDateTime) });
       }
       nonce++;
@@ -34,11 +34,12 @@ var HashBlock = ((difficulty, previousBlock) => {
 });
 
 
-var CreateNewBlock = ((hash, blockNumber, previousBlockHash) => {
+var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems) => {
   var newBlock = new Block({
     blockHash: hash,
     blockNumber: blockNumber,
-    previousBlockHash: previousBlockHash
+    previousBlockHash: previousBlockHash,
+    data: memPoolItems
   });
   newBlock.save();
   return newBlock;
