@@ -1,11 +1,12 @@
- var {MemPool} = require('../models/mempool.js');
+var {MemPool} = require('../models/mempool.js');
 var {MongoClient} = require('mongodb');
 
-var AddCodeFileToMemPool = ((fileContents, signedMessage, publicKey, privateKey) => {
+var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey, privateKey) => {
   let buff = new Buffer(fileContents);
   let base64data = buff.toString('base64');
 
   var memPool = new MemPool({
+    fileName: fileName,
     fileContents: base64data,
     signedMessage: signedMessage.toString('hex'),
     dateAdded: new Date(),
@@ -17,7 +18,6 @@ var AddCodeFileToMemPool = ((fileContents, signedMessage, publicKey, privateKey)
 });
 
 var GetMemPoolItems = (() => {
-
   var promise = new Promise((resolve, reject) => {
     var url = 'mongodb://localhost/CodeChain';
     MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
@@ -26,9 +26,7 @@ var GetMemPoolItems = (() => {
         return;
       }
       var db = client.db('CodeChain');
-      debugger;
       resolve(db.collection('mempools').find().sort({dateAdded: 1}).toArray());
-      client.close();
     });
   });
   return promise;

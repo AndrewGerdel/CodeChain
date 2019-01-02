@@ -2,6 +2,11 @@ var mongoose = require('mongoose');
 // mongoose.connect('mongodb://localhost/CodeChain', { useNewUrlParser: true });
 
 var MemPool = mongoose.model('MemPool', {
+  fileName: {
+    type: String,
+    required: true,
+    trim: true
+  },
   publicKey: {
     type: String,
     required: true,
