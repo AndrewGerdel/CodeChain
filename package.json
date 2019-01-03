@@ -22,6 +22,7 @@
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "hex-to-dec": "^1.0.1",
+    "json-query": "^2.2.2",
     "mongoose": "^5.4.1",
     "secp256k1": "^3.6.1"
   },

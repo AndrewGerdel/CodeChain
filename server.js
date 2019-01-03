@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 let memPoolController = require('./controllers/memPoolController.js');
 let keyController = require('./controllers/keyController.js');
 let blockController = require('./controllers/blockController.js');
-
+let jsonQuery = require('json-query')
 const port = process.env.PORT || 65340;
 
 var app = express();
@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
   res.send('Welcome to the blockchain.  Post to /uploadfile to add files.');
 });
 
-app.post('/uploadfile',function(request,response){
+app.post('/uploadfile',(request,response) => {
   var filename=request.body.filename;
   var fileContents=request.body.filecontents;
   var publicKey=request.body.publickey;
@@ -32,12 +32,35 @@ app.post('/uploadfile',function(request,response){
     })
 });
 
+app.get('/getfile', (request, response) => {
+  blockController.GetFileFromBlock(request.query.filehash)
+    .then((block) => {
+      debugger;
+      if(block.length > 0){
+        var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash +']', {
+          data: block
+        });
+        response.send({
+          file: jsonQueryResult.value
+        });
+      }else{
+        response.send('File not found');
+      }
+    }, (error) => {
+      console.log(error);
+    })
+    .catch((ex) => {
+      console.log(ex);
+    })
+
+});
+
 app.listen(port, () => {
   console.log('Server is up and running on port', port);
 });
 
-//Every 5 seconds, look for more data to mine.
-setInterval(Timer_MineNextBlock, 5000);
+//Every 2 seconds, look for more data to mine.
+setInterval(Timer_MineNextBlock, 2000);
 function Timer_MineNextBlock() {
   console.log('Checking mempool...');
   blockController.MineNextBlock();

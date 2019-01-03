@@ -104,12 +104,28 @@ var GetLastBlock = (() => {
       }
       var db = client.db('CodeChain');
       var lastBlock = db.collection('blocks').find().sort({blockNumber:-1}).limit(1).toArray();
-
       resolve(lastBlock);
     });
   });
   return promise;
 });
+
+var GetFileFromBlock = ((filehash) => {
+  var promise = new Promise((resolve, reject) => {
+    var url = 'mongodb://localhost/CodeChain';
+    MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+      if(error){
+        console.log('Unable to connect to Mongo');
+        return;
+      }
+      var db = client.db('CodeChain');
+      var lastBlock = db.collection('blocks').find( { 'data.hash':filehash}).sort({blockNumber:-1}).limit(1).toArray();
+      resolve(lastBlock);
+    });
+  });
+  return promise;
+});
+
 
 //Converts all current memPoolItems to json for easy hashing.
 function MemPoolItemsAsJson(){
@@ -123,5 +139,6 @@ function MemPoolItemsAsJson(){
 module.exports = {
   SolveBlock,
   GetLastBlock,
-  MineNextBlock
+  MineNextBlock,
+  GetFileFromBlock
 }
