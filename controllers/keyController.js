@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const secp256k1 = require('secp256k1');
 var conv = require('binstring');
+let mongoose = require('../db/mongoose.js');
 
 var GenerateKeyPair = (() => {
   let privateKey;
@@ -25,7 +26,6 @@ var SignMessage = ((message, privateKey) => {
 });
 
 var VerifySignedMessage = ((digest, signature, publicKey) => {
-  debugger
   let verified = secp256k1.verify(digest, signature, publicKey);
   return verified;
 });

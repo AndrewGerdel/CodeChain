@@ -25,6 +25,11 @@ var MemPool = mongoose.model('MemPool', {
     type: String,
     required: true,
     trim: true
+  },
+  hash: {
+    type: String,
+    required: true,
+    trim: true
   }
 });
 

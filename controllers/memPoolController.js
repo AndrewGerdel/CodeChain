@@ -1,6 +1,8 @@
 var {MemPool} = require('../models/mempool.js');
 var {MongoClient} = require('mongodb');
 var keyController = require('./keyController.js');
+const crypto = require('crypto');
+let mongoose = require('../db/mongoose.js');
 
 var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
   var promise = new Promise((resolve, reject) => {
@@ -10,15 +12,17 @@ var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) =
     if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){
       reject('Message not verified!  Not adding to mempool.');
     }
+    var dateNow = new Date();
     var memPool = new MemPool({
       fileName: fileName,
       fileContents: base64data,
       signedMessage: signedMessage.Signature.toString('hex'),
-      dateAdded: new Date(),
-      publicKey: publicKey
+      dateAdded: dateNow,
+      publicKey: publicKey,
+      hash: digest(fileName + fileContents + signedMessage + dateNow).toString("hex")
     });
     memPool.save();
-    resolve(base64data);
+    resolve(memPool);
   });
   return promise;
 });
@@ -56,6 +60,10 @@ var DeleteMemPoolItems = ((memPoolItems) => {
   });
   return promise;
 });
+
+function digest(str, algo = "sha256") {
+  return crypto.createHash(algo).update(str).digest();
+}
 
 module.exports = {
    AddCodeFileToMemPool:AddCodeFileToMemPool,

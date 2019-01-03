@@ -4,6 +4,7 @@ var {MongoClient} = require('mongodb');
 var {Block} = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
+let mongoose = require('../db/mongoose.js');
 
 var memPoolItems = [];
 var nonce = 0;
@@ -94,6 +95,7 @@ function MineNextBlock(){
       console.log('the last block is:', lastBlock[0].blockNumber);
       MemPoolController.GetMemPoolItems()
         .then((memPoolItems) => {
+          // console.log('i found this many mempoolitems', memPoolItems.length);
           var sumFileSizeBytes = 0;
           var counter = 0;
           for(i=0;i<memPoolItems.length;i++){
