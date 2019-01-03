@@ -4,20 +4,55 @@ var {MongoClient} = require('mongodb');
 var {Block} = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
-let mongoose = require('../db/mongoose.js');
-
+var mongoose = require('../db/mongoose.js');
 var memPoolItems = [];
 var nonce = 0;
 
 const maxBlockSizeBytes = 1000000;
-var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+ var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
+// Adds memPoolItems to the collection, then fires SolveBlock
+function MineNextBlock(){
+  GetLastBlock()
+    .then((lastBlock) => {
+      if(lastBlock.length == 0){
+          //there are no blocks.  Create the genesis block.
+          var newBlock = CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0);
+          lastBlock.push(newBlock);
+      }
+      // console.log('the last block is:', lastBlock[0].blockNumber);
+      MemPoolController.GetMemPoolItems()
+        .then((memPoolItemsFromDb) => {
+          var sumFileSizeBytes = 0;
+          var counter = 0;
+          if(memPoolItemsFromDb.length > 0) {
+            console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
+            for(i=0;i<memPoolItemsFromDb.length;i++){
+               var element = memPoolItemsFromDb[i];
+               var fileSizeBytes = (element.fileContents.length * 0.75) - 2;
+               sumFileSizeBytes += fileSizeBytes;
+               memPoolItems.push(memPoolItemsFromDb[i]);
+               // console.log(element._id, "File name:", element.fileName,  "File Size:", fileSizeBytes);
+               if(sumFileSizeBytes >= maxBlockSizeBytes){
+                   break;
+               }
+             }//endfor
+             SolveBlock(hexToDec(startingDifficulty), lastBlock[0])
+              .then((hashResult) => {
+                console.log(hashResult);
+              })
+              .catch((error) => {
+                console.log('Error in GetMemPoolItems', error);
+              });
+            }
+          })
+        .catch((error) =>  { console.log(error); });
+  });
+}
 
 
-var AddMemPoolItemToBlock = ((memPoolItem) => {
-  memPoolItems.push(memPoolItem);
-});
-
-var HashBlock = ((difficulty, previousBlock) => {
+//Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
+var SolveBlock = ((difficulty, previousBlock) => {
   var promise = new Promise((resolve, reject) => {
     var startingDateTime = new Date();
     var effectiveDate = new Date();
@@ -40,7 +75,7 @@ var HashBlock = ((difficulty, previousBlock) => {
   return promise;
 });
 
-
+// Creates a new block, pointing to the previous block, and recording mempoolitems, etc
 var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime) => {
   var newBlock = new Block({
     blockHash: hash,
@@ -58,6 +93,7 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
   return newBlock;
 });
 
+//Gets the most recent block from the chain
 var GetLastBlock = (() => {
   var promise = new Promise((resolve, reject) => {
     var url = 'mongodb://localhost/CodeChain';
@@ -75,6 +111,7 @@ var GetLastBlock = (() => {
   return promise;
 });
 
+//Converts all current memPoolItems to json for easy hashing.
 function MemPoolItemsAsJson(){
   var memPoolItemsJson;
   for(i=0;i<memPoolItems.length;i++){
@@ -83,47 +120,8 @@ function MemPoolItemsAsJson(){
   return memPoolItemsJson;
 }
 
-
-function MineNextBlock(){
-  GetLastBlock()
-    .then((lastBlock) => {
-      if(lastBlock.length == 0){
-          //there are no blocks.  Create one.
-          var newBlock = CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0);
-          lastBlock.push(newBlock);
-      }
-      console.log('the last block is:', lastBlock[0].blockNumber);
-      MemPoolController.GetMemPoolItems()
-        .then((memPoolItems) => {
-          // console.log('i found this many mempoolitems', memPoolItems.length);
-          var sumFileSizeBytes = 0;
-          var counter = 0;
-          for(i=0;i<memPoolItems.length;i++){
-             var element = memPoolItems[i];
-             AddMemPoolItemToBlock(element);
-             var fileSizeBytes = (element.fileContents.length * 0.75) - 2;
-             sumFileSizeBytes += fileSizeBytes;
-             console.log(element._id, "File name:", element.fileName,  "File Size:", fileSizeBytes);
-             if(sumFileSizeBytes >= maxBlockSizeBytes){
-                 break;
-             }
-           }//endfor
-           HashBlock(hexToDec(startingDifficulty), lastBlock[0])
-            .then((hashResult) => {
-              console.log(hashResult);
-            })
-            .catch((error) => {
-              console.log('Error in GetMemPoolItems', error);
-            });
-          })
-        .catch((error) =>  { console.log(error); });
-  });
-}
-
 module.exports = {
-  AddMemPoolItemToBlock,
-  HashBlock,
+  SolveBlock,
   GetLastBlock,
-  CreateNewBlock,
   MineNextBlock
 }

@@ -1,6 +1,4 @@
 var mongoose = require('mongoose');
-var mempool = require('./mempool.js');
-// mongoose.connect('mongodb://localhost/CodeChain', { useNewUrlParser: true });
 
 var Block = mongoose.model('Block', {
   blockNumber: {

@@ -1,9 +1,10 @@
 var {MemPool} = require('../models/mempool.js');
 var {MongoClient} = require('mongodb');
 var keyController = require('./keyController.js');
-const crypto = require('crypto');
-let mongoose = require('../db/mongoose.js');
+var crypto = require('crypto');
+var mongoose = require('../db/mongoose.js');
 
+//Adds a file to the mempool.
 var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
   var promise = new Promise((resolve, reject) => {
     debugger;
@@ -27,7 +28,7 @@ var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) =
   return promise;
 });
 
-
+//Gets all mempool items.
 var GetMemPoolItems = (() => {
   var promise = new Promise((resolve, reject) => {
     var url = 'mongodb://localhost/CodeChain';
@@ -43,6 +44,7 @@ var GetMemPoolItems = (() => {
   return promise;
 });
 
+//Deletes by _id all memPoolItems in the list
 var DeleteMemPoolItems = ((memPoolItems) => {
   var promise = new Promise((resolve, reject) => {
     var url = 'mongodb://localhost/CodeChain';
@@ -52,6 +54,7 @@ var DeleteMemPoolItems = ((memPoolItems) => {
         return;
       }
       var db = client.db('CodeChain');
+      debugger;
       for(i=0;i<memPoolItems.length;i++){
         db.collection('mempools').deleteOne({_id : memPoolItems[i]._id});
       }
@@ -61,6 +64,7 @@ var DeleteMemPoolItems = ((memPoolItems) => {
   return promise;
 });
 
+//creates a sha256 hash
 function digest(str, algo = "sha256") {
   return crypto.createHash(algo).update(str).digest();
 }

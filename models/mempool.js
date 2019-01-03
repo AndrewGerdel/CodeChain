@@ -1,5 +1,4 @@
 var mongoose = require('mongoose');
-// mongoose.connect('mongodb://localhost/CodeChain', { useNewUrlParser: true });
 
 var MemPool = mongoose.model('MemPool', {
   fileName: {

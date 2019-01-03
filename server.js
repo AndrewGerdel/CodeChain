@@ -36,9 +36,9 @@ app.listen(port, () => {
   console.log('Server is up and running on port', port);
 });
 
-
-setInterval(abc, 5000);
-
-function abc() {
+//Every 5 seconds, look for more data to mine.
+setInterval(Timer_MineNextBlock, 5000);
+function Timer_MineNextBlock() {
+  console.log('Checking mempool...');
   blockController.MineNextBlock();
 }
