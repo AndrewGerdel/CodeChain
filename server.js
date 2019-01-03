@@ -7,18 +7,18 @@ let jsonQuery = require('json-query')
 const port = process.env.PORT || 65340;
 
 var app = express();
-app.use(bodyParser.urlencoded({ extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
   res.send('Welcome to the blockchain.  Post to /uploadfile to add files.');
 });
 
-app.post('/uploadfile',(request,response) => {
-  var filename=request.body.filename;
-  var fileContents=request.body.filecontents;
-  var publicKey=request.body.publickey;
-  var privateKey=request.body.privatekey;
+app.post('/uploadfile', (request, response) => {
+  var filename = request.body.filename;
+  var fileContents = request.body.filecontents;
+  var publicKey = request.body.publickey;
+  var privateKey = request.body.privatekey;
   console.log(filename, fileContents, publicKey, privateKey);
 
   var signedMessage = keyController.SignMessage(fileContents, new Buffer(privateKey, 'hex'));
@@ -36,14 +36,14 @@ app.get('/getfile', (request, response) => {
   blockController.GetFileFromBlock(request.query.filehash)
     .then((block) => {
       debugger;
-      if(block.length > 0){
-        var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash +']', {
+      if (block.length > 0) {
+        var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
           data: block
         });
         response.send({
           file: jsonQueryResult.value
         });
-      }else{
+      } else {
         response.send('File not found');
       }
     }, (error) => {
