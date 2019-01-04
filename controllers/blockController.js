@@ -1,19 +1,19 @@
 var { MemPool } = require('../models/mempool.js');
 var MemPoolController = require('./memPoolController.js');
-var { MongoClient } = require('mongodb');
 var { Block } = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
-var mongoose = require('../db/mongoose.js');
 var memPoolItems = [];
 var nonce = 0;
+var memPoolRepository = require('../repositories/mempoolRepository.js');
+var blockRepository = require('../repositories/blockRepository.js');
 
 const maxBlockSizeBytes = 1000000;
 var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
 // Adds memPoolItems to the collection, then fires SolveBlock
 function MineNextBlock() {
-    GetLastBlock()
+    blockRepository.GetLastBlock()
         .then((lastBlock) => {
             if (lastBlock.length == 0) {
                 //there are no blocks.  Create the genesis block.
@@ -21,7 +21,7 @@ function MineNextBlock() {
                 lastBlock.push(newBlock);
             }
             // console.log('the last block is:', lastBlock[0].blockNumber);
-            MemPoolController.GetMemPoolItems()
+            memPoolRepository.GetMemPoolItems()
                 .then((memPoolItemsFromDb) => {
                     var sumFileSizeBytes = 0;
                     var counter = 0;
@@ -61,7 +61,7 @@ var SolveBlock = ((difficulty, previousBlock) => {
             if (hashAsDecimal <= difficulty) {
                 var endingDateTime = new Date();
                 var millisecondsBlockTime = (endingDateTime - startingDateTime);
-                var newBlock = CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, memPoolItems, millisecondsBlockTime)
+                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, memPoolItems, millisecondsBlockTime)
                 resolve({ Block: newBlock, Nonce: nonce, Now: effectiveDate });
             }
             nonce++;
@@ -74,58 +74,6 @@ var SolveBlock = ((difficulty, previousBlock) => {
     return promise;
 });
 
-// Creates a new block, pointing to the previous block, and recording mempoolitems, etc
-var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime) => {
-    var newBlock = new Block({
-        blockHash: hash,
-        blockNumber: blockNumber,
-        previousBlockHash: previousBlockHash,
-        data: memPoolItems,
-        millisecondsBlockTime: millisecondsBlockTime
-    });
-    newBlock.save();
-
-    MemPoolController.DeleteMemPoolItems(memPoolItems)
-        .then((result) => { console.log('Cleared mempool items'); })
-        .catch((error) => { console.log('Error clearing mempool', error); })
-
-    return newBlock;
-});
-
-//Gets the most recent block from the chain
-var GetLastBlock = (() => {
-    var promise = new Promise((resolve, reject) => {
-        var url = 'mongodb://localhost:27017/CodeChain';
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db('CodeChain');
-            var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
-            resolve(lastBlock);
-        });
-    });
-    return promise;
-});
-
-var GetFileFromBlock = ((filehash) => {
-    var promise = new Promise((resolve, reject) => {
-        var url = 'mongodb://localhost:27017/CodeChain';
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db('CodeChain');
-            var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
-            resolve(lastBlock);
-        });
-    });
-    return promise;
-});
-
-
 //Converts all current memPoolItems to json for easy hashing.
 function MemPoolItemsAsJson() {
     var memPoolItemsJson;
@@ -135,9 +83,23 @@ function MemPoolItemsAsJson() {
     return memPoolItemsJson;
 }
 
+var GetFileFromBlock = ((filehash) => {
+    var promise = new Promise((resolve, reject) => {
+        blockRepository.GetFileFromBlock(filehash)
+            .then((res) => {
+                resolve(res);
+            }, (err) => {
+                reject(err);
+            })
+            .catch((ex) => {
+                reject(ex);
+            })
+    });
+    return promise;
+});
+
 module.exports = {
     SolveBlock,
-    GetLastBlock,
     MineNextBlock,
     GetFileFromBlock
 }
