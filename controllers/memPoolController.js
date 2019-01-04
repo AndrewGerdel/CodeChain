@@ -7,7 +7,6 @@ var mongoose = require('../db/mongoose.js');
 //Adds a file to the mempool.
 var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
   var promise = new Promise((resolve, reject) => {
-    debugger;
     let buff = new Buffer(fileContents);
     let base64data = buff.toString('base64');
     if(!keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer(publicKey, 'hex'))){
@@ -31,7 +30,7 @@ var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) =
 //Gets all mempool items.
 var GetMemPoolItems = (() => {
   var promise = new Promise((resolve, reject) => {
-    var url = 'mongodb://localhost/CodeChain';
+    var url = 'mongodb://localhost:27017/CodeChain';
     MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
       if(error){
         console.log('Unable to connect to Mongo');
@@ -47,14 +46,13 @@ var GetMemPoolItems = (() => {
 //Deletes by _id all memPoolItems in the list
 var DeleteMemPoolItems = ((memPoolItems) => {
   var promise = new Promise((resolve, reject) => {
-    var url = 'mongodb://localhost/CodeChain';
+    var url = 'mongodb://localhost:27017/CodeChain';
     MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
       if(error){
         console.log('Unable to connect to Mongo');
         return;
       }
       var db = client.db('CodeChain');
-      debugger;
       for(i=0;i<memPoolItems.length;i++){
         db.collection('mempools').deleteOne({_id : memPoolItems[i]._id});
       }

@@ -95,7 +95,7 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
 //Gets the most recent block from the chain
 var GetLastBlock = (() => {
     var promise = new Promise((resolve, reject) => {
-        var url = 'mongodb://localhost/CodeChain';
+        var url = 'mongodb://localhost:27017/CodeChain';
         MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
             if (error) {
                 console.log('Unable to connect to Mongo');
@@ -111,7 +111,7 @@ var GetLastBlock = (() => {
 
 var GetFileFromBlock = ((filehash) => {
     var promise = new Promise((resolve, reject) => {
-        var url = 'mongodb://localhost/CodeChain';
+        var url = 'mongodb://localhost:27017/CodeChain';
         MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
             if (error) {
                 console.log('Unable to connect to Mongo');

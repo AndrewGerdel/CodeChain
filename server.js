@@ -24,7 +24,6 @@ app.post('/uploadfile', (request, response) => {
   var signedMessage = keyController.SignMessage(fileContents, new Buffer(privateKey, 'hex'));
   memPoolController.AddCodeFileToMemPool(filename, fileContents, signedMessage, publicKey)
     .then((result) => {
-      debugger;
       response.send(result);
     })
     .catch((ex) => {
@@ -35,7 +34,6 @@ app.post('/uploadfile', (request, response) => {
 app.get('/getfile', (request, response) => {
   blockController.GetFileFromBlock(request.query.filehash)
     .then((block) => {
-      debugger;
       if (block.length > 0) {
         var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
           data: block
@@ -54,6 +52,11 @@ app.get('/getfile', (request, response) => {
     })
 
 });
+
+var nodeService = require('./services/nodeService.js');
+nodeService.StartService(app);
+
+
 
 app.listen(port, () => {
   console.log('Server is up and running on port', port);
