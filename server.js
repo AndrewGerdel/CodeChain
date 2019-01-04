@@ -1,17 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-let blockController = require('./controllers/blockController.js');
 
-//check args
+//check args for port#
 var argv = require('yargs').argv;
 let port = 65340;
 if(argv.p){
   port = argv.p;
 }
 
-let config = require('./config.json');
-console.log(config.database.connectionString);
-
+//get more details on unhandled rejection errors, because they can be cryptic
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, reason);
 });
@@ -20,6 +17,7 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+//render out a simple default page. 
 app.get('/', (req, res) => {
   res.send('Welcome to the blockchain.  POST to /uploadfile to add files. GET to /getfiles to retrieve a file by hash.');
 });
@@ -32,13 +30,12 @@ fileService.StartService(app);
 var nodeService = require('./services/nodeService.js');
 nodeService.StartService(app);
 
+//start the blockService, which pings the mempool at a defined interval and checks for work 
+var blockService = require('./services/blockService.js');
+blockService.StartService();
+
+//start listening for communications from users via a browser, or from other nodes on the network. 
 app.listen(port, () => {
   console.log('Server is up and running on port', port);
 });
 
-//Every 2 seconds, look for more data to mine.
-setInterval(Timer_MineNextBlock, 2000);
-function Timer_MineNextBlock() {
-  console.log('Checking mempool...');
-  blockController.MineNextBlock();
-}
