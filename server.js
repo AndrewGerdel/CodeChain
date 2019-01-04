@@ -1,14 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 let blockController = require('./controllers/blockController.js');
-const port = process.env.PORT || 65340;
+var argv = require('yargs').argv;
+let port = 65340;
+if(argv.p){
+  port = argv.p;
+}
+
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, reason);
+});
 
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
-  res.send('Welcome to the blockchain.  Post to /uploadfile to add files.');
+  res.send('Welcome to the blockchain.  POST to /uploadfile to add files. GET to /getfiles to retrieve a file by hash.');
 });
 
 //start listening for file requests

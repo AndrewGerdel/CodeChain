@@ -47,7 +47,12 @@ function MineNextBlock() {
                     }
                 })
                 .catch((error) => { console.log(error); });
-        });
+        }, (err) => {
+            console.log(err);
+        })
+        .catch((ex) => {
+            console.log(ex);
+        })
 }
 
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.

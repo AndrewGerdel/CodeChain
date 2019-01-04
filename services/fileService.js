@@ -16,6 +16,8 @@ var StartService = ((app) => {
         memPoolController.AddCodeFileToMemPool(filename, fileContents, signedMessage, publicKey)
             .then((result) => {
                 response.send(result);
+            }, (err) => {
+                response.send('error: ' + err);
             })
             .catch((ex) => {
                 response.send('exception: ' + ex);
