@@ -1,11 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 let blockController = require('./controllers/blockController.js');
+
+//check args
 var argv = require('yargs').argv;
 let port = 65340;
 if(argv.p){
   port = argv.p;
 }
+
+let config = require('./config.json');
+console.log(config.database.connectionString);
 
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, reason);

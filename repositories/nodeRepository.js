@@ -1,6 +1,7 @@
 var {Node} = require('../models/node.js');
 var {MongoClient} = require('mongodb');
 var mongoose = require('../db/mongoose.js');
+var connectionString = require('../config.json').database.connectionString;
 
 var AddNewNode = ((uri) => {
     var promise = new Promise((resolve, reject) => {
@@ -15,8 +16,7 @@ var AddNewNode = ((uri) => {
 
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
-        var url = 'mongodb://localhost:27017/CodeChain';
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+        MongoClient.connect(connectionString, { useNewUrlParser: true }, (error, client) => {
             if (error) {
                 console.log('Unable to connect to Mongo');
                 return;
