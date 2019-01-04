@@ -27,6 +27,27 @@ var StartService = ((app) => {
                 res.send(ex);
             });
     });
+
+    LoadNodes();
+});
+
+
+var LoadNodes = (() => {
+    nodeController.GetAllNodes().then((res1) => {
+      console.log('Found nodes: ', res1.length);
+        if(res1.length == 0){
+            var nodeArrray = [];
+            nodeArrray.push(nodeController.CreateDefaultNode());
+            return nodeArrray;
+        }else{
+           return res1;
+        }
+    }, (err) => {
+        console.log(err);
+    })
+    .catch((ex) => {
+        console.log(ex);
+    })
 });
 
 module.exports = {

@@ -31,7 +31,21 @@ var AddNode = ((uri) => {
     return promise;
 });
 
+var CreateDefaultNode = (() => {
+    var defaultNodeUri = 'http://localhost:65340'; //Note: this is a temporary solution.  In the future, pull the default node from pastebin or some such
+    nodeRepository.AddNode(defaultNodeUri)
+        .then((res) => {
+            return res;
+        }, (err) => {
+            throw new Error(err);
+        })
+        .catch((ex) => {
+            throw new Error(ex);
+        })
+});
+
 module.exports = {
     GetAllNodes,
-    AddNode
+    AddNode,
+    CreateDefaultNode
 }
