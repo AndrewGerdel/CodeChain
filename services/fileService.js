@@ -5,7 +5,7 @@ let jsonQuery = require('json-query')
 
 var StartService = ((app) => {
 
-    app.post('/uploadfile', (request, response) => {
+    app.post('/file/upload', (request, response) => {
         var filename = request.body.filename;
         var fileContents = request.body.filecontents;
         var publicKey = request.body.publickey;
@@ -24,7 +24,7 @@ var StartService = ((app) => {
             })
     });
 
-    app.get('/getfile', (request, response) => {
+    app.get('/file/get', (request, response) => {
         blockController.GetFileFromBlock(request.query.filehash)
             .then((block) => {
                 if (block.length > 0) {

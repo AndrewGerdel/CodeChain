@@ -31,7 +31,7 @@ var GetAllNodes = (() => {
     return promise;
 });
 
-var GetNode = ((uri) => {
+var GetNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
         MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
             if (error) {
@@ -39,7 +39,7 @@ var GetNode = ((uri) => {
                 reject(error);
             }
             var db = client.db(connectionString.database);
-            var nodes = db.collection('nodes').find({ uri: uri }).toArray();
+            var nodes = db.collection('nodes').find({ hash: hash }).toArray();
             resolve(nodes);
         });
     });
@@ -54,7 +54,8 @@ var AddNode = ((protocol, uri, port) => {
             uri: uri,
             port: port,
             dateAdded: new Date(),
-            hash: hash
+            hash: hash,
+            dateLastRegistered: new Date()
         });
         newNode.save();
         debugger;
@@ -98,5 +99,6 @@ module.exports = {
     GetAllNodes,
     AddNode,
     DeleteNode,
-    UpdateNodeLastRegistrationDateTime
+    UpdateNodeLastRegistrationDateTime,
+    GetNode
 }

@@ -1,7 +1,8 @@
 var nodeController = require('../controllers/nodeController');
+var hashUtil = require('../utilities/hash.js');
 
 var StartService = ((app) => {
-    app.get('/nodes', (req, res) => {
+    app.get('/nodes/get', (req, res) => {
         nodeController.GetAllNodes()
             .then((resolve) => {
                 res.send(resolve);
@@ -13,15 +14,19 @@ var StartService = ((app) => {
             })
     });
 
-    app.post('/register', (req, res) => {
-        var ip = req.iq;
+    app.post('/nodes/register', (req, res) => {
+        var ip = req.ip;
+        var remotePort = req.headers.remoteport
+        var remoteProtocol = req.headers.remoteprotocol;
+        console.log(`Received registration request from ${remoteProtocol}://${ip}:${remotePort}`);
         debugger;
-        var remotePort = req.remotePort;
-        var remoteProtocol = req.remoteProtocol;
-        nodeController.GetNode(ip)
+        var hash = hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`).toString('hex');
+        nodeController.GetNode(hash)
             .then((result) => {
+                debugger;
                 if (result.length == 0) {
-                    nodeController.AddNode(remoteProtocol, ip);
+                    console.log(`Added remote node ${remoteProtocol}://${ip}:${remotePort}`)
+                    nodeController.AddNode(remoteProtocol, ip, remotePort);
                 }
             }, (err) => {
                 res.send("Error:" + err);

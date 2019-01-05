@@ -30,6 +30,21 @@ var GetAllNodes = (() => {
     return promise;
 });
 
+var GetNode = ((hash) => {
+    var promise = new Promise((resolve, reject) => {
+        nodeRepository.GetNode(hash)
+            .then((node) => {
+                resolve(node);
+            }, (err) => {
+                reject('An error occurred: ' + err);
+            })
+            .catch((ex) => {
+                reject(ex);
+            });
+    });
+    return promise;
+});
+
 var AddNode = ((protocol, uri, port) => {
     var promise = new Promise((resolve, reject) => {
         nodeRepository.AddNode(protocol, uri, port)
@@ -49,9 +64,8 @@ var RegisterWithOtherNodes = ((nodeList) => {
     var promise = new Promise((resolve, reject) => {
 
         nodeList.forEach(node => {
-            var nodeRegisterEndPoint = node.protocol + '://' + node.uri +  ':' + node.port + '/register';
-        debugger;
-        request(nodeRegisterEndPoint, {remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol}, (err, res, body) => {
+            var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
+            request(nodeRegisterEndPoint, { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol }, (err, res, body) => {
                 if (err) {
                     console.log(`Failed to register with ${node.uri}, deleting`);
                     nodeRepository.DeleteNode(node)
@@ -70,5 +84,6 @@ var RegisterWithOtherNodes = ((nodeList) => {
 module.exports = {
     GetAllNodes,
     AddNode,
-    RegisterWithOtherNodes
+    RegisterWithOtherNodes,
+    GetNode
 }
