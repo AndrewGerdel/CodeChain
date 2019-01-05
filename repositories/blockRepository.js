@@ -2,7 +2,7 @@ var { Block } = require('../models/block.js');
 var { MongoClient } = require('mongodb');
 var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
-var connectionString = require('../config.json').database.connectionString;
+var connectionString = require('../config.json').database;
 
 var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime) => {
     var newBlock = new Block({
@@ -25,13 +25,13 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
 //Gets the most recent block from the chain
 var GetLastBlock = (() => {
     var promise = new Promise((resolve, reject) => {
-        var url = connectionString;
+        var url = connectionString.host;
         MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
             if (error) {
                 console.log('Unable to connect to Mongo');
                 return;
             }
-            var db = client.db('CodeChain');
+            var db = client.db(connectionString.database);
             var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
             resolve(lastBlock);
         });
@@ -41,14 +41,12 @@ var GetLastBlock = (() => {
 
 var GetFileFromBlock = ((filehash) => {
     var promise = new Promise((resolve, reject) => {
-        var url = connectionString;
-        console.log('constr is ', connectionString);
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
             if (error) {
                 console.log('Unable to connect to Mongo');
                 return;
             }
-            var db = client.db('CodeChain');
+            var db = client.db(connectionString.database);
             var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
             resolve(lastBlock);
         });

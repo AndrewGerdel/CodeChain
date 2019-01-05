@@ -1,12 +1,12 @@
-var {Node} = require('../models/node.js');
-var {MongoClient} = require('mongodb');
+var { Node } = require('../models/node.js');
+var { MongoClient } = require('mongodb');
 var mongoose = require('../db/mongoose.js');
-var connectionString = require('../config.json').database.connectionString;
+var connectionString = require('../config.json').database;
 
 var AddNewNode = ((uri) => {
     var promise = new Promise((resolve, reject) => {
         var newNode = new Node({
-            uri : uri,
+            uri: uri,
             dateAdded: new Date()
         })
         resolve(newNode.save());
@@ -16,12 +16,12 @@ var AddNewNode = ((uri) => {
 
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString, { useNewUrlParser: true }, (error, client) => {
+        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
             if (error) {
                 console.log('Unable to connect to Mongo');
                 return;
             }
-            var db = client.db('CodeChain');
+            var db = client.db(connectionString.database);
             var nodes = db.collection('nodes').find().toArray();
             resolve(nodes);
         });
@@ -30,7 +30,7 @@ var GetAllNodes = (() => {
 });
 
 var AddNode = ((uri) => {
-    var promise = new  Promise((resolve, reject) => {
+    var promise = new Promise((resolve, reject) => {
         var newNode = new Node({
             uri: uri,
             dateAdded: new Date()
@@ -42,7 +42,7 @@ var AddNode = ((uri) => {
     return promise;
 });
 
-module.exports ={
+module.exports = {
     GetAllNodes,
     AddNode
 }

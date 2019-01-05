@@ -17,7 +17,7 @@ function MineNextBlock() {
         .then((lastBlock) => {
             if (lastBlock.length == 0) {
                 //there are no blocks.  Create the genesis block.
-                var newBlock = CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0);
+                var newBlock = blockRepository.CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0);
                 lastBlock.push(newBlock);
             }
             // console.log('the last block is:', lastBlock[0].blockNumber);
