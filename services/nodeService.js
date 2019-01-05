@@ -13,42 +13,45 @@ var StartService = ((app) => {
             })
     });
 
-    app.post('/addnode', (req, res) => {
+    app.post('/register', (req, res) => {
+        var ip = req.iq;
         debugger;
-        var uri = req.body.uri;
-        nodeController.AddNode(uri)
-            .then((resolve) => {
-                debugger;
-                res.send(resolve);
+        var remotePort = req.remotePort;
+        var remoteProtocol = req.remoteProtocol;
+        nodeController.GetNode(ip)
+            .then((result) => {
+                if (result.length == 0) {
+                    nodeController.AddNode(remoteProtocol, ip);
+                }
             }, (err) => {
-                res.send(err);
+                res.send("Error:" + err);
             })
             .catch((ex) => {
-                res.send(ex);
+                res.send("Exception:" + ex);
             });
     });
 
-    LoadNodes();
+    var nodeList = LoadAndRegisterNodes();
 });
 
 
-var LoadNodes = (() => {
-    nodeController.GetAllNodes().then((res1) => {
-      console.log('Found nodes: ', res1.length);
-        if(res1.length == 0){
-            var nodeArrray = [];
-            nodeArrray.push(nodeController.CreateDefaultNode());
-            return nodeArrray;
-        }else{
-           return res1;
-        }
-    }, (err) => {
-        console.log(err);
-    })
-    .catch((ex) => {
-        console.log(ex);
-    })
+var LoadAndRegisterNodes = (() => {
+    nodeController.GetAllNodes()
+        .then((nodes) => {
+            console.log('Registering with', nodes.length, "nodes");
+            nodeController.RegisterWithOtherNodes(nodes)
+                .then((success) => {
+
+                }, (fail) => {
+                    console.log("crap i need to exit");
+                });
+        })
+        .catch((ex) => {
+            console.log(ex);
+        })
 });
+
+
 
 module.exports = {
     StartService

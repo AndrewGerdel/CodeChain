@@ -1,12 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+var config = require('./config.json');
 
-//check args for port#
-var argv = require('yargs').argv;
-let port = 65340;
-if(argv.p){
-  port = argv.p;
-}
+let port = config.network.myPort;
 
 //get more details on unhandled rejection errors, because they can be cryptic
 process.on('unhandledRejection', (reason, p) => {

@@ -2,10 +2,12 @@ var { Node } = require('../models/node.js');
 var { MongoClient } = require('mongodb');
 var mongoose = require('../db/mongoose.js');
 var connectionString = require('../config.json').database;
+var hashUtil = require('../utilities/hash.js');
 
-var AddNewNode = ((uri) => {
+var AddNewNode = ((protocol, uri) => {
     var promise = new Promise((resolve, reject) => {
         var newNode = new Node({
+            protocol: protocol,
             uri: uri,
             dateAdded: new Date()
         })
@@ -29,11 +31,30 @@ var GetAllNodes = (() => {
     return promise;
 });
 
-var AddNode = ((uri) => {
+var GetNode = ((uri) => {
     var promise = new Promise((resolve, reject) => {
+        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
+            if (error) {
+                console.log('Unable to connect to Mongo');
+                reject(error);
+            }
+            var db = client.db(connectionString.database);
+            var nodes = db.collection('nodes').find({ uri: uri }).toArray();
+            resolve(nodes);
+        });
+    });
+    return promise;
+});
+
+var AddNode = ((protocol, uri, port) => {
+    var promise = new Promise((resolve, reject) => {
+        var hash = hashUtil.CreateSha256Hash(`${protocol}${uri}${port}`).toString('hex');
         var newNode = new Node({
+            protocol: protocol,
             uri: uri,
-            dateAdded: new Date()
+            port: port,
+            dateAdded: new Date(),
+            hash: hash
         });
         newNode.save();
         debugger;
@@ -42,7 +63,40 @@ var AddNode = ((uri) => {
     return promise;
 });
 
+//Deletes by _id supplied node
+var DeleteNode = ((node) => {
+    var promise = new Promise((resolve, reject) => {
+        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
+            if (error) {
+                console.log('Unable to connect to Mongo');
+                reject(error);
+            }
+            var db = client.db(connectionString.database);
+            db.collection('nodes').deleteOne({ _id: node._id });
+            resolve(true);
+        });
+    });
+    return promise;
+});
+
+var UpdateNodeLastRegistrationDateTime = ((node) => {
+    var promise = new Promise((resolve, reject) => {
+        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
+            if (error) {
+                console.log('Unable to connect to Mongo');
+                reject(error);
+            }
+            var db = client.db(connectionString.database);
+            db.collection('nodes').updateOne({ _id: node._id }, { $set: { dateLastRegistered: new Date() } });
+            resolve(true);
+        });
+    });
+    return promise;
+});
+
 module.exports = {
     GetAllNodes,
-    AddNode
+    AddNode,
+    DeleteNode,
+    UpdateNodeLastRegistrationDateTime
 }

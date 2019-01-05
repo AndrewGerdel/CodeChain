@@ -1,6 +1,13 @@
 {
   "database" : {
     "host" : "mongodb://localhost:27017/",
-    "database" : "futhermucker"
+    "database" : "CodeChain"
+  },
+  "network" : {
+    "defaultMasterNodeProtocol" : "http",
+    "defaultMasterNode" : "localhost",
+    "defaultMasterNodePort" : "65340",
+    "myPort" : 65340,
+    "myProtocol" : "http"
   }
 }
