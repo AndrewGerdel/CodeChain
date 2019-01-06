@@ -5,9 +5,13 @@
   },
   "network" : {
     "defaultMasterNodeProtocol" : "http",
-    "defaultMasterNode" : "localhost",
+    "defaultMasterNode" : "127.0.0.1",
     "defaultMasterNodePort" : "65340",
     "myPort" : 65340,
     "myProtocol" : "http"
+  },
+  "timers" : {
+    "primaryTimerIntervalMs" : 2000,
+    "secondaryTimerIntervalMs" : 60000
   }
 }

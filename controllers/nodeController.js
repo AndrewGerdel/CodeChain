@@ -65,15 +65,57 @@ var RegisterWithOtherNodes = ((nodeList) => {
 
         nodeList.forEach(node => {
             var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
-            request(nodeRegisterEndPoint, { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol }, (err, res, body) => {
+            var options = {
+                url: nodeRegisterEndPoint,
+                method: 'POST',
+                headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol }
+            };
+            request(options, (err, res, body) => {
                 if (err) {
-                    console.log(`Failed to register with ${node.uri}, deleting`);
+                    console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                    //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
                     nodeRepository.DeleteNode(node)
                         .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
                 } else {
                     console.log('Registered with', node.uri);
                     nodeRepository.UpdateNodeLastRegistrationDateTime(node)
                         .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
+                }
+            });
+            
+        });
+        resolve(nodeList);
+    });
+    return promise;
+});
+
+var GetNodesFromRemoteNodes = ((nodeList) => {
+    var promise = new Promise((resolve, reject) => {
+        nodeList.forEach(node => {
+            var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/get';
+            request(nodeRegisterEndPoint, {}, (err, res, body) => {
+                if (err) {
+                    console.log(`Failed to get nodes from ${node.uri}, deleting`);
+                    nodeRepository.DeleteNode(node)
+                        .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
+                } else {
+                    try {
+                        var nodesReceived = JSON.parse(body);
+                        console.log(`Recieved ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
+                        nodesReceived.forEach((node) => {
+                            var hash = hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}`).toString('hex');
+                            nodeRepository.GetNode(hash)
+                                .then((nodesFromDb) => {
+                                    if (nodesFromDb.length == 0) {
+                                        nodeRepository.AddNode(node.protocol, node.uri, node.port);
+                                    }
+                                })
+                        });
+                    } catch (error) {
+                        nodeRepository.DeleteNode(node)
+                            .catch((ex) => { reject(`Failed to delete node... ${node.uri}: ${ex}`); });
+                        reject(error);
+                    }
                 }
             });
         });
@@ -85,5 +127,6 @@ module.exports = {
     GetAllNodes,
     AddNode,
     RegisterWithOtherNodes,
-    GetNode
+    GetNode,
+    GetNodesFromRemoteNodes
 }

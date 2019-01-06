@@ -49,17 +49,20 @@ var GetNode = ((hash) => {
 var AddNode = ((protocol, uri, port) => {
     var promise = new Promise((resolve, reject) => {
         var hash = hashUtil.CreateSha256Hash(`${protocol}${uri}${port}`).toString('hex');
-        var newNode = new Node({
-            protocol: protocol,
-            uri: uri,
-            port: port,
-            dateAdded: new Date(),
-            hash: hash,
-            dateLastRegistered: new Date()
+        GetNode(hash).then((foundNode) => {
+            if (foundNode.length == 0) {
+                var newNode = new Node({
+                    protocol: protocol,
+                    uri: uri,
+                    port: port,
+                    dateAdded: new Date(),
+                    hash: hash,
+                    dateLastRegistered: new Date()
+                });
+                newNode.save();
+                resolve(newNode);
+            }
         });
-        newNode.save();
-        debugger;
-        resolve(newNode);
     });
     return promise;
 });
