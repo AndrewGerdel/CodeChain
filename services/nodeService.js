@@ -8,7 +8,7 @@ var StartService = ((app) => {
             .then((resolve) => {
                 res.send(resolve);
             }, (error) => {
-                console.log(error);
+                res.send(error);
             })
             .catch((ex) => {
                 console.log(ex);
@@ -30,7 +30,7 @@ var StartService = ((app) => {
                 } else {
                     // console.log('I didnt add the registration because that node already exists');
                 }
-                res.send("Done");
+                res.send(hash);
             }, (err) => {
                 res.send("Error:" + err);
             })
@@ -39,17 +39,23 @@ var StartService = ((app) => {
             });
     });
 
+    app.get('/nodes/whoami', (req, res) => {
+        var ip = req.ip;
+        ip = ip.replace('::ffff:', ''); //for localhost debugging.
+        var remotePort = req.headers.remoteport
+        var remoteProtocol = req.headers.remoteprotocol;
+        var hash = hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`).toString('hex');
+        res.send(hash);
+    });
+
     LoadAndRegisterNodes();
     setInterval(Timer_LoadAndRegisterNodes, config.timers.secondaryTimerIntervalMs);
 
 });
 
-
-
 function Timer_LoadAndRegisterNodes() {
     LoadAndRegisterNodes();
 }
-
 
 var LoadAndRegisterNodes = (() => {
     nodeController.GetAllNodes()
@@ -57,11 +63,12 @@ var LoadAndRegisterNodes = (() => {
             console.log('Registering with', nodes.length, "nodes");
             nodeController.RegisterWithOtherNodes(nodes)
                 .then((success) => {
-                    nodeController.GetNodesFromRemoteNodes(nodes)
-                        .then((nodesFromRemote) => {
-
-                        }).catch((ex) => {
-                            console.log(ex);
+                    nodeController.GetAllNodes()
+                        .then((nodes2) => {
+                            nodeController.GetNodesFromRemoteNodes(nodes2)
+                                .then((nodesFromRemote) => { }).catch((ex) => {
+                                    console.log(ex);
+                                });
                         });
                 }).catch((ex) => {
                     console.log(ex);
@@ -71,8 +78,6 @@ var LoadAndRegisterNodes = (() => {
             console.log(ex);
         })
 });
-
-
 
 module.exports = {
     StartService

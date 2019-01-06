@@ -25,6 +25,7 @@ var GetAllNodes = (() => {
             }
             var db = client.db(connectionString.database);
             var nodes = db.collection('nodes').find().toArray();
+            client.close();
             resolve(nodes);
         });
     });
@@ -40,6 +41,7 @@ var GetNode = ((hash) => {
             }
             var db = client.db(connectionString.database);
             var nodes = db.collection('nodes').find({ hash: hash }).toArray();
+            client.close();
             resolve(nodes);
         });
     });
@@ -67,8 +69,8 @@ var AddNode = ((protocol, uri, port) => {
     return promise;
 });
 
-//Deletes by _id supplied node
-var DeleteNode = ((node) => {
+//Deletes node by hash
+var DeleteNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
         MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
             if (error) {
@@ -76,7 +78,8 @@ var DeleteNode = ((node) => {
                 reject(error);
             }
             var db = client.db(connectionString.database);
-            db.collection('nodes').deleteOne({ _id: node._id });
+            db.collection('nodes').deleteOne({ hash: hash });
+            client.close();
             resolve(true);
         });
     });
@@ -92,6 +95,7 @@ var UpdateNodeLastRegistrationDateTime = ((node) => {
             }
             var db = client.db(connectionString.database);
             db.collection('nodes').updateOne({ _id: node._id }, { $set: { dateLastRegistered: new Date() } });
+            client.close();
             resolve(true);
         });
     });
