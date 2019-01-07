@@ -4,18 +4,6 @@ var mongoose = require('../db/mongoose.js');
 var connectionString = require('../config.json').database;
 var hashUtil = require('../utilities/hash.js');
 
-var AddNewNode = ((protocol, uri) => {
-    var promise = new Promise((resolve, reject) => {
-        var newNode = new Node({
-            protocol: protocol,
-            uri: uri,
-            dateAdded: new Date()
-        })
-        resolve(newNode.save());
-    });
-    return promise;
-});
-
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
         MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
