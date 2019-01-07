@@ -1,5 +1,6 @@
 var { MemPool } = require('../models/mempool.js');
 var MemPoolController = require('./memPoolController.js');
+var KeyController = require('./keyController.js');
 var { Block } = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
@@ -17,7 +18,7 @@ function MineNextBlock() {
             .then((lastBlock) => {
                 if (lastBlock.length == 0) {
                     //there are no blocks.  Create the genesis block.
-                    var newBlock = blockRepository.CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0);
+                    var newBlock = blockRepository.CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0, 0, new Date());
                     lastBlock.push(newBlock);
                 }
                 // console.log('the last block is:', lastBlock[0].blockNumber);
@@ -73,8 +74,8 @@ var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
             if (hashAsDecimal <= difficulty) {
                 var endingDateTime = new Date();
                 var millisecondsBlockTime = (endingDateTime - startingDateTime);
-                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime)
-                resolve({ Block: newBlock, Nonce: nonce, Now: effectiveDate });
+                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate);
+                resolve({ Block: newBlock });
             }
             nonce++;
             if (nonce >= Number.MAX_SAFE_INTEGER) {
@@ -110,8 +111,16 @@ var GetFileFromBlock = ((filehash) => {
     return promise;
 });
 
+var ValidateBlock = ((block) => {
+    var promise = new Promise((resolve, reject) => {
+        // KeyController.VerifySignedMessage()
+        debugger;
+    });
+});
+
 module.exports = {
     SolveBlock,
     MineNextBlock,
-    GetFileFromBlock
+    GetFileFromBlock,
+    ValidateBlock
 }

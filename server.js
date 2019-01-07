@@ -28,7 +28,7 @@ nodeService.StartService(app);
 
 //start the blockService, which pings the mempool at a defined interval and checks for work 
 var blockService = require('./services/blockService.js');
-blockService.StartService();
+blockService.StartService(app);
 
 //start listening for communications from users via a browser, or from other nodes on the network. 
 app.listen(port, () => {

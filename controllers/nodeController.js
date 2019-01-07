@@ -127,10 +127,35 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
     return promise;
 });
 
+var BroadcastBlockToNetwork = ((block) => {
+    GetAllNodes()
+        .then((nodes) => {
+            nodes.forEach((node) => {
+                var postUrl = `${node.protocol}://${node.uri}:${node.port}/block/add`;
+                var options = {
+                    url: postUrl,
+                    method: 'POST',
+                    headers: { block: JSON.stringify(block) }
+                };
+                request(options, (err, res, body) => {
+                    if (err) {
+                        console.log(`Failed to send block ${block.BlockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                        //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
+                        nodeRepository.DeleteNode(node.hash)
+                            .catch((ex) => { reject(`Failed to delete node after block submit failed ${node.uri}: ${ex}`); });
+                    } else {
+                        //it worked.  Nothing to report. 
+                    }
+                });
+            });
+        });
+});
+
 module.exports = {
     GetAllNodes,
     AddNode,
     RegisterWithOtherNodes,
     GetNode,
-    GetNodesFromRemoteNodes
+    GetNodesFromRemoteNodes,
+    BroadcastBlockToNetwork
 }

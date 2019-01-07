@@ -17,14 +17,22 @@ var Block = mongoose.model('Block', {
   },
   data: {
     type: Array,
-    "default" : []
+    "default": []
   },
   millisecondsBlockTime: {
     type: Number,
+    required: true
+  },
+  nonce: {
+    type: Number,
+    required: true
+  },
+  solvedDateTime: {
+    type: Date,
     required: true
   }
 });
 
 module.exports = {
-  Block : Block
+  Block: Block
 }

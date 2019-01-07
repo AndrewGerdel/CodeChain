@@ -4,13 +4,15 @@ var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
 var connectionString = require('../config.json').database;
 
-var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime) => {
+var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime, nonce, solvedDateTime) => {
     var newBlock = new Block({
         blockHash: hash,
         blockNumber: blockNumber,
         previousBlockHash: previousBlockHash,
         data: memPoolItems,
-        millisecondsBlockTime: millisecondsBlockTime
+        millisecondsBlockTime: millisecondsBlockTime,
+        nonce: nonce,
+        solvedDateTime: solvedDateTime
     });
     newBlock.save();
 
