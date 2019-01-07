@@ -23,6 +23,30 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
     return newBlock;
 });
 
+var AddBlock = ((block) => {
+    var promise = new Promise((resolve, reject) => {
+        debugger;
+        var newBlock = new Block({
+            blockHash: block.blockHash,
+            blockNumber: block.blockNumber,
+            previousBlockHash: block.previousBlockHash,
+            data: block.data,
+            millisecondsBlockTime: millisecondsBlockTime,
+            nonce: nonce,
+            solvedDateTime: solvedDateTime
+        });
+        newBlock.save();
+
+        memPoolRepository.DeleteMemPoolItems(block.data)
+            .then((result) => { console.log('Cleared mempool items'); })
+            .catch((error) => { console.log('Error clearing mempool', error); })
+
+        resolve(newBlock);
+    });
+    return promise;
+
+});
+
 
 //Gets the most recent block from the chain
 var GetLastBlock = (() => {
@@ -58,5 +82,6 @@ var GetFileFromBlock = ((filehash) => {
 module.exports = {
     CreateNewBlock,
     GetLastBlock,
-    GetFileFromBlock
+    GetFileFromBlock,
+    AddBlock
 }

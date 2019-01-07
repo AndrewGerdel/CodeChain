@@ -43,9 +43,10 @@ function MineNextBlock() {
                                 }
                             }//endfor
                             SolveBlock(hexToDec(startingDifficulty), lastBlock[0], memPoolItems)
-                                .then((hashResult) => {
-                                    // console.log(hashResult);
-                                    resolve(hashResult);
+                                .then((newBlock) => {
+                                    resolve(newBlock);
+                                }, (err) => {
+                                    reject(err);
                                 })
                                 .catch((error) => {
                                     reject('Error in GetMemPoolItems: ' + error);
@@ -69,13 +70,15 @@ var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
         var startingDateTime = new Date();
         var effectiveDate = new Date();
         do {
-            var hash = crypto.createHmac('sha256', nonce + effectiveDate + MemPoolItemsAsJson(mempoolItems)).digest('hex');
+            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems);
+            var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+
             var hashAsDecimal = hexToDec(hash);
             if (hashAsDecimal <= difficulty) {
                 var endingDateTime = new Date();
                 var millisecondsBlockTime = (endingDateTime - startingDateTime);
-                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate);
-                resolve({ Block: newBlock });
+                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString());
+                resolve(newBlock);
             }
             nonce++;
             if (nonce >= Number.MAX_SAFE_INTEGER) {
@@ -87,14 +90,30 @@ var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
     return promise;
 });
 
+function CreateBlockHash(nonce, effectiveDate, memPoolItems) {
+
+    return hash;
+}
 //Converts all current memPoolItems to json for easy hashing.
 function MemPoolItemsAsJson(memPoolItems) {
-    var memPoolItemsJson;
+    var memPoolItemsJson = "";
     for (i = 0; i < memPoolItems.length; i++) {
         memPoolItemsJson += JSON.stringify(memPoolItems[i]);
     }
     return memPoolItemsJson;
 }
+
+var GetLastBlock = (() => {
+    var promise = new Promise((resolve, reject) => {
+        blockRepository.GetLastBlock()
+            .then((block) => {
+                resolve(block);
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
+});
 
 var GetFileFromBlock = ((filehash) => {
     var promise = new Promise((resolve, reject) => {
@@ -111,16 +130,36 @@ var GetFileFromBlock = ((filehash) => {
     return promise;
 });
 
-var ValidateBlock = ((block) => {
+var ValidateBlockHash = ((block) => {
     var promise = new Promise((resolve, reject) => {
-        // KeyController.VerifySignedMessage()
-        debugger;
+        var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data);
+        var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+        if (hash == block.blockHash) {
+            resolve(hash);
+        } else {
+            reject(hash);
+        }
     });
+    return promise;
+});
+
+var AddBlock = ((block) => {
+    var promise = new Promise((resolve, reject) => {
+        blockRepository.AddBlock(block)
+            .then((result) => {
+                resolve(result);
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
 });
 
 module.exports = {
     SolveBlock,
     MineNextBlock,
     GetFileFromBlock,
-    ValidateBlock
+    ValidateBlockHash,
+    GetLastBlock,
+    AddBlock
 }

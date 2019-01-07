@@ -4,7 +4,39 @@ var config = require('../config.json');
 
 var StartService = ((app) => {
   app.post('/block/add', (req, res) => {
-    blockController.ValidateBlock(req.headers.block);
+    var block = JSON.parse(req.headers.block);
+    blockController.ValidateBlockHash(block)
+      .then((result) => {
+        console.log(`Successfully validated block hash ${block.blockNumber}`);
+        blockController.GetLastBlock()
+          .then((lastBlock) => {
+            if (block.blockNumber != lastBlock[0].blockNumber + 1) {
+              res.send("Invalid block number");
+              console.log("Invalid block number.", block.blockNumber, lastBlock[0].blockNumber);
+            } else {
+              if (block.previousBlockHash != lastBlock[0].blockHash) {
+                res.send("Invalid previous block hash");
+                console.log("Invalid previous block hash.", previousBlockHash, lastBlock[0].blockHash);
+              } else {
+                blockController.AddBlock(block)
+                  .then((addBlockResult) => {
+                    res.send(`Successfully imported block ${block.blockNumber}`);
+                    console.log(`Successfully imported block ${block.blockNumber}`);
+                  }, (err) => {
+                    res.send(`Error adding block to blockchain`);
+                    console.log(`Error adding block to blockchain. ${err}`);
+                  })
+
+              }
+            }
+          }, (err) => {
+            res.send("Failed to retrieve local block");
+            console.log("Failed to retrieve local block.", err);
+          });
+      }, (err) => {
+        res.send("Failed to validate block hash");
+        console.log("Failed to validate block hash");
+      });
   });
   MempoolLoop();
 });
@@ -23,8 +55,8 @@ function MineNextBlock() {
   var promise = new Promise((resolve, reject) => {
     blockController.MineNextBlock()
       .then((block) => {
-        console.log(`Solved block ${block.Block.blockNumber}`);
-        nodeController.BroadcastBlockToNetwork(block.Block);
+        console.log(`Solved block ${block.blockNumber}`);
+        nodeController.BroadcastBlockToNetwork(block);
         resolve(block);
       }, (err) => {
         reject(err);

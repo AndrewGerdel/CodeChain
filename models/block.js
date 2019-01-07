@@ -28,7 +28,7 @@ var Block = mongoose.model('Block', {
     required: true
   },
   solvedDateTime: {
-    type: Date,
+    type: String,
     required: true
   }
 });
