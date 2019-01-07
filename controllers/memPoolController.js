@@ -3,6 +3,7 @@ var {MongoClient} = require('mongodb');
 var keyController = require('./keyController.js');
 var crypto = require('crypto');
 var mongoose = require('../db/mongoose.js');
+var filetypes = require('../enums/mempoolFiletypes.js');
 
 //Adds a file to the mempool.
 var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
@@ -14,8 +15,11 @@ var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) =
     }
     var dateNow = new Date();
     var memPool = new MemPool({
-      fileName: fileName,
-      fileContents: base64data,
+      type: filetypes.File,
+      fileData : {
+        fileName: fileName,
+        fileContents: base64data
+      },
       signedMessage: signedMessage.Signature.toString('hex'),
       dateAdded: dateNow,
       publicKey: publicKey,

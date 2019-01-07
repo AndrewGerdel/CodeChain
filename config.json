@@ -11,7 +11,7 @@
     "myProtocol" : "http"
   },
   "timers" : {
-    "primaryTimerIntervalMs" : 2000,
+    "primaryTimerIntervalMs" : 500,
     "secondaryTimerIntervalMs" : 600000
   }
 }

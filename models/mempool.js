@@ -1,21 +1,27 @@
 var mongoose = require('mongoose');
 
 var MemPool = mongoose.model('MemPool', {
-  fileName: {
-    type: String,
-    required: true,
-    trim: true
+  type: {
+    type: Number,
+    required: true
   },
-  publicKey: {
-    type: String,
-    required: true,
-    trim: true
-  },
+  fileData: {
+    fileName: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    fileContents: {
+      type: String,
+      required: false,
+      trim: true
+    }
+  },  
   dateAdded: {
     type: Date,
     required: true
   },
-  fileContents: {
+  publicKey: {
     type: String,
     required: true,
     trim: true
