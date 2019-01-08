@@ -20,10 +20,16 @@ function MineNextBlock() {
             .then((lastBlock) => {
                 if (lastBlock.length == 0) {
                     //there are no blocks.  Create the genesis block.
-                    var newBlock = blockRepository.CreateNewBlock('68f64f11fdcb97cdc5b4f52726cf923e6d3bc6f41f153ce91b7532221fa48fd7', 1, 'None', [], 0, 0, new Date());
+                    var nonce = 0;
+                    var effectiveDate = new Date('1/1/2000');
+                    var mempoolItems = [];
+                    var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems);
+                    var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+                    var endingDateTime = new Date();
+                    var millisecondsBlockTime = 0;
+                    var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString());
                     lastBlock.push(newBlock);
                 }
-                // console.log('the last block is:', lastBlock[0].blockNumber);
                 memPoolRepository.GetMemPoolItems()
                     .then((memPoolItemsFromDb) => {
                         var sumFileSizeBytes = 0;
@@ -170,18 +176,30 @@ var AddBlock = ((block) => {
     return promise;
 });
 
+//appends a collection of blocks to the existing blockchain.
+var AppendBlockchain = ((blockchain) => {
+    var promise = new Promise((resolve, reject) => {
+        GetLastBlock()
+            .then((lastBlockResult) => {
+                var lastBlock = lastBlockResult[0];
+
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
+});
+
 var GetBlocksFromRemoteNode = ((nodeHash, startingBlockNumber) => {
     var promise = new Promise((resolve, reject) => {
         nodeRepository.GetNode(nodeHash)
             .then((nodeResult) => {
-                debugger;
                 var node = nodeResult[0];
                 var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
-                debugger;
                 request(getNodesUrl, (err, res, body) => {
-                    if(err){
+                    if (err) {
                         reject(err);
-                    }else{
+                    } else {
                         var blocks = JSON.parse(body);
                         resolve(blocks);
                     }
@@ -193,6 +211,46 @@ var GetBlocksFromRemoteNode = ((nodeHash, startingBlockNumber) => {
     return promise;
 });
 
+var ValidateAndAddBlock = ((block) => {
+    var promise = new Promise((resolve, reject) => {
+        ValidateBlockHash(block)
+            .then((result) => {
+                console.log(`Successfully valdated block hash ${block.blockNumber}`);
+                GetLastBlock()
+                    .then((lastBlock) => {
+                        debugger;
+                        if (block.blockNumber != lastBlock[0].blockNumber + 1) {
+                            reject("Invalid block number");
+                            console.log("Invalid block number.", block.blockNumber, lastBlock[0].blockNumber);
+                        } else {
+                            if (block.previousBlockHash != lastBlock[0].blockHash) {
+                                reject("Invalid previous block hash");
+                                console.log("Invalid previous block hash.", previousBlockHash, lastBlock[0].blockHash);
+                            } else {
+                                AddBlock(block)
+                                    .then((addBlockResult) => {
+                                        resolve(`Successfully imported block ${block.blockNumber}`);
+                                    }, (err) => {
+                                        reject(`Error adding block to blockchain`);
+                                        console.log(`Error adding block to blockchain. ${err}`);
+                                    })
+
+                            }
+                        }
+                    }, (err) => {
+                        reject("Failed to retrieve last block");
+                        console.log("Failed to retrieve last block.", err);
+                    });
+            }, (err) => {
+                reject("Failed to validate block hash");
+                console.log("Failed to validate block hash");
+            });
+    });
+    return promise;
+
+
+});
+
 module.exports = {
     SolveBlock,
     MineNextBlock,
@@ -201,5 +259,6 @@ module.exports = {
     GetLastBlock,
     AddBlock,
     GetBlocksFromStartingBlock,
-    GetBlocksFromRemoteNode
+    GetBlocksFromRemoteNode,
+    ValidateAndAddBlock
 }

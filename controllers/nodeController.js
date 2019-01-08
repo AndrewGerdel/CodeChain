@@ -157,11 +157,11 @@ var GetLongestBlockchain = (() => {
             .then((lastBlock) => {
                 nodeRepository.GetNodeWithLongestChain()
                     .then((node) => {
-                        debugger;
                         blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber)
                             .then((blocks) => {
-                                console.log(`Hey, I received ${blocks.length} blocks from ${node.uri}:${node.port}`);
-
+                                console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
+                                var index = 0;
+                                AddBlocks(blocks, index)
                             }, (err) => {
                                 reject(err);
                             });
@@ -175,6 +175,16 @@ var GetLongestBlockchain = (() => {
     });
     return promise;
 });
+
+function AddBlocks(blocks, index) {
+    blockController.ValidateAndAddBlock(blocks[index])
+        .then((result) => {
+            console.log(`Imported block ${blocks[index].blockNumber}`);
+            AddBlocks(blocks, index++);
+        }, (err) => {
+            console.log(`Failed to add blocks.  Index ${index}, Error: ${err}`);
+        });
+}
 
 module.exports = {
     GetAllNodes,
