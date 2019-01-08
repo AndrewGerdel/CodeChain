@@ -222,7 +222,7 @@ var ValidateAndAddBlock = ((block) => {
                         debugger;
                         if (block.blockNumber != lastBlock[0].blockNumber + 1) {
                             reject("Invalid block number");
-                            console.log("Invalid block number.", block.blockNumber, lastBlock[0].blockNumber);
+                            // console.log("Invalid block number.", block.blockNumber, lastBlock[0].blockNumber);
                         } else {
                             if (block.previousBlockHash != lastBlock[0].blockHash) {
                                 reject("Invalid previous block hash");

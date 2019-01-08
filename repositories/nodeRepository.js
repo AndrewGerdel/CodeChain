@@ -4,6 +4,10 @@ var mongoose = require('../db/mongoose.js');
 var connectionString = require('../config.json').database;
 var hashUtil = require('../utilities/hash.js');
 
+//Should return all nodes EXCEPT FOR YOURSELF.  Because all nodes continuously broadcast their full nodelist to each other, it's known that each 
+//node will contain a record for themselves.  We want to not use that record, so we're not wasting time broadcasting to ourselves.  But... we need
+//to rely on other nodes to tell us our own hash, because that is calculated based on IP address, which will look different to us vs. the rest of the world.
+//And that's why we use the registrationDetails.myHash value below... because during registration, each node let's us know our own hash, and that's where it gets stored.
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
         MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
@@ -12,9 +16,28 @@ var GetAllNodes = (() => {
                 return;
             }
             var db = client.db(connectionString.database);
-            var nodes = db.collection('nodes').find().toArray();
-            client.close();
-            resolve(nodes);
+
+            //Get OUR OWN HASH from registrationDetails.myHash, so it can be excluded from the next query below. 
+            var getMyHash = db.collection('nodes').aggregate([
+                {
+                    "$group":
+                        { _id: "$registrationDetails.myHash", count: { $sum: 1 } }
+                },
+                { $sort: { "count": -1 } }
+            ]).limit(1).toArray();
+
+            getMyHash.then((result) => {
+                // console.log(`Hey, my hash must be ${result[0]._id}`);
+                var myHash = '';
+                if (result.length > 0) {
+                    myHash = result[0]._id;
+                }
+                var nodes = db.collection('nodes').find({ "hash": { $ne: myHash } }).toArray();
+                client.close();
+                resolve(nodes);
+            }, (err) => {
+                reject(`Failed to get my hash: ${err}`);
+            });
         });
     });
     return promise;
@@ -100,12 +123,13 @@ var UpdateNodeRegistration = ((node, details) => {
                 reject(error);
             }
             var db = client.db(connectionString.database);
-            db.collection('nodes').updateOne({ _id: node._id }, 
-                { $set: 
-                    { 
-                        dateLastRegistered: new Date(), 
-                        registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash} 
-                    } 
+            db.collection('nodes').updateOne({ _id: node._id },
+                {
+                    $set:
+                    {
+                        dateLastRegistered: new Date(),
+                        registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash }
+                    }
                 });
             client.close();
             resolve(true);
