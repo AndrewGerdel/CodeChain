@@ -38,6 +38,18 @@ var StartService = ((app) => {
         console.log("Failed to validate block hash");
       });
   });
+
+  app.get('/block/getBlocks', (req, res) => {
+    var startingBlock = req.query.startingBlock;
+    blockController.GetBlocksFromStartingBlock(startingBlock)
+      .then((blocks) => {
+        res.send(blocks);
+      }, (err) => {
+        res.send('Error sending blocks');
+        console.log('Error sending blocks. ', err);
+      })
+  });
+
   MempoolLoop();
 });
 

@@ -36,6 +36,24 @@ var GetNode = ((hash) => {
     return promise;
 });
 
+
+var GetNodeWithLongestChain = (() => {
+    var promise = new Promise((resolve, reject) => {
+        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
+            if (error) {
+                console.log('Unable to connect to Mongo');
+                reject(error);
+            }
+            var db = client.db(connectionString.database);
+            var nodes = db.collection('nodes').find().sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
+            client.close();
+            resolve(nodes);
+        });
+    });
+    return promise;
+});
+
+
 var AddNode = ((protocol, uri, port) => {
     var promise = new Promise((resolve, reject) => {
         var hash = hashUtil.CreateSha256Hash(`${protocol}${uri}${port}`).toString('hex');
@@ -74,7 +92,7 @@ var DeleteNode = ((hash) => {
     return promise;
 });
 
-var UpdateNodeLastRegistrationDateTime = ((node) => {
+var UpdateNodeRegistration = ((node, details) => {
     var promise = new Promise((resolve, reject) => {
         MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
             if (error) {
@@ -82,7 +100,13 @@ var UpdateNodeLastRegistrationDateTime = ((node) => {
                 reject(error);
             }
             var db = client.db(connectionString.database);
-            db.collection('nodes').updateOne({ _id: node._id }, { $set: { dateLastRegistered: new Date() } });
+            db.collection('nodes').updateOne({ _id: node._id }, 
+                { $set: 
+                    { 
+                        dateLastRegistered: new Date(), 
+                        registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash} 
+                    } 
+                });
             client.close();
             resolve(true);
         });
@@ -94,6 +118,7 @@ module.exports = {
     GetAllNodes,
     AddNode,
     DeleteNode,
-    UpdateNodeLastRegistrationDateTime,
-    GetNode
+    UpdateNodeRegistration,
+    GetNode,
+    GetNodeWithLongestChain
 }

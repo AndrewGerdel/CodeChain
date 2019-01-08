@@ -3,6 +3,7 @@ var nodeRepository = require('../repositories/nodeRepository');
 var request = require('request');
 var config = require('../config.json');
 var hashUtil = require('../utilities/hash.js');
+var blockController = require('./blockController.js');
 
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
@@ -73,21 +74,19 @@ var RegisterWithOtherNodes = ((nodeList) => {
             request(options, (err, res, body) => {
                 if (err) {
                     console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
-                    //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
                     nodeRepository.DeleteNode(node.hash)
                         .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
                 } else {
                     console.log('Registered with', node.uri);
-                    nodeRepository.UpdateNodeLastRegistrationDateTime(node)
+                    var returnData = JSON.parse(body);
+                    nodeRepository.UpdateNodeRegistration(node, returnData)
+                        .then((result) => {
+                        })
                         .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
                 }
-                counter++;
-                if (counter >= nodeList.length) {
-                    resolve(true);
-                }
             });
-
         });
+        resolve('All requests launched');
     });
     return promise;
 });
@@ -123,6 +122,7 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
                 }
             });
         });
+        resolve('Requests sent to all nodes.');
     });
     return promise;
 });
@@ -151,11 +151,37 @@ var BroadcastBlockToNetwork = ((block) => {
         });
 });
 
+var GetLongestBlockchain = (() => {
+    var promise = new Promise((resolve, reject) => {
+        blockController.GetLastBlock()
+            .then((lastBlock) => {
+                nodeRepository.GetNodeWithLongestChain()
+                    .then((node) => {
+                        debugger;
+                        blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber)
+                            .then((blocks) => {
+                                console.log(`Hey, I received ${blocks.length} blocks from ${node.uri}:${node.port}`);
+
+                            }, (err) => {
+                                reject(err);
+                            });
+                    }, (err) => {
+                        reject('An error occurred: ' + err);
+                    })
+                    .catch((ex) => {
+                        reject(ex);
+                    });
+            });
+    });
+    return promise;
+});
+
 module.exports = {
     GetAllNodes,
     AddNode,
     RegisterWithOtherNodes,
     GetNode,
     GetNodesFromRemoteNodes,
-    BroadcastBlockToNetwork
+    BroadcastBlockToNetwork,
+    GetLongestBlockchain
 }

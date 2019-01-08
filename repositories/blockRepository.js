@@ -25,7 +25,6 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
 
 var AddBlock = ((block) => {
     var promise = new Promise((resolve, reject) => {
-        debugger;
         var newBlock = new Block({
             blockHash: block.blockHash,
             blockNumber: block.blockNumber,
@@ -59,7 +58,25 @@ var GetLastBlock = (() => {
             }
             var db = client.db(connectionString.database);
             var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
+            client.close();
             resolve(lastBlock);
+        });
+    });
+    return promise;
+});
+
+var GetBlocksFromStartingBlock = ((startingBlock) => {
+    var promise = new Promise((resolve, reject) => {
+        var url = connectionString.host;
+        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+            if (error) {
+                console.log('Unable to connect to Mongo');
+                return;
+            }
+            var db = client.db(connectionString.database);
+            var blocks = db.collection('blocks').find({"blockNumber": {"$gte" : Number(startingBlock)}}).sort({ blockNumber: 1 }).toArray();
+            client.close();
+            resolve(blocks);
         });
     });
     return promise;
@@ -74,6 +91,7 @@ var GetFileFromBlock = ((filehash) => {
             }
             var db = client.db(connectionString.database);
             var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
+            client.close();
             resolve(lastBlock);
         });
     });
@@ -83,5 +101,6 @@ module.exports = {
     CreateNewBlock,
     GetLastBlock,
     GetFileFromBlock,
-    AddBlock
+    AddBlock,
+    GetBlocksFromStartingBlock
 }

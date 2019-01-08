@@ -1,6 +1,7 @@
 var nodeController = require('../controllers/nodeController');
 var hashUtil = require('../utilities/hash.js');
 var config = require('../config.json');
+var blockController = require('../controllers/blockController');
 
 var StartService = ((app) => {
     app.get('/nodes/get', (req, res) => {
@@ -30,7 +31,14 @@ var StartService = ((app) => {
                 } else {
                     // console.log('I didnt add the registration because that node already exists');
                 }
-                res.send(hash);
+                blockController.GetLastBlock().then((result) => {
+                    var responseDetails = { yourHash: hash, myBlockHeight: result[0].blockNumber }
+                    res.send(responseDetails);
+                }, (err) => {
+                    console.log(`Error getting last block. ${err}`);
+                    res.send(`Unknown error getting blockchain on remote host.`);
+                });
+
             }, (err) => {
                 res.send("Error:" + err);
             })
@@ -48,35 +56,65 @@ var StartService = ((app) => {
         res.send(hash);
     });
 
-    LoadAndRegisterNodes();
+    Timer_LoadAndRegisterNodes();
     setInterval(Timer_LoadAndRegisterNodes, config.timers.secondaryTimerIntervalMs);
 
 });
 
 function Timer_LoadAndRegisterNodes() {
-    LoadAndRegisterNodes();
+    RegisterWithRemoteNodes()
+        .then((results) => {
+            UpdateNodeListFromRemoteNodes()
+                .then((res2) => {
+                    RetrieveBlockchainFromLongestNode()
+                        .then((res3) => {
+
+                        });
+                })
+        })
 }
 
-var LoadAndRegisterNodes = (() => {
-    nodeController.GetAllNodes()
-        .then((nodes) => {
-            console.log('Registering with', nodes.length, "nodes");
-            nodeController.RegisterWithOtherNodes(nodes)
-                .then((success) => {
-                    nodeController.GetAllNodes()
-                        .then((nodes2) => {
-                            nodeController.GetNodesFromRemoteNodes(nodes2)
-                                .then((nodesFromRemote) => { }).catch((ex) => {
-                                    console.log(ex);
-                                });
-                        });
-                }).catch((ex) => {
-                    console.log(ex);
-                });
-        })
-        .catch((ex) => {
-            console.log(ex);
-        })
+var RegisterWithRemoteNodes = (() => {
+    var promise = new Promise((resolve, reject) => {
+        nodeController.GetAllNodes() //get all nodes from our local db
+            .then((nodes) => {
+                console.log('Registering with', nodes.length, "nodes");
+                nodeController.RegisterWithOtherNodes(nodes) //register with each of those nodes
+                    .then((results) => {
+                        resolve(results);
+                    }, (err) => {
+                        reject(err);
+                    })
+            });
+
+    });
+    return promise
+});
+
+var UpdateNodeListFromRemoteNodes = (() => {
+    var promise = new Promise((resolve, reject) => {
+        nodeController.GetAllNodes() //re-get all nodes from the db.  Some might have been deleted.
+            .then((nodes2) => {
+                nodeController.GetNodesFromRemoteNodes(nodes2) //get the nodelist from each remote node and import it into our db
+                    .then((nodesFromRemote) => {
+                        resolve(nodesFromRemote);
+                    }, (err) => {
+                        reject(err);
+                    });
+            });
+    });
+    return promise
+});
+
+
+var RetrieveBlockchainFromLongestNode = (() => {
+    var promise = new Promise((resolve, reject) => {
+        nodeController.GetLongestBlockchain()
+            .then((longestNode) => {
+
+            });
+    });
+    return promise
 });
 
 module.exports = {

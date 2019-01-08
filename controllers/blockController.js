@@ -7,6 +7,8 @@ var hexToDec = require('hex-to-dec');
 var nonce = 0;
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
+var nodeRepository = require('../repositories/nodeRepository.js');
+var request = require('request');
 
 const maxBlockSizeBytes = 1000000;
 var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
@@ -115,6 +117,19 @@ var GetLastBlock = (() => {
     return promise;
 });
 
+var GetBlocksFromStartingBlock = ((startingBlock) => {
+    var promise = new Promise((resolve, reject) => {
+        blockRepository.GetBlocksFromStartingBlock(startingBlock)
+            .then((blocks) => {
+                resolve(blocks);
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
+});
+
+
 var GetFileFromBlock = ((filehash) => {
     var promise = new Promise((resolve, reject) => {
         blockRepository.GetFileFromBlock(filehash)
@@ -155,11 +170,36 @@ var AddBlock = ((block) => {
     return promise;
 });
 
+var GetBlocksFromRemoteNode = ((nodeHash, startingBlockNumber) => {
+    var promise = new Promise((resolve, reject) => {
+        nodeRepository.GetNode(nodeHash)
+            .then((nodeResult) => {
+                debugger;
+                var node = nodeResult[0];
+                var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
+                debugger;
+                request(getNodesUrl, (err, res, body) => {
+                    if(err){
+                        reject(err);
+                    }else{
+                        var blocks = JSON.parse(body);
+                        resolve(blocks);
+                    }
+                });
+            }, (err) => {
+                reject('Could not find node ' + nodeHash);
+            })
+    });
+    return promise;
+});
+
 module.exports = {
     SolveBlock,
     MineNextBlock,
     GetFileFromBlock,
     ValidateBlockHash,
     GetLastBlock,
-    AddBlock
+    AddBlock,
+    GetBlocksFromStartingBlock,
+    GetBlocksFromRemoteNode
 }

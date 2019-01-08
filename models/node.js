@@ -25,6 +25,16 @@ var Node = mongoose.model('Node', {
   hash : {
     type: String,
     require: true
+  },
+  registrationDetails : {
+    blockHeight : {
+      type: Number,
+      require: false
+    },
+    myHash : {
+      type: String,
+      require: false
+    }
   }
 });
 
