@@ -30,9 +30,9 @@ var AddBlock = ((block) => {
             blockNumber: block.blockNumber,
             previousBlockHash: block.previousBlockHash,
             data: block.data,
-            millisecondsBlockTime: millisecondsBlockTime,
-            nonce: nonce,
-            solvedDateTime: solvedDateTime
+            millisecondsBlockTime: block.millisecondsBlockTime,
+            nonce: block.nonce,
+            solvedDateTime: block.solvedDateTime
         });
         newBlock.save();
 
@@ -74,7 +74,7 @@ var GetBlocksFromStartingBlock = ((startingBlock) => {
                 return;
             }
             var db = client.db(connectionString.database);
-            var blocks = db.collection('blocks').find({"blockNumber": {"$gte" : Number(startingBlock)}}).sort({ blockNumber: 1 }).toArray();
+            var blocks = db.collection('blocks').find({"blockNumber": {"$gt" : Number(startingBlock)}}).sort({ blockNumber: 1 }).toArray();
             client.close();
             resolve(blocks);
         });

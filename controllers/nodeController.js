@@ -157,14 +157,20 @@ var GetLongestBlockchain = (() => {
             .then((lastBlock) => {
                 nodeRepository.GetNodeWithLongestChain()
                     .then((node) => {
-                        blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber)
-                            .then((blocks) => {
-                                console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
-                                var index = 0;
-                                AddBlocks(blocks, index)
-                            }, (err) => {
-                                reject(err);
-                            });
+                        if (node.length > 0) {
+
+                            blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber)
+                                .then((blocks) => {
+                                    if (blocks.length > 0) {
+                                        console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
+                                        var index = 0;
+                                        AddBlocks(blocks, index)
+                                    }
+                                }, (err) => {
+                                    reject(err);
+                                });
+                        }
+
                     }, (err) => {
                         reject('An error occurred: ' + err);
                     })
@@ -180,7 +186,10 @@ function AddBlocks(blocks, index) {
     blockController.ValidateAndAddBlock(blocks[index])
         .then((result) => {
             console.log(`Imported block ${blocks[index].blockNumber}`);
-            AddBlocks(blocks, index++);
+            index++;
+            if(blocks.length > index ){
+                AddBlocks(blocks, index);
+            }
         }, (err) => {
             console.log(`Failed to add blocks.  Index ${index}, Error: ${err}`);
         });

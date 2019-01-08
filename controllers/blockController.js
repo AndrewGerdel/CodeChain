@@ -158,6 +158,7 @@ var ValidateBlockHash = ((block) => {
         if (hash == block.blockHash) {
             resolve(hash);
         } else {
+            debugger;
             reject(hash);
         }
     });
@@ -215,7 +216,7 @@ var ValidateAndAddBlock = ((block) => {
     var promise = new Promise((resolve, reject) => {
         ValidateBlockHash(block)
             .then((result) => {
-                console.log(`Successfully valdated block hash ${block.blockNumber}`);
+                console.log(`Successfully validated block hash ${block.blockNumber}`);
                 GetLastBlock()
                     .then((lastBlock) => {
                         debugger;
@@ -242,6 +243,7 @@ var ValidateAndAddBlock = ((block) => {
                         console.log("Failed to retrieve last block.", err);
                     });
             }, (err) => {
+                debugger;
                 reject("Failed to validate block hash");
                 console.log("Failed to validate block hash");
             });

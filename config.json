@@ -1,13 +1,13 @@
 {
   "database" : {
     "host" : "mongodb://localhost:27017/",
-    "database" : "CodeChain2"
+    "database" : "CodeChain"
   },
   "network" : {
     "defaultMasterNodeProtocol" : "http",
     "defaultMasterNode" : "127.0.0.1",
     "defaultMasterNodePort" : "65340",
-    "myPort" : 65341,
+    "myPort" : 65340,
     "myProtocol" : "http"
   },
   "timers" : {
