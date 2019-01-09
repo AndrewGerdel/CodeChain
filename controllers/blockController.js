@@ -10,9 +10,10 @@ var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
 var nodeRepository = require('../repositories/nodeRepository.js');
 var request = require('request');
+var config = require('../config.json');
 
 const maxBlockSizeBytes = 1000000;
-const targetBlockTimeMs = 60000; //target a one minute block time. 
+const targetBlockTimeMs = config.network.targetBlockTimeMs; //target a one minute block time. 
 
 // Adds memPoolItems to the collection, then fires SolveBlock
 function MineNextBlock() {
@@ -57,7 +58,7 @@ var BreakMemPoolItemsToSize = ((memPoolItemsFromDb, difficulty, lastBlock) => {
         var counter = 0;
         var memPoolItems = [];
         if (memPoolItemsFromDb.length == 0) {
-            reject("");
+            reject(""); //no work to do, reject silently.
         }
         else {
             console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
@@ -108,6 +109,8 @@ var CreateGenesisBlock = ((lastBlock) => {
 
 var CalculateDifficulty = ((lastBlock) => {
     var promise = new Promise((resolve, reject) => {
+    debugger;
+
         blockRepository.GetBlocks(10).then((result) => {
             var totalMilliseconds = 0;
             for (i = 0; i < result.length; i++) {
@@ -141,10 +144,18 @@ var CalculateDifficulty = ((lastBlock) => {
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
     var promise = new Promise((resolve, reject) => {
-        console.log(`Difficulty calculated at ${difficulty}`);
+        let targetBlockNumber = previousBlock.blockNumber + 1;
+        console.log(`Difficulty calculated at ${difficulty}. Working on block ${targetBlockNumber}.`);
+
         var startingDateTime = new Date();
         var effectiveDate = new Date();
+        var counter = 0;
         do {
+            if(counter == 500) {
+                counter = 0;
+                blockRepository.GetBlock(targetBlockNumber);
+
+            }
             var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
             var hash = crypto.createHmac('sha256', hashInput).digest('hex');
 
@@ -152,7 +163,7 @@ var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
             if (hashAsDecimal <= difficulty) {
                 var endingDateTime = new Date();
                 var millisecondsBlockTime = (endingDateTime - startingDateTime);
-                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), decToHex(difficulty));
+                var newBlock = blockRepository.CreateNewBlock(hash, targetBlockNumber, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), decToHex(difficulty));
                 resolve(newBlock);
             }
             nonce++;

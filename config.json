@@ -8,10 +8,11 @@
     "defaultMasterNode" : "127.0.0.1",
     "defaultMasterNodePort" : "65340",
     "myPort" : 65340,
-    "myProtocol" : "http"
+    "myProtocol" : "http",
+    "targetBlockTimeMs" : 10000
   },
   "timers" : {
     "primaryTimerIntervalMs" : 500,
-    "secondaryTimerIntervalMs" : 600000
+    "secondaryTimerIntervalMs" : 60000
   }
 }
