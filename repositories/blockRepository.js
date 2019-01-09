@@ -33,7 +33,8 @@ var AddBlock = ((block) => {
             data: block.data,
             millisecondsBlockTime: block.millisecondsBlockTime,
             nonce: block.nonce,
-            solvedDateTime: block.solvedDateTime
+            solvedDateTime: block.solvedDateTime,
+            difficulty: block.difficulty
         });
         newBlock.save();
 

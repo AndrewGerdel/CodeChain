@@ -33,7 +33,9 @@ function MempoolLoop() {
   MineNextBlock().then((result) => {
     setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
   }, (err) => {
-    console.log(err);
+    if (err != "") {
+      console.log(err);
+    }
     setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
   })
 }

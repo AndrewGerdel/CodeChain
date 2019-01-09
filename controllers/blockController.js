@@ -16,8 +16,6 @@ const targetBlockTimeMs = 60000; //target a one minute block time.
 
 // Adds memPoolItems to the collection, then fires SolveBlock
 function MineNextBlock() {
-    console.log('abc');
-    
     var promise = new Promise((resolve, reject) => {
         blockRepository.GetLastBlock()
             .then((lastBlock) => {
@@ -25,7 +23,6 @@ function MineNextBlock() {
                     .then((lastBlock) => {
                         CalculateDifficulty(lastBlock) //calculates the difficulty for the next block. 
                             .then((difficulty) => {
-                                console.log(`Difficulty calculated at ${difficulty}`);
                                 memPoolRepository.GetMemPoolItems()
                                     .then((memPoolItemsFromDb) => {
                                         BreakMemPoolItemsToSize(memPoolItemsFromDb, difficulty, lastBlock)
@@ -60,7 +57,7 @@ var BreakMemPoolItemsToSize = ((memPoolItemsFromDb, difficulty, lastBlock) => {
         var counter = 0;
         var memPoolItems = [];
         if (memPoolItemsFromDb.length == 0) {
-            reject("Empty mempool");
+            reject("");
         }
         else {
             console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
@@ -144,10 +141,11 @@ var CalculateDifficulty = ((lastBlock) => {
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
     var promise = new Promise((resolve, reject) => {
+        console.log(`Difficulty calculated at ${difficulty}`);
         var startingDateTime = new Date();
         var effectiveDate = new Date();
         do {
-            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems);
+            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
             var hash = crypto.createHmac('sha256', hashInput).digest('hex');
 
             var hashAsDecimal = hexToDec(hash);
@@ -222,7 +220,7 @@ var GetFileFromBlock = ((filehash) => {
 
 var ValidateBlockHash = ((block) => {
     var promise = new Promise((resolve, reject) => {
-        var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data);
+        var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data) + block.difficulty;
         var hash = crypto.createHmac('sha256', hashInput).digest('hex');
         if (hash == block.blockHash) {
             resolve(hash);
