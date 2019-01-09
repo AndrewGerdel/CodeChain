@@ -22,8 +22,15 @@ var SignMessage = ((message, privateKey) => {
 
 //Verifies a signed message was created by the private key associated with the public key.
 var VerifySignedMessage = ((digest, signature, publicKey) => {
-  let verified = secp256k1.verify(digest, signature, publicKey);
-  return verified;
+  var promise = new Promise((resolve, reject) => {
+    let verified = secp256k1.verify(new Buffer.from(digest), new Buffer.from(signature), new Buffer.from(publicKey));
+    if(verified){
+      resolve(true);
+    }else{
+      reject(false);
+    }
+  });
+  return promise;
 });
 
 //Hashes the supplied string, default sha256
@@ -32,7 +39,7 @@ function digest(str, algo = "sha256") {
 }
 
 module.exports ={
-  GenerateKeyPair:GenerateKeyPair,
-  SignMessage:SignMessage,
-  VerifySignedMessage:VerifySignedMessage,
+  GenerateKeyPair,
+  SignMessage,
+  VerifySignedMessage,
 }

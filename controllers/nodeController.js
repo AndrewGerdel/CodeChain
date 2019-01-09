@@ -12,7 +12,7 @@ var GetAllNodes = (() => {
                 if (nodes.length > 0) {
                     resolve(nodes);
                 } else {
-                    console.log('Adding default master node from config:', config.network.defaultMasterNode);
+                    // console.log('Adding default master node from config:', config.network.defaultMasterNode);
                     nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort)
                         .then((newNode) => {
                             nodeRepository.GetAllNodes()

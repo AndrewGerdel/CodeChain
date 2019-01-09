@@ -214,33 +214,38 @@ var GetBlocksFromRemoteNode = ((nodeHash, startingBlockNumber) => {
 
 var ValidateAndAddBlock = ((block) => {
     var promise = new Promise((resolve, reject) => {
-        ValidateBlockHash(block)
+        ValidateBlockHash(block) //validate the block hash (nonce, solvedDateTime and MemPoolItems)
             .then((result) => {
                 console.log(`Successfully validated block hash ${block.blockNumber}`);
-                GetLastBlock()
-                    .then((lastBlock) => {
-                        debugger;
-                        if (block.blockNumber != lastBlock[0].blockNumber + 1) {
-                            reject("Invalid block number");
-                            // console.log("Invalid block number.", block.blockNumber, lastBlock[0].blockNumber);
-                        } else {
-                            if (block.previousBlockHash != lastBlock[0].blockHash) {
-                                reject("Invalid previous block hash");
-                                console.log("Invalid previous block hash.", previousBlockHash, lastBlock[0].blockHash);
-                            } else {
-                                AddBlock(block)
-                                    .then((addBlockResult) => {
-                                        resolve(`Successfully imported block ${block.blockNumber}`);
-                                    }, (err) => {
-                                        reject(`Error adding block to blockchain`);
-                                        console.log(`Error adding block to blockchain. ${err}`);
-                                    })
-
-                            }
-                        }
+                MemPoolController.ValidateMemPoolItems(block.data) //validate each memPoolItem (filecontents, signedmessage, publickey)
+                    .then((result) => {
+                        console.log(`Successfully validated memPoolItems on block ${block.blockNumber}`);
+                        GetLastBlock() //Get the last block from my local db
+                            .then((lastBlock) => {
+                                debugger;
+                                if (block.blockNumber != lastBlock[0].blockNumber + 1) { //Make sure the last blocknumber is one less than the blocknumber being added
+                                    reject("Invalid block number");
+                                } else {
+                                    if (block.previousBlockHash != lastBlock[0].blockHash) { //Make sure the block of the previous hash matches the previousBlockHash of the block being added.
+                                        console.log("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
+                                        reject("Invalid previous block hash");
+                                    } else {
+                                        AddBlock(block) //Finally... all validations passed.  Add the block to the end of the chain. 
+                                            .then((addBlockResult) => {
+                                                resolve(`Successfully imported block ${block.blockNumber}`);
+                                            }, (err) => {
+                                                console.log(`Error adding block to blockchain. ${err}`);
+                                                reject(`Error adding block to blockchain`);
+                                            });
+                                    }
+                                }
+                            }, (err) => {
+                                console.log("Failed to retrieve last block.", err);
+                                reject("Failed to retrieve last block");
+                            });
                     }, (err) => {
-                        reject("Failed to retrieve last block");
-                        console.log("Failed to retrieve last block.", err);
+                        console.log("Failed to validate memPoolItems.", err);
+                        reject("Failed to validate memPoolItems.");
                     });
             }, (err) => {
                 debugger;

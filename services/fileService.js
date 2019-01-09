@@ -10,9 +10,11 @@ var StartService = ((app) => {
         var fileContents = request.body.filecontents;
         var publicKey = request.body.publickey;
         var privateKey = request.body.privatekey;
-        console.log(filename, fileContents, publicKey, privateKey);
+        console.log(`Received file ${filename}`);
+        
+        // console.log(filename, fileContents, publicKey, privateKey);
 
-        var signedMessage = keyController.SignMessage(fileContents, new Buffer(privateKey, 'hex'));
+        var signedMessage = keyController.SignMessage(fileContents, new Buffer.from(privateKey, 'hex'));
         memPoolController.AddCodeFileToMemPool(filename, fileContents, signedMessage, publicKey)
             .then((result) => {
                 response.send(result);
