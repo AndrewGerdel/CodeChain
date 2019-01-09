@@ -1,6 +1,29 @@
 var { MongoClient } = require('mongodb');
 var mongoose = require('../db/mongoose.js');
 var connectionString = require('../config.json').database;
+var filetypes = require('../enums/mempoolFiletypes.js');
+var { MemPool } = require('../models/mempool.js');
+var hashUtil = require('../utilities/hash.js');
+
+var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey) => {
+  var promise = new  Promise((resolve, reject) => {
+    var dateNow = new Date();
+    var memPool = new MemPool({
+      type: filetypes.File,
+      fileData: {
+        fileName: fileName,
+        fileContents: base64FileContents
+      },
+      signedMessage: signedMessage.Signature.toString('hex'),
+      dateAdded: dateNow,
+      publicKey: publicKey,
+      hash: hashUtil.CreateSha256Hash(fileName + base64FileContents + signedMessage + dateNow).toString("hex")
+    });
+    memPool.save();
+    resolve(memPool);
+  });
+  return promise;
+});
 
 //Gets all mempool items.
 var GetMemPoolItems = (() => {
@@ -37,5 +60,6 @@ var DeleteMemPoolItems = ((memPoolItems) => {
 
 module.exports = {
   DeleteMemPoolItems,
-  GetMemPoolItems
+  GetMemPoolItems,
+  AddMemPoolItem
 }

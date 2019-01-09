@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const secp256k1 = require('secp256k1');
 var conv = require('binstring');
-let mongoose = require('../db/mongoose.js');
 
 //Generates a new key pair
 var GenerateKeyPair = (() => {
