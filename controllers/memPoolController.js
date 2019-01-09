@@ -1,7 +1,6 @@
 var { MongoClient } = require('mongodb');
 var keyController = require('./keyController.js');
 var crypto = require('crypto');
-var mongoose = require('../db/mongoose.js');
 var hashUtil = require('../utilities/hash.js');
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 
