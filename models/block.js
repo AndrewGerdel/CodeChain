@@ -30,6 +30,10 @@ var Block = mongoose.model('Block', {
   solvedDateTime: {
     type: String,
     required: true
+  },
+  difficulty: {
+    type: String,
+    required: true
   }
 });
 

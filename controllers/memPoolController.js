@@ -11,7 +11,6 @@ var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) =
   var promise = new Promise((resolve, reject) => {
     let buff = new Buffer.from(fileContents);
     let base64data = buff.toString('base64');
-    debugger;
     keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer.from(publicKey, 'hex'))
       .then((success) => {
         var dateNow = new Date();

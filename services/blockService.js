@@ -29,10 +29,11 @@ var StartService = ((app) => {
 });
 
 function MempoolLoop() {
+  debugger;
   MineNextBlock().then((result) => {
     setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
   }, (err) => {
-    // console.log(err);
+    console.log(err);
     setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
   })
 }

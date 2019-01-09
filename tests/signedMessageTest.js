@@ -14,7 +14,6 @@ do {
 const pubKey = secp256k1.publicKeyCreate(privKey)
  
 // sign the message
-debugger;
 const sigObj = secp256k1.sign(msg, privKey)
  
 var signatureAsString = sigObj.signature.toString('hex');

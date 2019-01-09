@@ -4,7 +4,7 @@ var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
 var connectionString = require('../config.json').database;
 
-var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime, nonce, solvedDateTime) => {
+var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime, nonce, solvedDateTime, difficulty) => {
     var newBlock = new Block({
         blockHash: hash,
         blockNumber: blockNumber,
@@ -12,7 +12,8 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
         data: memPoolItems,
         millisecondsBlockTime: millisecondsBlockTime,
         nonce: nonce,
-        solvedDateTime: solvedDateTime
+        solvedDateTime: solvedDateTime,
+        difficulty: difficulty
     });
     newBlock.save();
 
@@ -46,6 +47,23 @@ var AddBlock = ((block) => {
 
 });
 
+//Gets the most recent block from the chain
+var GetBlocks = ((blockCount) => {
+    var promise = new Promise((resolve, reject) => {
+        var url = connectionString.host;
+        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+            if (error) {
+                console.log('Unable to connect to Mongo');
+                return;
+            }
+            var db = client.db(connectionString.database);
+            var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(blockCount).toArray();
+            client.close();
+            resolve(lastBlock);
+        });
+    });
+    return promise;
+});
 
 //Gets the most recent block from the chain
 var GetLastBlock = (() => {
@@ -102,5 +120,6 @@ module.exports = {
     GetLastBlock,
     GetFileFromBlock,
     AddBlock,
-    GetBlocksFromStartingBlock
+    GetBlocksFromStartingBlock,
+    GetBlocks
 }

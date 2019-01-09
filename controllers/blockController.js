@@ -4,6 +4,7 @@ var KeyController = require('./keyController.js');
 var { Block } = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
+var decToHex = require('dec-to-hex');
 var nonce = 0;
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
@@ -11,66 +12,134 @@ var nodeRepository = require('../repositories/nodeRepository.js');
 var request = require('request');
 
 const maxBlockSizeBytes = 1000000;
-var startingDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+const targetBlockTimeMs = 60000; //target a one minute block time. 
 
 // Adds memPoolItems to the collection, then fires SolveBlock
 function MineNextBlock() {
+    console.log('abc');
+    
     var promise = new Promise((resolve, reject) => {
         blockRepository.GetLastBlock()
             .then((lastBlock) => {
-                if (lastBlock.length == 0) {
-                    //there are no blocks.  Create the genesis block.
-                    var nonce = 0;
-                    var effectiveDate = new Date('1/1/2000');
-                    var mempoolItems = [];
-                    var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems);
-                    var hash = crypto.createHmac('sha256', hashInput).digest('hex');
-                    var endingDateTime = new Date();
-                    var millisecondsBlockTime = 0;
-                    var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString());
-                    lastBlock.push(newBlock);
-                }
-                memPoolRepository.GetMemPoolItems()
-                    .then((memPoolItemsFromDb) => {
-                        var sumFileSizeBytes = 0;
-                        var counter = 0;
-                        var memPoolItems = [];
-                        if (memPoolItemsFromDb.length == 0) {
-                            reject("Empty mempool");
-                        }
-                        else {
-                            console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
-                            for (i = 0; i < memPoolItemsFromDb.length; i++) {
-                                var element = memPoolItemsFromDb[i];
-                                var fileSizeBytes = (element.fileData.fileContents.length * 0.75) - 2;
-                                sumFileSizeBytes += fileSizeBytes;
-                                memPoolItems.push(memPoolItemsFromDb[i]);
-                                // console.log(element._id, "File name:", element.fileName,  "File Size:", fileSizeBytes);
-                                if (sumFileSizeBytes >= maxBlockSizeBytes) {
-                                    break;
-                                }
-                            }//endfor
-                            SolveBlock(hexToDec(startingDifficulty), lastBlock[0], memPoolItems)
-                                .then((newBlock) => {
-                                    resolve(newBlock);
-                                }, (err) => {
-                                    reject(err);
-                                })
-                                .catch((error) => {
-                                    reject('Error in GetMemPoolItems: ' + error);
-                                });
-                        }
+                CreateGenesisBlock(lastBlock) //will create a genesis block if the chain is currently empty.
+                    .then((lastBlock) => {
+                        CalculateDifficulty(lastBlock) //calculates the difficulty for the next block. 
+                            .then((difficulty) => {
+                                console.log(`Difficulty calculated at ${difficulty}`);
+                                memPoolRepository.GetMemPoolItems()
+                                    .then((memPoolItemsFromDb) => {
+                                        BreakMemPoolItemsToSize(memPoolItemsFromDb, difficulty, lastBlock)
+                                            .then((a) => {
+                                                resolve(a);
+                                            }, (err) => {
+                                                reject(err); //err from BreakMemPoolItemsToSize
+                                            });
+                                    }, (err) => {
+                                        reject(err); //err from GetMemPoolItems
+                                    });
+                            }, (err) => {
+                                reject(err); //err from CalculateDifficulty
+                            });
+                    }, (err) => {
+                        reject(err); //err from CreateGenesisBlock
                     })
-                    .catch((error) => { throw new Error(error); });
             }, (err) => {
-                throw new Error(err);
+                reject(err); //err from getlastblock
             })
             .catch((ex) => {
                 throw new Error(ex);
             })
+
     });
     return promise;
 }
+
+var BreakMemPoolItemsToSize = ((memPoolItemsFromDb, difficulty, lastBlock) => {
+    var promise = new Promise((resolve, reject) => {
+        var sumFileSizeBytes = 0;
+        var counter = 0;
+        var memPoolItems = [];
+        if (memPoolItemsFromDb.length == 0) {
+            reject("Empty mempool");
+        }
+        else {
+            console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
+            for (i = 0; i < memPoolItemsFromDb.length; i++) {
+                var element = memPoolItemsFromDb[i];
+                var fileSizeBytes = (element.fileData.fileContents.length * 0.75) - 2;
+                sumFileSizeBytes += fileSizeBytes;
+                memPoolItems.push(memPoolItemsFromDb[i]);
+                // console.log(element._id, "File name:", element.fileName,  "File Size:", fileSizeBytes);
+                if (sumFileSizeBytes >= maxBlockSizeBytes) {
+                    break;
+                }
+            }//endfor
+            SolveBlock(difficulty, lastBlock[0], memPoolItems)
+                .then((newBlock) => {
+                    resolve(newBlock);
+                }, (err) => {
+                    reject(err);
+                })
+                .catch((error) => {
+                    reject('Error in GetMemPoolItems: ' + error);
+                });
+        }
+    });
+    return promise;
+});
+
+var CreateGenesisBlock = ((lastBlock) => {
+    var promise = new Promise((resolve, reject) => {
+        if (lastBlock.length == 0) {
+            var nonce = 0;
+            var effectiveDate = new Date('1/1/2000');
+            var mempoolItems = [];
+            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems);
+            var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+            var endingDateTime = new Date();
+            var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target
+            var genesisDifficulty = "0x000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+            var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), genesisDifficulty);
+            lastBlock.push(newBlock);
+            resolve(lastBlock);
+        } else {
+            resolve(lastBlock);
+        }
+    });
+    return promise;
+});
+
+var CalculateDifficulty = ((lastBlock) => {
+    var promise = new Promise((resolve, reject) => {
+        blockRepository.GetBlocks(10).then((result) => {
+            var totalMilliseconds = 0;
+            for (i = 0; i < result.length; i++) {
+                totalMilliseconds += result[i].millisecondsBlockTime;
+            }
+            var averageBlockTimeMs = totalMilliseconds / result.length;
+            if (averageBlockTimeMs < targetBlockTimeMs) {
+                var diff = targetBlockTimeMs - averageBlockTimeMs;  
+                var percentage = (diff / targetBlockTimeMs); 
+                var currentDifficulty = hexToDec(lastBlock[0].difficulty); 
+                var newDifficulty = currentDifficulty - (currentDifficulty * percentage); 
+                resolve(newDifficulty);
+            }
+            else  if (averageBlockTimeMs > targetBlockTimeMs) {
+                var diff = averageBlockTimeMs - targetBlockTimeMs;  
+                var percentage = (diff / targetBlockTimeMs); 
+                var currentDifficulty = hexToDec(lastBlock[0].difficulty);
+                var newDifficulty = currentDifficulty + (currentDifficulty * percentage); 
+                resolve(newDifficulty);
+            }
+            else if (averageBlockTimeMs == targetBlockTimeMs) {
+                resolve(hexToDec(lastBlock[0].difficulty));
+            }
+        }, (err) => {
+            reject(err);
+        });
+    });
+    return promise;
+});
 
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
@@ -85,7 +154,7 @@ var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
             if (hashAsDecimal <= difficulty) {
                 var endingDateTime = new Date();
                 var millisecondsBlockTime = (endingDateTime - startingDateTime);
-                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString());
+                var newBlock = blockRepository.CreateNewBlock(hash, previousBlock.blockNumber + 1, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), decToHex(difficulty));
                 resolve(newBlock);
             }
             nonce++;
@@ -158,7 +227,6 @@ var ValidateBlockHash = ((block) => {
         if (hash == block.blockHash) {
             resolve(hash);
         } else {
-            debugger;
             reject(hash);
         }
     });
@@ -222,7 +290,6 @@ var ValidateAndAddBlock = ((block) => {
                         console.log(`Successfully validated memPoolItems on block ${block.blockNumber}`);
                         GetLastBlock() //Get the last block from my local db
                             .then((lastBlock) => {
-                                debugger;
                                 if (block.blockNumber != lastBlock[0].blockNumber + 1) { //Make sure the last blocknumber is one less than the blocknumber being added
                                     reject("Invalid block number");
                                 } else {
@@ -248,7 +315,6 @@ var ValidateAndAddBlock = ((block) => {
                         reject("Failed to validate memPoolItems.");
                     });
             }, (err) => {
-                debugger;
                 reject("Failed to validate block hash");
                 console.log("Failed to validate block hash");
             });
