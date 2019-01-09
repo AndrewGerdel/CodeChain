@@ -2,7 +2,7 @@ var nodeController = require('../controllers/nodeController');
 var hashUtil = require('../utilities/hash.js');
 var blockController = require('../controllers/blockController');
 
-var StartService = ((app) => {
+var StartService = ((app, isDebug) => {
     app.get('/nodes/get', (req, res) => {
         nodeController.GetAllNodes()
             .then((resolve) => {
@@ -55,6 +55,17 @@ var StartService = ((app) => {
         res.send(hash);
     });
 
+
+    if(isDebug) {
+        //if debugging, do not run on it's own thread. 
+        var nodeProcess = require('../processServices/nodeProcess.js');
+      }else {
+         //Run the backend block processes on a child thread
+         const { fork } = require('child_process');
+         const forked = fork('processServices/nodeProcess.js');
+      }
+
+ 
     
 
 });

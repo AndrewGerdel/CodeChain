@@ -90,12 +90,12 @@ var GetBlock = ((blockNumber) => {
         var url = connectionString.host;
         MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
             if (error) {
-                console.log('Unable to connect to Mongo');
+                console.log('Unable to connect to Mongo:', error);
                 return;
             }
             var db = client.db(connectionString.database);
             var lastBlock = db.collection('blocks').find({ blockNumber: blockNumber }).toArray();
-            client.close();
+            // client.close();
             resolve(lastBlock);
         });
     });

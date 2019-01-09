@@ -24,19 +24,19 @@ var StartService = ((app, isDebug) => {
       })
   });
 
-  //Run the backend block processes on a child thread
-  const { fork } = require('child_process');
-  const forked = fork('processServices/blockProcess.js');
+  // //Run the backend block processes on a child thread
+  // const { fork } = require('child_process');
+  // const forked = fork('processServices/blockProcess.js');
 
-  // if(isDebug) {
-  //   //if debugging, do not run on it's own thread. 
-  //   var blockProcess = require('../processServices/blockProcess.js');
-  //   blockProcess.MempoolLoop();
-  // }else {
-  //    //Run the backend block processes on a child thread
-  //    const { fork } = require('child_process');
-  //    const forked = fork('processServices/blockProcess.js');
-  // }
+  if(isDebug) {
+    //if debugging, do not run on it's own thread. 
+    var blockProcess = require('../processServices/blockProcess.js');
+    blockProcess.MempoolLoop();
+  }else {
+     //Run the backend block processes on a child thread
+     const { fork } = require('child_process');
+     const forked = fork('processServices/blockProcess.js');
+  }
 });
 
 

@@ -2,6 +2,7 @@ let blockController = require('../controllers/blockController.js');
 let nodeController = require('../controllers/nodeController.js');
 var config = require('../config.json');
 
+console.log('Block process starting...');
 MempoolLoop();
 
 function MempoolLoop() {
@@ -16,7 +17,7 @@ function MempoolLoop() {
 }
 
 function MineNextBlock() {
-  // console.log('Checking mempool...');
+  // console.log('Checking mempool.?..');
   var promise = new Promise((resolve, reject) => {
     blockController.MineNextBlock()
       .then((block) => {
@@ -33,6 +34,6 @@ function MineNextBlock() {
   return promise;
 }
 
-module.exports ={
+module.exports = {
   MempoolLoop
 }

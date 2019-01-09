@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 var config = require('./config.json');
+const argv = require('yargs').argv
 
 let port = config.network.myPort;
 
@@ -13,14 +14,17 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+
 //render out a simple default page. 
 app.get('/', (req, res) => {
   res.send('Welcome to the blockchain.  POST to /uploadfile to add files. GET to /getfiles to retrieve a file by hash.');
 });
 
-// const isDebug = argv && (argv.includes('inspect') || argv.includes('debug'));
-// console.log('is debug', isDebug);
-var isDebug = false; //temp
+debugger;
+const isDebug = process.execArgv.includes("--debug") || process.execArgv.includes("--inspect-brk") || process.execArgv.includes("--inspect") || process.execArgv.includes("--debug-brk")
+if(isDebug == true){
+  console.log('Launching in debug mode. Backend process will run synchronous.');
+}
 
 //start listening for file requests
 var fileService = require('./webServices/fileService.js');
@@ -29,6 +33,7 @@ fileService.StartService(app);
 //start listening for node requests, and spin up any node-related processes.
 var nodeService = require('./webServices/nodeService.js');
 nodeService.StartService(app);
+
 
 //start the blockService, which pings the mempool at a defined interval and checks for work 
 var blockService = require('./webServices/blockService.js');

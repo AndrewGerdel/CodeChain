@@ -1,10 +1,9 @@
 var nodeController = require('../controllers/nodeController');
 var config = require('../config.json');
 
-Timer_LoadAndRegisterNodes();
-setInterval(Timer_LoadAndRegisterNodes, config.timers.secondaryTimerIntervalMs);
 
-function Timer_LoadAndRegisterNodes() {
+
+var Timer_LoadAndRegisterNodes = (() => {
     RegisterWithRemoteNodes()
         .then((results) => {
             UpdateNodeListFromRemoteNodes()
@@ -15,7 +14,7 @@ function Timer_LoadAndRegisterNodes() {
                         });
                 })
         })
-}
+});
 
 var RegisterWithRemoteNodes = (() => {
     var promise = new Promise((resolve, reject) => {
@@ -54,8 +53,11 @@ var RetrieveBlockchainFromLongestNode = (() => {
     var promise = new Promise((resolve, reject) => {
         nodeController.GetLongestBlockchain()
             .then((longestNode) => {
-
             });
     });
     return promise
 });
+
+console.log('Node process starting...');
+Timer_LoadAndRegisterNodes();
+setInterval(Timer_LoadAndRegisterNodes, config.timers.secondaryTimerIntervalMs);
