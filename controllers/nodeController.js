@@ -156,48 +156,26 @@ var BroadcastBlockToNetwork = ((block) => {
 });
 
 var GetLongestBlockchain = (() => {
-    var promise = new Promise((resolve, reject) => {
-        blockController.GetLastBlock()
-            .then((lastBlock) => {
-                nodeRepository.GetNodeWithLongestChain()
-                    .then((node) => {
-                        if (node.length > 0 && lastBlock.length > 0) {
-
-                            blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber)
-                                .then((blocks) => {
-                                    if (blocks.length > 0) {
-                                        console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
-                                        var index = 0;
-                                        AddBlocks(blocks, index)
-                                    }
-                                }, (err) => {
-                                    reject(err);
-                                });
-                        }
-
-                    }, (err) => {
-                        reject('An error occurred: ' + err);
-                    })
-                    .catch((ex) => {
-                        reject(ex);
-                    });
-            });
+    var promise = new Promise(async (resolve, reject) => {
+        var lastBlock = await blockController.GetLastBlock();
+        var node = await nodeRepository.GetNodeWithLongestChain();
+        if (node.length > 0 && lastBlock.length > 0) {
+            var blocks = await blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber);
+            if (blocks.length > 0) {
+                debugger;
+                console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
+                for (blockCount = 0; blockCount < blocks.length; blockCount++) {
+                    var addblockResult = await blockController.ValidateAndAddBlock(blocks[blockCount]);
+                    //Loop until that block is actually written to the database.  Otherwise validation of the next block will sometimes fail. 
+                    do {
+                        var lastBlockCheck = await blockController.GetLastBlock();
+                    } while (lastBlockCheck[0].blockNumber < addblockResult.blockNumber);
+                }
+            }
+        }
     });
     return promise;
 });
-
-function AddBlocks(blocks, index) {
-    blockController.ValidateAndAddBlock(blocks[index])
-        .then((result) => {
-            console.log(`Imported block ${blocks[index].blockNumber}`);
-            index++;
-            if (blocks.length > index) {
-                AddBlocks(blocks, index);
-            }
-        }, (err) => {
-            console.log(`Failed to add blocks.  Index ${index}, Error: ${err}`);
-        });
-}
 
 module.exports = {
     GetAllNodes,
