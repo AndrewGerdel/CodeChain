@@ -6,27 +6,16 @@ var hashUtil = require('../utilities/hash.js');
 var blockController = require('./blockController.js');
 
 var GetAllNodes = (() => {
-    var promise = new Promise((resolve, reject) => {
-        nodeRepository.GetAllNodes()
-            .then((nodes) => {
-                if (nodes.length > 0) {
-                    resolve(nodes);
-                } else {
-                    // console.log('Adding default master node from config:', config.network.defaultMasterNode);
-                    nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort)
-                        .then((newNode) => {
-                            nodeRepository.GetAllNodes()
-                                .then((newNodeList) => {
-                                    resolve(newNodeList);
-                                })
-                        });
-                }
-            }, (err) => {
-                reject('An error occurred: ' + err);
-            })
-            .catch((ex) => {
-                reject(ex);
-            });
+    var promise = new Promise(async (resolve, reject) => {
+        var nodes = await nodeRepository.GetAllNodes();
+        if (nodes.length > 0) {
+            resolve(nodes);
+        } else {
+            // console.log('Adding default master node from config:', config.network.defaultMasterNode);
+            var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort);
+            var newNodeList = await nodeRepository.GetAllNodes();
+            resolve(newNodeList);
+        }
     });
     return promise;
 });
@@ -71,24 +60,24 @@ var RegisterWithOtherNodes = ((nodeList) => {
                 headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol }
             };
             var counter = 0;
-            request(options, (err, res, body) => {
-                if (err) {
-                    console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
-                    nodeRepository.DeleteNode(node.hash)
-                        .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
-                } else {
-                    console.log('Registered with', node.uri);
-                    try {
+            try {
+                request(options, (err, res, body) => {
+                    if (err) {
+                        console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                        nodeRepository.DeleteNode(node.hash);
+                    } else {
+                        console.log('Registered with', node.uri);
                         var returnData = JSON.parse(body);
                         nodeRepository.UpdateNodeRegistration(node, returnData)
                             .then((result) => {
                             })
                             .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
-                    } catch (ex) {
-                        console.log(`Exception loading JSON from ${node.uri}:${node.port}. ${ex}`);
                     }
-                }
-            });
+                });
+            } catch (ex) {
+                console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
+                nodeRepository.DeleteNode(node.hash);
+            }
         });
         resolve('All requests launched');
     });
@@ -155,26 +144,30 @@ var BroadcastBlockToNetwork = ((block) => {
         });
 });
 
-var GetLongestBlockchain = (() => {
-    var promise = new Promise(async (resolve, reject) => {
-        var lastBlock = await blockController.GetLastBlock();
-        var node = await nodeRepository.GetNodeWithLongestChain();
-        if (node.length > 0 && lastBlock.length > 0) {
-            var blocks = await blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber);
-            if (blocks.length > 0) {
-                debugger;
-                console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
-                for (blockCount = 0; blockCount < blocks.length; blockCount++) {
-                    var addblockResult = await blockController.ValidateAndAddBlock(blocks[blockCount]);
-                    //Loop until that block is actually written to the database.  Otherwise validation of the next block will sometimes fail. 
-                    do {
-                        var lastBlockCheck = await blockController.GetLastBlock();
-                    } while (lastBlockCheck[0].blockNumber < addblockResult.blockNumber);
+var  ImportLongestBlockchain = (async (callback) => {
+    var lastBlock = await blockController.GetLastBlock();
+    var node = await nodeRepository.GetNodeWithLongestChain();
+    var blockNumber = 0;
+    if (lastBlock && lastBlock.length > 0) {
+        blockNumber = lastBlock[0].blockNumber;
+    }
+    if (node.length > 0) {
+        var blocks = await blockController.GetBlocksFromRemoteNode(node[0].hash, blockNumber,
+            (async(blocks) => {
+                if (blocks && blocks.length > 0) {
+                    console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
+                    for (blockCount = 0; blockCount < blocks.length; blockCount++) {
+                        var addblockResult = await blockController.ValidateAndAddBlock(blocks[blockCount]);
+                        //Loop until that block is actually written to the database.  Otherwise validation of the next block will sometimes fail. 
+                        do {
+                            var lastBlockCheck = await blockController.GetLastBlock();
+                        } while (lastBlockCheck[0].blockNumber < addblockResult.blockNumber);
+                    }
+                    callback(blocks);
                 }
-            }
-        }
-    });
-    return promise;
+                callback();
+            }));
+    }
 });
 
 module.exports = {
@@ -184,5 +177,5 @@ module.exports = {
     GetNode,
     GetNodesFromRemoteNodes,
     BroadcastBlockToNetwork,
-    GetLongestBlockchain
+    ImportLongestBlockchain
 }

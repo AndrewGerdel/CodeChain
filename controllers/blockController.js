@@ -279,25 +279,21 @@ var AppendBlockchain = ((blockchain) => {
     return promise;
 });
 
-var GetBlocksFromRemoteNode = ((nodeHash, startingBlockNumber) => {
-    var promise = new Promise((resolve, reject) => {
-        nodeRepository.GetNode(nodeHash)
-            .then((nodeResult) => {
-                var node = nodeResult[0];
-                var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
-                request(getNodesUrl, (err, res, body) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        var blocks = JSON.parse(body);
-                        resolve(blocks);
-                    }
-                });
-            }, (err) => {
-                reject('Could not find node ' + nodeHash);
-            })
+var GetBlocksFromRemoteNode = (async (nodeHash, startingBlockNumber, callback) => {
+    var nodeResult = await nodeRepository.GetNode(nodeHash);
+    var node = nodeResult[0];
+    var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
+    await request(getNodesUrl, (err, res, body) => {
+        console.log('response received');
+        
+        if (err) {
+            //throw new Error("Error getting blocks from remote node: " + err);
+        } else {
+            var blocks = JSON.parse(body);
+        console.log('returning now');
+        callback(blocks);
+        }
     });
-    return promise;
 });
 
 
@@ -316,7 +312,7 @@ var ValidateAndAddBlock = ((block) => {
                 reject("Invalid previous block hash");
             } else {
                 var addBlockResult = await AddBlock(block) //Finally... all validations passed.  Add the block to the end of the chain. 
-                resolve({blockNumber: block.blockNumber, message: `Successfully imported block ${block.blockNumber}`});
+                resolve({ blockNumber: block.blockNumber, message: `Successfully imported block ${block.blockNumber}` });
             }
         }
     });

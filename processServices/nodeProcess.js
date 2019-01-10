@@ -1,63 +1,46 @@
 var nodeController = require('../controllers/nodeController');
 var config = require('../config.json');
 
-
-
-var Timer_LoadAndRegisterNodes = (() => {
-    RegisterWithRemoteNodes()
-        .then((results) => {
-            UpdateNodeListFromRemoteNodes()
-                .then((res2) => {
-                    RetrieveBlockchainFromLongestNode()
-                        .then((res3) => {
-
-                        });
-                })
-        })
+process.on('unhandledRejection', (reason, promise) => {
+    console.log('Unhandled Rejection at:', reason.stack || reason)
 });
 
-var RegisterWithRemoteNodes = (() => {
-    var promise = new Promise((resolve, reject) => {
-        nodeController.GetAllNodes() //get all nodes from our local db
-            .then((nodes) => {
-                console.log('Registering with', nodes.length, "nodes");
-                nodeController.RegisterWithOtherNodes(nodes) //register with each of those nodes
-                    .then((results) => {
-                        resolve(results);
-                    }, (err) => {
-                        reject(err);
-                    })
-            });
+var Timer_LoadAndRegisterNodes = (async () => {
+    console.log('nodeProcess running.', new Date());
 
-    });
-    return promise
+    try {
+        var res1 = await RegisterWithRemoteNodes();
+        var res2 = await UpdateNodeListFromRemoteNodes();
+        var res3 = await RetrieveBlockchainFromLongestNode();
+    } catch (ex) {
+        console.log(`Error in nodeProcess: ${ex}`);
+    } finally {
+        setTimeout(() => {
+            Timer_LoadAndRegisterNodes();
+        }, config.timers.secondaryTimerIntervalMs);
+    }
 });
 
-var UpdateNodeListFromRemoteNodes = (() => {
-    var promise = new Promise((resolve, reject) => {
-        nodeController.GetAllNodes() //re-get all nodes from the db.  Some might have been deleted.
-            .then((nodes2) => {
-                nodeController.GetNodesFromRemoteNodes(nodes2) //get the nodelist from each remote node and import it into our db
-                    .then((nodesFromRemote) => {
-                        resolve(nodesFromRemote);
-                    }, (err) => {
-                        reject(err);
-                    });
-            });
-    });
-    return promise
+var RegisterWithRemoteNodes = (async () => {
+    var nodes = await nodeController.GetAllNodes(); //get all nodes from our local db
+    console.log('Registering with', nodes.length, "nodes");
+    var registrationResults = await nodeController.RegisterWithOtherNodes(nodes) //register with each of those nodes
+    return (registrationResults);
+});
+
+var UpdateNodeListFromRemoteNodes = (async () => {
+    var nodes2 = await nodeController.GetAllNodes(); //re-get all nodes from the db.  Some might have been deleted.
+    var nodesFromRemote = await nodeController.GetNodesFromRemoteNodes(nodes2) //get the nodelist from each remote node and import it into our db
+    return (nodesFromRemote);
 });
 
 
-var RetrieveBlockchainFromLongestNode = (() => {
-    var promise = new Promise((resolve, reject) => {
-        nodeController.GetLongestBlockchain()
-            .then((longestNode) => {
-            });
-    });
-    return promise
+var RetrieveBlockchainFromLongestNode = (async() => {
+    var longestNode = await nodeController.ImportLongestBlockchain((() => {
+        console.log('done waiting');
+        return(longestNode);
+    }));
 });
 
 console.log('Node process starting...');
 Timer_LoadAndRegisterNodes();
-setInterval(Timer_LoadAndRegisterNodes, config.timers.secondaryTimerIntervalMs);

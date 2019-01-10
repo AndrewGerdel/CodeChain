@@ -83,6 +83,8 @@ var AddNode = ((protocol, uri, port) => {
                 });
                 newNode.save();
                 resolve(newNode);
+            }else{
+                resolve(foundNode[0]);
             }
         });
     });
