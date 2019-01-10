@@ -78,11 +78,15 @@ var RegisterWithOtherNodes = ((nodeList) => {
                         .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
                 } else {
                     console.log('Registered with', node.uri);
-                    var returnData = JSON.parse(body);
-                    nodeRepository.UpdateNodeRegistration(node, returnData)
-                        .then((result) => {
-                        })
-                        .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
+                    try {
+                        var returnData = JSON.parse(body);
+                        nodeRepository.UpdateNodeRegistration(node, returnData)
+                            .then((result) => {
+                            })
+                            .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
+                    } catch (ex) {
+                        console.log(`Exception loading JSON from ${node.uri}:${node.port}. ${ex}`);
+                    }
                 }
             });
         });
@@ -157,7 +161,7 @@ var GetLongestBlockchain = (() => {
             .then((lastBlock) => {
                 nodeRepository.GetNodeWithLongestChain()
                     .then((node) => {
-                        if (node.length > 0) {
+                        if (node.length > 0 && lastBlock.length > 0) {
 
                             blockController.GetBlocksFromRemoteNode(node[0].hash, lastBlock[0].blockNumber)
                                 .then((blocks) => {
@@ -187,7 +191,7 @@ function AddBlocks(blocks, index) {
         .then((result) => {
             console.log(`Imported block ${blocks[index].blockNumber}`);
             index++;
-            if(blocks.length > index ){
+            if (blocks.length > index) {
                 AddBlocks(blocks, index);
             }
         }, (err) => {

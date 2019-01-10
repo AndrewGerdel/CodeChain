@@ -1,12 +1,14 @@
 var { MongoClient } = require('mongodb');
+var mongo = require('mongoskin');
 var mongoose = require('../db/mongoose.js');
 var connectionString = require('../config.json').database;
 var filetypes = require('../enums/mempoolFiletypes.js');
 var { MemPool } = require('../models/mempool.js');
 var hashUtil = require('../utilities/hash.js');
 
+
 var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey) => {
-  var promise = new  Promise((resolve, reject) => {
+  var promise = new Promise((resolve, reject) => {
     var dateNow = new Date();
     var memPool = new MemPool({
       type: filetypes.File,
@@ -25,17 +27,16 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey) =
   return promise;
 });
 
+
 //Gets all mempool items.
 var GetMemPoolItems = (() => {
   var promise = new Promise((resolve, reject) => {
-    MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-      if (error) {
-        console.log('Unable to connect to Mongo');
-        return;
-      }
-      var db = client.db(connectionString.database);
-      resolve(db.collection('mempools').find().sort({ dateAdded: 1 }).toArray());
-    });
+    mongoose.GetDb()
+      .then((db) => {
+        resolve(db.collection('mempools').find().sort({ dateAdded: 1 }).toArray());
+      }, (err) => {
+        reject(err);
+      });
   });
   return promise;
 });
@@ -43,16 +44,14 @@ var GetMemPoolItems = (() => {
 //Deletes by _id all memPoolItems in the list
 var DeleteMemPoolItems = ((memPoolItems) => {
   var promise = new Promise((resolve, reject) => {
-    MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-      if (error) {
-        console.log('Unable to connect to Mongo');
-        return;
-      }
-      var db = client.db(connectionString.database);
+    mongoose.GetDb()
+    .then((db) => {
       for (i = 0; i < memPoolItems.length; i++) {
         db.collection('mempools').deleteOne({ _id: memPoolItems[i]._id });
       }
       resolve(true);
+    }, (err) => {
+      reject(err);
     });
   });
   return promise;

@@ -20,7 +20,6 @@ app.get('/', (req, res) => {
   res.send('Welcome to the blockchain.  POST to /uploadfile to add files. GET to /getfiles to retrieve a file by hash.');
 });
 
-debugger;
 const isDebug = process.execArgv.includes("--debug") || process.execArgv.includes("--inspect-brk") || process.execArgv.includes("--inspect") || process.execArgv.includes("--debug-brk")
 if(isDebug == true){
   console.log('Launching in debug mode. Backend process will run synchronous.');

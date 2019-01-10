@@ -10,51 +10,45 @@ var hashUtil = require('../utilities/hash.js');
 //And that's why we use the registrationDetails.myHash value below... because during registration, each node let's us know our own hash, and that's where it gets stored.
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db(connectionString.database);
 
-            //Get OUR OWN HASH from registrationDetails.myHash, so it can be excluded from the next query below. 
-            var getMyHash = db.collection('nodes').aggregate([
-                {
-                    "$group":
-                        { _id: "$registrationDetails.myHash", count: { $sum: 1 } }
-                },
-                { $sort: { "count": -1 } }
-            ]).limit(1).toArray();
+        mongoose.GetDb()
+            .then((db) => {
+                //Get OUR OWN HASH from registrationDetails.myHash, so it can be excluded from the next query below. 
+                var getMyHash = db.collection('nodes').aggregate([
+                    {
+                        "$group":
+                            { _id: "$registrationDetails.myHash", count: { $sum: 1 } }
+                    },
+                    { $sort: { "count": -1 } }
+                ]).limit(1).toArray();
 
-            getMyHash.then((result) => {
-                // console.log(`Hey, my hash must be ${result[0]._id}`);
-                var myHash = '';
-                if (result.length > 0) {
-                    myHash = result[0]._id;
-                }
-                var nodes = db.collection('nodes').find({ "hash": { $ne: myHash } }).toArray();
-                client.close();
-                resolve(nodes);
+                getMyHash.then((result) => {
+                    // console.log(`Hey, my hash must be ${result[0]._id}`);
+                    var myHash = '';
+                    if (result.length > 0) {
+                        myHash = result[0]._id;
+                    }
+                    var nodes = db.collection('nodes').find({ "hash": { $ne: myHash } }).toArray();
+                    resolve(nodes);
+                }, (err) => {
+                    reject(`Failed to get my hash: ${err}`);
+                });
             }, (err) => {
-                reject(`Failed to get my hash: ${err}`);
+                reject(err);
             });
-        });
     });
     return promise;
 });
 
 var GetNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                reject(error);
-            }
-            var db = client.db(connectionString.database);
-            var nodes = db.collection('nodes').find({ hash: hash }).toArray();
-            client.close();
-            resolve(nodes);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var nodes = db.collection('nodes').find({ hash: hash }).toArray();
+                resolve(nodes);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
@@ -62,16 +56,13 @@ var GetNode = ((hash) => {
 
 var GetNodeWithLongestChain = (() => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                reject(error);
-            }
-            var db = client.db(connectionString.database);
-            var nodes = db.collection('nodes').find().sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
-            client.close();
-            resolve(nodes);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var nodes = db.collection('nodes').find().sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
+                resolve(nodes);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
@@ -101,39 +92,36 @@ var AddNode = ((protocol, uri, port) => {
 //Deletes node by hash
 var DeleteNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                reject(error);
-            }
-            var db = client.db(connectionString.database);
-            db.collection('nodes').deleteOne({ hash: hash });
-            client.close();
-            resolve(true);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                db.collection('nodes').deleteOne({ hash: hash });
+                resolve(true);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
 
 var UpdateNodeRegistration = ((node, details) => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                reject(error);
-            }
-            var db = client.db(connectionString.database);
-            db.collection('nodes').updateOne({ _id: node._id },
-                {
-                    $set:
+
+        mongoose.GetDb()
+            .then((db) => {
+                db.collection('nodes').updateOne({ _id: node._id },
                     {
-                        dateLastRegistered: new Date(),
-                        registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash }
-                    }
-                });
-            client.close();
-            resolve(true);
-        });
+                        $set:
+                        {
+                            dateLastRegistered: new Date(),
+                            registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash }
+                        }
+                    });
+                
+                resolve(true);
+            }, (err) => {
+                reject(err);
+            });
+
     });
     return promise;
 });

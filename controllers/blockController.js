@@ -19,11 +19,8 @@ const targetBlockTimeMs = config.network.targetBlockTimeMs; //target a one minut
 // Adds memPoolItems to the collection, then fires SolveBlock
 function MineNextBlock() {
     var promise = new Promise((resolve, reject) => {
-        debugger;
-
         memPoolRepository.GetMemPoolItems()
             .then((memPoolItemsFromDb) => {
-                debugger;
                 if (memPoolItemsFromDb.length > 0) {
                     blockRepository.GetLastBlock()
                         .then((lastBlock) => {
@@ -49,7 +46,7 @@ function MineNextBlock() {
                         .catch((ex) => {
                             throw new Error(ex);
                         })
-                }else{
+                } else {
                     reject(""); //no work to do
                 }
             });
@@ -114,8 +111,6 @@ var CreateGenesisBlock = ((lastBlock) => {
 
 var CalculateDifficulty = ((lastBlock) => {
     var promise = new Promise((resolve, reject) => {
-        debugger;
-
         blockRepository.GetBlocks(10).then((result) => {
             var totalMilliseconds = 0;
             for (i = 0; i < result.length; i++) {
@@ -316,7 +311,8 @@ var ValidateAndAddBlock = ((block) => {
                         GetLastBlock() //Get the last block from my local db
                             .then((lastBlock) => {
                                 if (block.blockNumber != lastBlock[0].blockNumber + 1) { //Make sure the last blocknumber is one less than the blocknumber being added
-                                    reject("Invalid block number");
+                                    reject(`Invalid block number. Expecting ${lastBlock[0].blockNumber + 1} but instead got ${block.blockNumber}`);
+
                                 } else {
                                     if (block.previousBlockHash != lastBlock[0].blockHash) { //Make sure the block of the previous hash matches the previousBlockHash of the block being added.
                                         console.log("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
@@ -358,5 +354,6 @@ module.exports = {
     AddBlock,
     GetBlocksFromStartingBlock,
     GetBlocksFromRemoteNode,
-    ValidateAndAddBlock
+    ValidateAndAddBlock,
+    CreateGenesisBlock
 }

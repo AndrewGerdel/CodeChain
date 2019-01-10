@@ -31,8 +31,12 @@ var StartService = ((app, isDebug) => {
                     // console.log('I didnt add the registration because that node already exists');
                 }
                 blockController.GetLastBlock().then((result) => {
-                    var responseDetails = { yourHash: hash, myBlockHeight: result[0].blockNumber }
-                    res.send(responseDetails);
+                    if (result.length > 0) {
+                        var responseDetails = { yourHash: hash, myBlockHeight: result[0].blockNumber }
+                        res.send(responseDetails);
+                    } else {
+                        res.send('No blocks found');
+                    }
                 }, (err) => {
                     console.log(`Error getting last block. ${err}`);
                     res.send(`Unknown error getting blockchain on remote host.`);
@@ -56,17 +60,17 @@ var StartService = ((app, isDebug) => {
     });
 
 
-    if(isDebug) {
+    if (isDebug) {
         //if debugging, do not run on it's own thread. 
         var nodeProcess = require('../processServices/nodeProcess.js');
-      }else {
-         //Run the backend block processes on a child thread
-         const { fork } = require('child_process');
-         const forked = fork('processServices/nodeProcess.js');
-      }
+    } else {
+        //Run the backend block processes on a child thread
+        const { fork } = require('child_process');
+        const forked = fork('processServices/nodeProcess.js');
+    }
 
- 
-    
+
+
 
 });
 

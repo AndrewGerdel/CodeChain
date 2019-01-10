@@ -51,17 +51,13 @@ var AddBlock = ((block) => {
 //Gets the most recent block from the chain
 var GetBlocks = ((blockCount) => {
     var promise = new Promise((resolve, reject) => {
-        var url = connectionString.host;
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db(connectionString.database);
-            var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(blockCount).toArray();
-            client.close();
-            resolve(lastBlock);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(blockCount).toArray();
+                resolve(lastBlock);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
@@ -69,17 +65,13 @@ var GetBlocks = ((blockCount) => {
 //Gets the most recent block from the chain
 var GetLastBlock = (() => {
     var promise = new Promise((resolve, reject) => {
-        var url = connectionString.host;
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db(connectionString.database);
-            var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
-            client.close();
-            resolve(lastBlock);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
+                resolve(lastBlock);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
@@ -87,53 +79,43 @@ var GetLastBlock = (() => {
 //Gets the most recent block from the chain
 var GetBlock = ((blockNumber) => {
     var promise = new Promise((resolve, reject) => {
-        var url = connectionString.host;
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo:', error);
-                return;
-            }
-            var db = client.db(connectionString.database);
-            var lastBlock = db.collection('blocks').find({ blockNumber: blockNumber }).toArray();
-            // client.close();
-            resolve(lastBlock);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var lastBlock = db.collection('blocks').find({ blockNumber: blockNumber }).toArray();
+                resolve(lastBlock);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
 
 var GetBlocksFromStartingBlock = ((startingBlock) => {
     var promise = new Promise((resolve, reject) => {
-        var url = connectionString.host;
-        MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db(connectionString.database);
-            var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }).sort({ blockNumber: 1 }).toArray();
-            client.close();
-            resolve(blocks);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }).sort({ blockNumber: 1 }).toArray();
+                resolve(blocks);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
 
 var GetFileFromBlock = ((filehash) => {
     var promise = new Promise((resolve, reject) => {
-        MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
-            if (error) {
-                console.log('Unable to connect to Mongo');
-                return;
-            }
-            var db = client.db(connectionString.database);
-            var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
-            client.close();
-            resolve(lastBlock);
-        });
+        mongoose.GetDb()
+            .then((db) => {
+                var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
+                resolve(lastBlock);
+            }, (err) => {
+                reject(err);
+            });
     });
     return promise;
 });
+
 module.exports = {
     CreateNewBlock,
     GetLastBlock,

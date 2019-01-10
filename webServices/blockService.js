@@ -24,21 +24,34 @@ var StartService = ((app, isDebug) => {
       })
   });
 
-  // //Run the backend block processes on a child thread
-  // const { fork } = require('child_process');
-  // const forked = fork('processServices/blockProcess.js');
+  //If the blockchain is empty, create the genesis block now. 
+  blockController.GetLastBlock()
+    .then((lastBlock) => {
+      if (lastBlock.length == 0) {
+        blockController.CreateGenesisBlock(lastBlock)
+          .then((newBlock) => {
+            StartOrForkProcess(isDebug);
+            // blockController.AddBlock(newBlock[0]) //don't add the block again. It's already been added by CreateGenesisBlock()
+          }, (err) => {
+            throw new Error('Failed to create genesis block: ' + err);
+          })
+      } else {
+        StartOrForkProcess(isDebug);
+      }
+    });
+});
 
-  if(isDebug) {
+function StartOrForkProcess(isDebug) {
+  if (isDebug) {
     //if debugging, do not run on it's own thread. 
     var blockProcess = require('../processServices/blockProcess.js');
     blockProcess.MempoolLoop();
-  }else {
-     //Run the backend block processes on a child thread
-     const { fork } = require('child_process');
-     const forked = fork('processServices/blockProcess.js');
+  } else {
+    //Run the backend block processes on a child thread
+    const { fork } = require('child_process');
+    const forked = fork('processServices/blockProcess.js');
   }
-});
-
+}
 
 module.exports = {
   StartService
