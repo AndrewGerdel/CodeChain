@@ -36,7 +36,6 @@ var StartService = ((app, isDebug) => {
   });
 
   app.get('/block/getBlockHash', (req, res) => {
-    debugger;
     var blockNumber = Number(req.query.blockNumber);
     blockController.GetBlockHash(blockNumber)
       .then((blockHash) => {

@@ -175,7 +175,6 @@ var GetBlock = (async (blockNumber) => {
 });
 
 var GetBlockHash = (async (blockNumber) => {
-    debugger;
     var block = await blockRepository.GetBlock(blockNumber);
     if(block && block.length > 0){
         return block[0].blockHash;
@@ -303,7 +302,10 @@ var ValidateBlock = (async (block) => {
     } else {
         console.log(`Successfully validated difficulty on block`);
     }
+});
 
+var OrphanBlocks = (async(blocks) => {
+    await blockRepository.MoveBlocksToOrphanCollection(blocks);
 });
 
 
@@ -320,5 +322,6 @@ module.exports = {
     ValidateBlock,
     GetBlockHashesFromStartingBlock,
     GetBlock,
-    GetBlockHash
+    GetBlockHash,
+    OrphanBlocks
 }

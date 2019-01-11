@@ -123,6 +123,19 @@ var GetFileFromBlock = ((filehash) => {
     return promise;
 });
 
+var MoveBlocksToOrphanCollection = (async (blocks) => {
+    var db = await mongoose.GetDb();
+    debugger;
+    await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
+        throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
+    });
+    for (i = 0; i < blocks.length; i++) {
+        db.collection('blocks').deleteOne({ _id: blocks[i]._id }).catch((ex) => {
+            throw new Error('Failed to remove orphaned block: ' + ex);
+        })
+    }
+});
+
 module.exports = {
     CreateNewBlock,
     GetLastBlock,
@@ -131,5 +144,6 @@ module.exports = {
     GetBlocksFromStartingBlock,
     GetBlocks,
     GetBlock,
-    GetBlockHashesFromStartingBlock
+    GetBlockHashesFromStartingBlock,
+    MoveBlocksToOrphanCollection
 }

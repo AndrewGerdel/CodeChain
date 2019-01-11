@@ -152,7 +152,6 @@ var ImportLongestBlockchain = (async (callback) => {
         blockNumber = lastBlock[0].blockNumber;
     }
     var node = await nodeRepository.GetNodeWithLongestChain();
-    debugger;
     if (node && node.length > 0) {
         //We are behind at least one node on the network.   But how far behind? And do we have any collisions?
         //1: Compare our most recent block to the other node's same block.  Are we a match?
@@ -163,13 +162,20 @@ var ImportLongestBlockchain = (async (callback) => {
             //We are behind AND out of sync.  We have a collision.  If the other node's chain is SIX BLOCKS OR MORE ahead of ours, then 
             //accept his "rightness".  Orphan ours and merge his. 
             if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 6) {
-                console.log('!!!hit it, his height is higher!');
                 var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
-                console.log(`The last block that matches is ${lastMatchingBlockNumber}`);
-                //todo: orphan and merge
+                console.log(`Orphaning all blocks after ${lastMatchingBlockNumber}`);
+                await OrphanLocalBlocks(lastMatchingBlockNumber);
+                //Now that the bad blocks have been removed, immediately get blocks from the longest node and append them, so we can become current again. 
+                GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
             }
         }
     }
+});
+
+var OrphanLocalBlocks = (async (lastMatchingBlockNumber) => {
+    debugger;
+    var blocks = await blockController.GetBlocksFromStartingBlock(lastMatchingBlockNumber);
+    await blockController.OrphanBlocks(blocks);
 });
 
 var FindWhereBlockchainsDiffer = (async (node, lastBlock) => {
@@ -222,7 +228,6 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     var blockHash = await requestPromise(getNodesUrl).catch((ex) => {
         throw new Error('Error pulling block from node ' + node);
     });
-    debugger;
 
     if (blockHash == lastBlock.blockHash) {
         return true;
