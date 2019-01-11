@@ -5,33 +5,18 @@ var config = require('../config.json');
 console.log('Block process starting...');
 MempoolLoop();
 
-function MempoolLoop() {
-  MineNextBlock().then((result) => {
-    setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
-  }, (err) => {
-    if (err != "") {
-      console.log(err);
-    }
-    setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
-  })
+async function MempoolLoop() {
+  var result = await MineNextBlock();
+  setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
 }
 
-function MineNextBlock() {
-  // console.log('Checking mempool.?..');
-  var promise = new Promise((resolve, reject) => {
-    blockController.MineNextBlock()
-      .then((block) => {
-        console.log(`Solved block ${block.blockNumber} in ${block.millisecondsBlockTime}ms`);
-        nodeController.BroadcastBlockToNetwork(block);
-        resolve(block);
-      }, (err) => {
-        reject(err);
-      })
-      .catch((ex) => {
-        console.log(`Critical error: ${ex}`);
-      });
-  });
-  return promise;
+async function MineNextBlock() {
+  var block = await blockController.MineNextBlock();
+  if (block) {
+    console.log(`Solved block ${block.blockNumber} in ${block.millisecondsBlockTime}ms`);
+    await nodeController.BroadcastBlockToNetwork(block);
+    return block;
+  }
 }
 
 module.exports = {

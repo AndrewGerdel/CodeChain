@@ -144,7 +144,7 @@ var BroadcastBlockToNetwork = ((block) => {
         });
 });
 
-var  ImportLongestBlockchain = (async (callback) => {
+var ImportLongestBlockchain = (async (callback) => {
     var lastBlock = await blockController.GetLastBlock();
     var node = await nodeRepository.GetNodeWithLongestChain();
     var blockNumber = 0;
@@ -153,11 +153,11 @@ var  ImportLongestBlockchain = (async (callback) => {
     }
     if (node.length > 0) {
         var blocks = await blockController.GetBlocksFromRemoteNode(node[0].hash, blockNumber,
-            (async(blocks) => {
+            (async (blocks) => {
                 if (blocks && blocks.length > 0) {
                     console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
                     for (blockCount = 0; blockCount < blocks.length; blockCount++) {
-                        var addblockResult = await blockController.ValidateAndAddBlock(blocks[blockCount]);
+                        var addblockResult = await blockController.ValidateAndAddIncomingBlock(blocks[blockCount]);
                         //Loop until that block is actually written to the database.  Otherwise validation of the next block will sometimes fail. 
                         do {
                             var lastBlockCheck = await blockController.GetLastBlock();

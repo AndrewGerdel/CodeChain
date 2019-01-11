@@ -4,7 +4,7 @@ var config = require('../config.json');
 var StartService = ((app, isDebug) => {
   app.post('/block/add', (req, res) => {
     var block = JSON.parse(req.headers.block);
-    blockController.ValidateAndAddBlock(block)
+    blockController.ValidateAndAddIncomingBlock(block)
       .then((success) => {
         res.send(success);
       }, (err) => {

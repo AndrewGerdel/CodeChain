@@ -6,7 +6,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 var Timer_LoadAndRegisterNodes = (async () => {
-    console.log('nodeProcess running.', new Date());
+    // console.log('nodeProcess running.', new Date());
 
     try {
         var res1 = await RegisterWithRemoteNodes();
@@ -37,8 +37,7 @@ var UpdateNodeListFromRemoteNodes = (async () => {
 
 var RetrieveBlockchainFromLongestNode = (async() => {
     var longestNode = await nodeController.ImportLongestBlockchain((() => {
-        console.log('done waiting');
-        return(longestNode);
+        return longestNode;
     }));
 });
 
