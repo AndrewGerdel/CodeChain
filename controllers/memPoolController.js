@@ -5,24 +5,15 @@ var hashUtil = require('../utilities/hash.js');
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 
 //Adds a file to the mempool.
-var AddCodeFileToMemPool = ((fileName, fileContents, signedMessage, publicKey) => {
-  var promise = new Promise((resolve, reject) => {
-    let buff = new Buffer.from(fileContents);
-    let base64data = buff.toString('base64');
-    keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer.from(publicKey, 'hex'))
-      .then((success) => {
-        memPoolRepository.AddMemPoolItem(fileName, base64data, signedMessage, publicKey)
-          .then((result) => {
-            resolve(result);
-          }, (err) => {
-            reject(err);
-          })
-      }, (err) => {
-        reject('Message not verified.  Not adding to mempool.');
-      });
-
-  });
-  return promise;
+var AddCodeFileToMemPool = (async (fileName, fileContents, signedMessage, publicKey) => {
+  let buff = new Buffer.from(fileContents);
+  let base64data = buff.toString('base64');
+  var verified = await keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer.from(publicKey, 'hex'));
+  if (!verified) {
+    throw new Error("Invalid signed message");
+  }
+  var result = await memPoolRepository.AddMemPoolItem(fileName, base64data, signedMessage, publicKey)
+  return result;
 });
 
 var ValidateMemPoolItems = ((memPoolItems) => {
