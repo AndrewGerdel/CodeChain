@@ -9,5 +9,6 @@ function VerifySignedMessage(msg, signature, publicKey) {
 }
 
 module.exports = {
-  CreateSha256Hash
+  CreateSha256Hash,
+  VerifySignedMessage
 }

@@ -3,6 +3,7 @@ var keyController = require('./keyController.js');
 var crypto = require('crypto');
 var hashUtil = require('../utilities/hash.js');
 var memPoolRepository = require('../repositories/mempoolRepository.js');
+var mempoolItemTypes = require('../enums/mempoolFiletypes.js');
 
 //Adds a file to the mempool.
 var AddCodeFileToMemPool = (async (fileName, fileContents, signedMessage, publicKey) => {
@@ -16,17 +17,23 @@ var AddCodeFileToMemPool = (async (fileName, fileContents, signedMessage, public
   return result;
 });
 
-var ValidateMemPoolItems = ((memPoolItems) => {
-  var promise = new Promise((resolve, reject) => {
-    for (i = 0; i < memPoolItems; i++) {
-      var verified = hashUtil.VerifySignedMessage(memPoolItems[i].fileData.fileContents, memPoolItems[i].signedMessage, memPoolItems[i].publicKey);
-      if (!verified) {
-        reject(`Failed to verify ${memPoolItems.fileData.hash}`);
-      }
+var ValidateMemPoolItems = (async (memPoolItems) => {
+  for (i = 0; i < memPoolItems; i++) {
+    var verified = await ValidateMemPoolItems(memPoolItems[i]);
+    if (!verified) {
+      throw new Error("Failed to verify mempoolitems: ", memPoolItems);
     }
-    resolve(true);
-  });
-  return promise;
+  }
+  return true;
+});
+
+var ValidateMemPoolItems = (async (memPoolItem) => {
+  debugger;
+  if (memPoolItem.type == mempoolItemTypes.File) {
+    return hashUtil.VerifySignedMessage(memPoolItems[i].fileData.fileContents, memPoolItems[i].signedMessage, memPoolItems[i].publicKey);
+  }else{
+    throw new Error(`Unknown memPoolItem type: ${memPoolItem}`);
+  }
 });
 
 //creates a sha256 hash
