@@ -1,6 +1,7 @@
 //controls interactions with other network nodes
 var nodeRepository = require('../repositories/nodeRepository');
 var request = require('request');
+var requestPromise = require('request-promise');
 var config = require('../config.json');
 var hashUtil = require('../utilities/hash.js');
 var blockController = require('./blockController.js');
@@ -146,29 +147,54 @@ var BroadcastBlockToNetwork = ((block) => {
 
 var ImportLongestBlockchain = (async (callback) => {
     var lastBlock = await blockController.GetLastBlock();
-    var node = await nodeRepository.GetNodeWithLongestChain();
     var blockNumber = 0;
     if (lastBlock && lastBlock.length > 0) {
         blockNumber = lastBlock[0].blockNumber;
     }
-    if (node.length > 0) {
-        var blocks = await blockController.GetBlocksFromRemoteNode(node[0].hash, blockNumber,
-            (async (blocks) => {
-                if (blocks && blocks.length > 0) {
-                    console.log(`I received ${blocks.length} blocks from ${node[0].uri}:${node[0].port}`);
-                    for (blockCount = 0; blockCount < blocks.length; blockCount++) {
-                        var addblockResult = await blockController.ValidateAndAddIncomingBlock(blocks[blockCount]);
-                        //Loop until that block is actually written to the database.  Otherwise validation of the next block will sometimes fail. 
-                        do {
-                            var lastBlockCheck = await blockController.GetLastBlock();
-                        } while (lastBlockCheck[0].blockNumber < addblockResult.blockNumber);
-                    }
-                    callback(blocks);
-                }
-                callback();
-            }));
+    var node = await nodeRepository.GetNodeWithLongestChain();
+    if (node && node.length > 0) {
+        //We are behind at least one node on the network.   But how far behind? And do we have any collisions?
+        //1: Compare our most recent block to the other node's same block.  Are we a match?
+        var comparisonResult = await CompareOurMostRecentBlock(node[0], lastBlock[0]);
+        if (comparisonResult) {
+            GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
+        }else{
+            //We are behind AND out of sync.  We have a collision.  If the other node's chain is SIX BLOCKS ahead of ours, then 
+            //accept his rightness.  Orphan ours and merge his. 
+        }
     }
 });
+
+var GetBlocksFromRemoteNodeAndAppendToChain = (async(node, lastBlock) => {
+    var blocks = await blockController.GetBlocksFromRemoteNode(node, lastBlock.blockNumber);
+    if (blocks && blocks.length > 0) {
+        console.log(`I received ${blocks.length} blocks from ${node.uri}:${node.port}`);
+        for (blockCount = 0; blockCount < blocks.length; blockCount++) {
+
+            var addblockResult = await blockController.ValidateAndAddIncomingBlock(blocks[blockCount]);
+            //Loop until that block is actually written to the database.  Otherwise validation of the next block will sometimes fail. 
+            do {
+                var lastBlockCheck = await blockController.GetLastBlock();
+            } while (lastBlockCheck[0].blockNumber < addblockResult.blockNumber);
+        }
+    }
+});
+
+var CompareOurMostRecentBlock = (async (node, lastBlock) => {
+    var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlockHash?blockNumber=${lastBlock.blockNumber}`;
+    var blockHash = await requestPromise(getNodesUrl).catch((ex) => {
+        throw new Error('Error pulling block from node ' + node);
+    });
+    debugger;
+
+    if (blockHash == lastBlock.blockHash) {
+        return true;
+    } else {
+        console.log(`Our hash for block ${lastBlock.blockNumber} is ${lastBlock}. Theirs is ${block}`);
+        return false;
+    }
+});
+
 
 module.exports = {
     GetAllNodes,

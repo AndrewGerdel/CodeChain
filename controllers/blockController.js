@@ -10,6 +10,7 @@ var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
 var nodeRepository = require('../repositories/nodeRepository.js');
 var request = require('request');
+var requestPromise = require('request-promise');
 var config = require('../config.json');
 var pad = require('pad-left');
 
@@ -173,6 +174,16 @@ var GetBlock = (async (blockNumber) => {
     return block;
 });
 
+var GetBlockHash = (async (blockNumber) => {
+    debugger;
+    var block = await blockRepository.GetBlock(blockNumber);
+    if(block && block.length > 0){
+        return block[0].blockHash;
+    }else{
+        return '';
+    }
+});
+
 var GetBlocksFromStartingBlock = ((startingBlock) => {
     var promise = new Promise((resolve, reject) => {
         blockRepository.GetBlocksFromStartingBlock(startingBlock)
@@ -184,6 +195,19 @@ var GetBlocksFromStartingBlock = ((startingBlock) => {
     });
     return promise;
 });
+
+var GetBlockHashesFromStartingBlock = ((startingBlock) => {
+    var promise = new Promise((resolve, reject) => {
+        blockRepository.GetBlockHashesFromStartingBlock(startingBlock)
+            .then((blocks) => {
+                resolve(blocks);
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
+});
+
 
 
 var GetFileFromBlock = ((filehash) => {
@@ -237,18 +261,13 @@ var AppendBlockchain = ((blockchain) => {
     return promise;
 });
 
-var GetBlocksFromRemoteNode = (async (nodeHash, startingBlockNumber, callback) => {
-    var nodeResult = await nodeRepository.GetNode(nodeHash);
-    var node = nodeResult[0];
+var GetBlocksFromRemoteNode = (async (node, startingBlockNumber) => {
     var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
-    await request(getNodesUrl, (err, res, body) => {
-        if (err) {
-            //throw new Error("Error getting blocks from remote node: " + err);
-        } else {
-            var blocks = JSON.parse(body);
-            callback(blocks);
-        }
+    var body = await requestPromise(getNodesUrl).catch((ex) => {
+        throw new Error(`Could not get blocks from remote node ${node.uri}.  ${ex}`);
     });
+    var blocks = JSON.parse(body);
+    return(blocks);
 });
 
 //Validates the block and makes sure it fits on the end of the chain. 
@@ -306,5 +325,8 @@ module.exports = {
     GetBlocksFromRemoteNode,
     ValidateAndAddIncomingBlock,
     CreateGenesisBlock,
-    ValidateBlock
+    ValidateBlock,
+    GetBlockHashesFromStartingBlock,
+    GetBlock,
+    GetBlockHash
 }

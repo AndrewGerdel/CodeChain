@@ -24,6 +24,41 @@ var StartService = ((app, isDebug) => {
       })
   });
 
+  app.get('/block/getBlock', (req, res) => {
+    var blockNumber = Number(req.query.blockNumber);
+    blockController.GetBlock(blockNumber)
+      .then((block) => {
+        res.send(block);
+      }, (err) => {
+        res.send('Error sending block');
+        console.log('Error sending block ', err);
+      })
+  });
+
+  app.get('/block/getBlockHash', (req, res) => {
+    debugger;
+    var blockNumber = Number(req.query.blockNumber);
+    blockController.GetBlockHash(blockNumber)
+      .then((blockHash) => {
+        res.send(blockHash);
+      }, (err) => {
+        res.send('Error sending block hash');
+        console.log('Error sending block hash', err);
+      })
+  });
+
+  app.get('/block/getBlockHashes', (req, res) => {
+    var startingBlock = req.query.startingBlock;
+    blockController.GetBlockHashesFromStartingBlock(startingBlock)
+      .then((blocks) => {
+        res.send(blocks);
+      }, (err) => {
+        res.send('Error sending blocks');
+        console.log('Error sending blocks. ', err);
+      })
+  });
+
+
   //If the blockchain is empty, create the genesis block now. 
   blockController.GetLastBlock()
     .then((lastBlock) => {
