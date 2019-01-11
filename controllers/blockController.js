@@ -261,14 +261,7 @@ var AppendBlockchain = ((blockchain) => {
     return promise;
 });
 
-var GetBlocksFromRemoteNode = (async (node, startingBlockNumber) => {
-    var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
-    var body = await requestPromise(getNodesUrl).catch((ex) => {
-        throw new Error(`Could not get blocks from remote node ${node.uri}.  ${ex}`);
-    });
-    var blocks = JSON.parse(body);
-    return(blocks);
-});
+
 
 //Validates the block and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
@@ -322,7 +315,6 @@ module.exports = {
     GetLastBlock,
     AddBlock,
     GetBlocksFromStartingBlock,
-    GetBlocksFromRemoteNode,
     ValidateAndAddIncomingBlock,
     CreateGenesisBlock,
     ValidateBlock,

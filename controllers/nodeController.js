@@ -152,21 +152,41 @@ var ImportLongestBlockchain = (async (callback) => {
         blockNumber = lastBlock[0].blockNumber;
     }
     var node = await nodeRepository.GetNodeWithLongestChain();
+    debugger;
     if (node && node.length > 0) {
         //We are behind at least one node on the network.   But how far behind? And do we have any collisions?
         //1: Compare our most recent block to the other node's same block.  Are we a match?
         var comparisonResult = await CompareOurMostRecentBlock(node[0], lastBlock[0]);
         if (comparisonResult) {
             GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
-        }else{
-            //We are behind AND out of sync.  We have a collision.  If the other node's chain is SIX BLOCKS ahead of ours, then 
-            //accept his rightness.  Orphan ours and merge his. 
+        } else {
+            //We are behind AND out of sync.  We have a collision.  If the other node's chain is SIX BLOCKS OR MORE ahead of ours, then 
+            //accept his "rightness".  Orphan ours and merge his. 
+            if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 6) {
+                console.log('!!!hit it, his height is higher!');
+                var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
+                console.log(`The last block that matches is ${lastMatchingBlockNumber}`);
+                //todo: orphan and merge
+            }
         }
     }
 });
 
-var GetBlocksFromRemoteNodeAndAppendToChain = (async(node, lastBlock) => {
-    var blocks = await blockController.GetBlocksFromRemoteNode(node, lastBlock.blockNumber);
+var FindWhereBlockchainsDiffer = (async (node, lastBlock) => {
+    var lastMatchingBlockNumber = 0;
+    for (blockNumber = lastBlock.blockNumber; blockNumber > 0; blockNumber--) {
+        var myLocalBlock = await blockController.GetBlock(blockNumber);
+        var remoteBlockHash = await GetBlockHashFromRemoteNode(node, blockNumber);
+        if (myLocalBlock && myLocalBlock.length > 0 && myLocalBlock[0].blockHash == remoteBlockHash) {
+            lastMatchingBlockNumber = blockNumber;
+            break;
+        }
+    }
+    return lastMatchingBlockNumber;
+});
+
+var GetBlocksFromRemoteNodeAndAppendToChain = (async (node, lastBlock) => {
+    var blocks = await GetBlocksFromRemoteNode(node, lastBlock.blockNumber);
     if (blocks && blocks.length > 0) {
         console.log(`I received ${blocks.length} blocks from ${node.uri}:${node.port}`);
         for (blockCount = 0; blockCount < blocks.length; blockCount++) {
@@ -180,6 +200,23 @@ var GetBlocksFromRemoteNodeAndAppendToChain = (async(node, lastBlock) => {
     }
 });
 
+var GetBlocksFromRemoteNode = (async (node, startingBlockNumber) => {
+    var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlocks?startingBlock=${startingBlockNumber}`;
+    var body = await requestPromise(getNodesUrl).catch((ex) => {
+        throw new Error(`Could not get blocks from remote node ${node.uri}.  ${ex}`);
+    });
+    var blocks = JSON.parse(body);
+    return (blocks);
+});
+
+var GetBlockHashFromRemoteNode = (async (node, blockNumber) => {
+    var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlockHash?blockNumber=${blockNumber}`;
+    var body = await requestPromise(getNodesUrl).catch((ex) => {
+        throw new Error(`Could not get block hash from remote node ${node.uri}.  ${ex}`);
+    });
+    return (body);
+});
+
 var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlockHash?blockNumber=${lastBlock.blockNumber}`;
     var blockHash = await requestPromise(getNodesUrl).catch((ex) => {
@@ -190,7 +227,7 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     if (blockHash == lastBlock.blockHash) {
         return true;
     } else {
-        console.log(`Our hash for block ${lastBlock.blockNumber} is ${lastBlock}. Theirs is ${block}`);
+        console.log(`Our hash for block ${lastBlock.blockNumber} is ${lastBlock.blockHash}. Theirs is ${blockHash}`);
         return false;
     }
 });
