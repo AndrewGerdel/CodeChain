@@ -4,6 +4,11 @@ var mongoose = require('../db/mongoose.js');
 var connectionString = require('../config.json').database;
 var hashUtil = require('../utilities/hash.js');
 
+mongoose.GetDb().then((db) => {
+    db.collection("nodes").createIndex({ "hash": 1 }, { unique: true });
+  });
+  
+
 //Should return all nodes EXCEPT FOR YOURSELF.  Because all nodes continuously broadcast their full nodelist to each other, it's known that each 
 //node will contain a record for themselves.  We want to not use that record, so we're not wasting time broadcasting to ourselves.  But... we need
 //to rely on other nodes to tell us our own hash, because that is calculated based on IP address, which will look different to us vs. the rest of the world.

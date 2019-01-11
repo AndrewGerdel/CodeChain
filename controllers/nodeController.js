@@ -64,10 +64,10 @@ var RegisterWithOtherNodes = ((nodeList) => {
             try {
                 request(options, (err, res, body) => {
                     if (err) {
-                        console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                        // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
                         nodeRepository.DeleteNode(node.hash);
                     } else {
-                        console.log('Registered with', node.uri);
+                        // console.log('Registered with', node.uri);
                         var returnData = JSON.parse(body);
                         nodeRepository.UpdateNodeRegistration(node, returnData)
                             .then((result) => {
@@ -91,14 +91,14 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
             var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/get';
             request(nodeRegisterEndPoint, {}, (err, res, body) => {
                 if (err) {
-                    console.log(`Failed to get nodes from ${node.uri}:${node.port}, deleting`);
+                    // console.log(`Failed to get nodes from ${node.uri}:${node.port}, deleting`);
                     nodeRepository.DeleteNode(node.hash)
                         .then((result) => { })
                         .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
                 } else {
                     try {
                         var nodesReceived = JSON.parse(body);
-                        console.log(`Recieved ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
+                        // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
                         nodesReceived.forEach((node) => {
                             var hash = hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}`).toString('hex');
                             nodeRepository.GetNode(hash)
@@ -226,7 +226,7 @@ var GetBlockHashFromRemoteNode = (async (node, blockNumber) => {
 var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlockHash?blockNumber=${lastBlock.blockNumber}`;
     var blockHash = await requestPromise(getNodesUrl).catch((ex) => {
-        throw new Error('Error pulling block from node ' + node);
+        throw new Error(`Error pulling block from node ${node.uri}. ${ex}`);
     });
 
     if (blockHash == lastBlock.blockHash) {

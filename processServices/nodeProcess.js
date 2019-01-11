@@ -23,7 +23,9 @@ var Timer_LoadAndRegisterNodes = (async () => {
 
 var RegisterWithRemoteNodes = (async () => {
     var nodes = await nodeController.GetAllNodes(); //get all nodes from our local db
-    console.log('Registering with', nodes.length, "nodes");
+    console.log(`Connected to ${nodes.length} nodes.`);
+    
+    // console.log('Registering with', nodes.length, "nodes");
     var registrationResults = await nodeController.RegisterWithOtherNodes(nodes) //register with each of those nodes
     return (registrationResults);
 });

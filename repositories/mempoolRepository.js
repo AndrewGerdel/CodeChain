@@ -6,6 +6,9 @@ var filetypes = require('../enums/mempoolFiletypes.js');
 var { MemPool } = require('../models/mempool.js');
 var hashUtil = require('../utilities/hash.js');
 
+mongoose.GetDb().then((db) => {
+  db.collection("mempools").createIndex({ "hash": 1 }, { unique: true });
+});
 
 var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey) => {
   var promise = new Promise((resolve, reject) => {

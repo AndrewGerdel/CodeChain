@@ -4,6 +4,12 @@ var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
 var connectionString = require('../config.json').database;
 
+mongoose.GetDb().then((db) => {
+    db.collection("blocks").createIndex({ "blockNumber": 1 }, { unique: true });
+    db.collection("blocks").createIndex({ "blockHash": 1 }, { unique: true });
+    db.collection("blocks").createIndex({ "previousBlockHash": 1 }, { unique: true });
+});
+
 var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime, nonce, solvedDateTime, difficulty) => {
     var newBlock = new Block({
         blockHash: hash,
