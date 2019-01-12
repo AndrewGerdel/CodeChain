@@ -6,8 +6,8 @@ var hashUtil = require('../utilities/hash.js');
 
 mongoose.GetDb().then((db) => {
     db.collection("nodes").createIndex({ "hash": 1 }, { unique: true });
-  });
-  
+});
+
 
 //Should return all nodes EXCEPT FOR YOURSELF.  Because all nodes continuously broadcast their full nodelist to each other, it's known that each 
 //node will contain a record for themselves.  We want to not use that record, so we're not wasting time broadcasting to ourselves.  But... we need
@@ -88,7 +88,7 @@ var AddNode = ((protocol, uri, port) => {
                 });
                 newNode.save();
                 resolve(newNode);
-            }else{
+            } else {
                 resolve(foundNode[0]);
             }
         });
@@ -123,7 +123,7 @@ var UpdateNodeRegistration = ((node, details) => {
                             registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash }
                         }
                     });
-                
+
                 resolve(true);
             }, (err) => {
                 reject(err);
@@ -133,11 +133,19 @@ var UpdateNodeRegistration = ((node, details) => {
     return promise;
 });
 
+var GetRandomNodes = (async (numberToReturn) => {
+    var db = await mongoose.GetDb();
+    var nodes = await db.collection('nodes').aggregate([{ $sample: { size: numberToReturn } }]).toArray();
+    return nodes;
+});
+
+
 module.exports = {
     GetAllNodes,
     AddNode,
     DeleteNode,
     UpdateNodeRegistration,
     GetNode,
-    GetNodeWithLongestChain
+    GetNodeWithLongestChain,
+    GetRandomNodes
 }

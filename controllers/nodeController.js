@@ -147,6 +147,9 @@ var BroadcastBlockToNetwork = ((block) => {
 
 var ImportLongestBlockchain = (async (callback) => {
     var lastBlock = await blockController.GetLastBlock();
+    if (!lastBlock || lastBlock.length == 0) {
+        lastBlock = await blockController.CreateGenesisBlock();
+    }
     var blockNumber = 0;
     if (lastBlock && lastBlock.length > 0) {
         blockNumber = lastBlock[0].blockNumber;
@@ -173,7 +176,6 @@ var ImportLongestBlockchain = (async (callback) => {
 });
 
 var OrphanLocalBlocks = (async (lastMatchingBlockNumber) => {
-    debugger;
     var blocks = await blockController.GetBlocksFromStartingBlock(lastMatchingBlockNumber);
     await blockController.OrphanBlocks(blocks);
 });
@@ -224,6 +226,7 @@ var GetBlockHashFromRemoteNode = (async (node, blockNumber) => {
 });
 
 var CompareOurMostRecentBlock = (async (node, lastBlock) => {
+
     var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlockHash?blockNumber=${lastBlock.blockNumber}`;
     var blockHash = await requestPromise(getNodesUrl).catch((ex) => {
         throw new Error(`Error pulling block from node ${node.uri}. ${ex}`);
@@ -236,6 +239,8 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
         return false;
     }
 });
+
+
 
 
 module.exports = {

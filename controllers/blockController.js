@@ -64,7 +64,8 @@ var BreakMemPoolItemsToSize = ((memPoolItemsFromDb, difficulty, lastBlock) => {
 
 var CreateGenesisBlock = ((lastBlock) => {
     var promise = new Promise((resolve, reject) => {
-        if (lastBlock.length == 0) {
+        if (!lastBlock || lastBlock.length == 0) {
+            lastBlock = [];
             var nonce = 0;
             var effectiveDate = new Date('1/1/2000');
             var mempoolItems = [];
@@ -266,6 +267,7 @@ var AppendBlockchain = ((blockchain) => {
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
     console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
+    debugger;
     var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data) //validate each memPoolItem (filecontents, signedmessage, publickey)
     console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();

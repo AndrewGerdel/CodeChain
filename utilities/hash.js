@@ -1,4 +1,6 @@
 var crypto = require('crypto');
+const secp256k1 = require('secp256k1');
+
 
 function CreateSha256Hash(input) {
   return crypto.createHash("sha256").update(input).digest();

@@ -2,7 +2,9 @@ var nodeController = require('../controllers/nodeController');
 var hashUtil = require('../utilities/hash.js');
 var blockController = require('../controllers/blockController');
 
-var StartService = ((app, isDebug) => {
+var StartService = ((app, isDebug, callback) => {
+    console.log(1.1);
+
     app.get('/nodes/get', (req, res) => {
         nodeController.GetAllNodes()
             .then((resolve) => {
@@ -14,6 +16,7 @@ var StartService = ((app, isDebug) => {
                 console.log(ex);
             })
     });
+    console.log(1.1);
 
     app.post('/nodes/register', (req, res) => {
         var ip = req.ip;
@@ -49,6 +52,7 @@ var StartService = ((app, isDebug) => {
                 res.send("Exception:" + ex);
             });
     });
+    console.log(1.1);
 
     app.get('/nodes/whoami', (req, res) => {
         var ip = req.ip;
@@ -59,19 +63,34 @@ var StartService = ((app, isDebug) => {
         res.send(hash);
     });
 
+    console.log(1.2);
 
     if (isDebug) {
-        //if debugging, do not run on it's own thread. 
-        var nodeProcess = require('../processServices/nodeProcess.js');
+        //Run the backend block processes on a child thread with inspect-brk
+        //NOTE: In chrome, 'Open dedicated DevTools for Node'.  Add localhost:7778 and localhost:7779
+
+        const { fork } = require('child_process');
+        const forked = fork('processServices/nodeProcess.js', [], { execArgv: ['--inspect-brk=7778'] });
+
+        //if we're debugging, just fire up all services right out of the gate.  Don't wait for the network to sync.
+        callback();
+
+        // forked.on('message', (msg) => {
+        //     if (msg && msg.iterationCount == 1) {
+        //         //only callback on the first iteration.  This will fire up all the webservice endpoints.
+        //     }
+        // });
     } else {
         //Run the backend block processes on a child thread
         const { fork } = require('child_process');
         const forked = fork('processServices/nodeProcess.js');
+        forked.on('message', (msg) => {
+            if (msg && msg.iterationCount == 1) {
+                //only callback on the first iteration.  This will fire up all the webservice endpoints.
+                callback();
+            }
+        });
     }
-
-
-
-
 });
 
 module.exports = {

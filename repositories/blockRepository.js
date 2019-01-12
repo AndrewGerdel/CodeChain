@@ -131,7 +131,6 @@ var GetFileFromBlock = ((filehash) => {
 
 var MoveBlocksToOrphanCollection = (async (blocks) => {
     var db = await mongoose.GetDb();
-    debugger;
     await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
         throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
     });

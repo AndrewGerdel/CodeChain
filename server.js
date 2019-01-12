@@ -21,25 +21,35 @@ app.get('/', (req, res) => {
 });
 
 const isDebug = process.execArgv.includes("--debug") || process.execArgv.includes("--inspect-brk") || process.execArgv.includes("--inspect") || process.execArgv.includes("--debug-brk")
-if(isDebug == true){
+if (isDebug == true) {
   console.log('Launching in debug mode. Backend process will run synchronous.');
 }
 
-//start listening for file requests
-var fileService = require('./webServices/fileService.js');
-fileService.StartService(app);
-
 //start listening for node requests, and spin up any node-related processes.
 var nodeService = require('./webServices/nodeService.js');
-nodeService.StartService(app);
+console.log('Syncing with the network...');
 
 
-//start the blockService, which pings the mempool at a defined interval and checks for work 
-var blockService = require('./webServices/blockService.js');
-blockService.StartService(app, isDebug);
+nodeService.StartService(app, isDebug, (() => {
+  //We don't want to start any of the other services until the nodeService has done its work (updating the blockchain).
 
-//start listening for communications from users via a browser, or from other nodes on the network. 
-app.listen(port, () => {
-  console.log('Server is up and running on port', port);
-});
+  //start the blockService, which pings the mempool at a defined interval and checks for work. 
+  var blockService = require('./webServices/blockService.js');
+  blockService.StartService(app, isDebug);
+
+  //start listening for file requests
+  var fileService = require('./webServices/fileService.js');
+  fileService.StartService(app);
+
+  //start the mempoolService, which facilitates mempool communication between nodes
+  var mempoolService = require('./webServices/mempoolService.js');
+  mempoolService.StartService(app, isDebug);
+
+  //start listening for communications from users via a browser, or from other nodes on the network. 
+  app.listen(port, () => {
+    console.log('Server is up and running on port', port);
+  });
+}));
+
+
 

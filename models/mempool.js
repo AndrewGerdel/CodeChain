@@ -35,7 +35,15 @@ var MemPool = mongoose.model('MemPool', {
     type: String,
     required: true,
     trim: true
-  }
+  },
+  deleted: {
+    type: Boolean
+  },
+  salt: {
+    type: String,
+    required: true,
+    trim: true
+  },
 });
 
 module.exports = {

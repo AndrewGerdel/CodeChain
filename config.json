@@ -13,6 +13,6 @@
   },
   "timers" : {
     "primaryTimerIntervalMs" : 500,
-    "secondaryTimerIntervalMs" : 60000
+    "secondaryTimerIntervalMs" : 20000
   }
 }

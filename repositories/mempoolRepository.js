@@ -8,11 +8,11 @@ var hashUtil = require('../utilities/hash.js');
 
 mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "hash": 1 }, { unique: true });
+  db.collection("mempools").createIndex({ "deleted": 1 }, { unique: false });
 });
 
-var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey) => {
+var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded) => {
   var promise = new Promise((resolve, reject) => {
-    var dateNow = new Date();
     var memPool = new MemPool({
       type: filetypes.File,
       fileData: {
@@ -20,9 +20,11 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey) =
         fileContents: base64FileContents
       },
       signedMessage: signedMessage.Signature.toString('hex'),
-      dateAdded: dateNow,
+      dateAdded: dateAdded,
       publicKey: publicKey,
-      hash: hashUtil.CreateSha256Hash(fileName + base64FileContents + signedMessage + dateNow).toString("hex")
+      hash: hashUtil.CreateSha256Hash(fileName + base64FileContents + signedMessage + dateAdded + salt).toString("hex"),
+      deleted: false,
+      salt: salt
     });
     memPool.save();
     resolve(memPool);
@@ -36,7 +38,7 @@ var GetMemPoolItems = (() => {
   var promise = new Promise((resolve, reject) => {
     mongoose.GetDb()
       .then((db) => {
-        resolve(db.collection('mempools').find().sort({ dateAdded: 1 }).toArray());
+        resolve(db.collection('mempools').find({ deleted: false }).sort({ dateAdded: 1 }).toArray());
       }, (err) => {
         reject(err);
       });
@@ -48,20 +50,32 @@ var GetMemPoolItems = (() => {
 var DeleteMemPoolItems = ((memPoolItems) => {
   var promise = new Promise((resolve, reject) => {
     mongoose.GetDb()
-    .then((db) => {
-      for (i = 0; i < memPoolItems.length; i++) {
-        db.collection('mempools').deleteOne({ _id: memPoolItems[i]._id });
-      }
-      resolve(true);
-    }, (err) => {
-      reject(err);
-    });
+      .then((db) => {
+        for (i = 0; i < memPoolItems.length; i++) {
+          db.collection('mempools').updateOne({ _id: memPoolItems[i]._id },
+            {
+              $set:
+              {
+                deleted: true
+              }
+            });
+        }
+        resolve(true);
+      }, (err) => {
+        reject(err);
+      });
   });
   return promise;
+});
+
+var GetMemPoolItem = (async (hash) => {
+  var db = await mongoose.GetDb();
+  return db.collection('mempools').find({ hash: hash }).toArray();
 });
 
 module.exports = {
   DeleteMemPoolItems,
   GetMemPoolItems,
-  AddMemPoolItem
+  AddMemPoolItem,
+  GetMemPoolItem
 }
