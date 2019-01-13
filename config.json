@@ -7,6 +7,7 @@
     "defaultMasterNodeProtocol": "http",
     "defaultMasterNode": "127.0.0.1",
     "defaultMasterNodePort": "65340",
+    "defaultMasterNodeUid" : "06a45e157f3b0d70e32ce3510ac43a3c",
     "myPort": 65340,
     "myProtocol": "http",
     "myUid": "",
