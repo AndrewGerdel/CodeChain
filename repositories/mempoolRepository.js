@@ -52,13 +52,7 @@ var DeleteMemPoolItems = ((memPoolItems) => {
     mongoose.GetDb()
       .then((db) => {
         for (i = 0; i < memPoolItems.length; i++) {
-          db.collection('mempools').updateOne({ _id: memPoolItems[i]._id },
-            {
-              $set:
-              {
-                deleted: true
-              }
-            });
+          db.collection('mempools').deleteOne({ hash: memPoolItems[i].hash });
         }
         resolve(true);
       }, (err) => {

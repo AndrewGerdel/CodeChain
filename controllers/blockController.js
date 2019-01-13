@@ -121,6 +121,13 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
                 console.log(`Abandoning work on block ${targetBlockNumber}. Block solved by another node.`);
                 return;
             }
+            for (m = 0; m < mempoolItems.length; m++) {
+                var memPoolResult = memPoolRepository.GetMemPoolItem(mempoolItems[m].hash);
+                if(memPoolResult.length == 0){
+                    console.log(`Abandoning work on block ${targetBlockNumber}. MemPoolItem was included in a previous block.`);
+                    return;
+                }
+            }
         }
         var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
         var hash = crypto.createHmac('sha256', hashInput).digest('hex');
@@ -220,7 +227,7 @@ var ValidateBlockHash = (async (block) => {
 });
 
 var AddBlock = (async (block) => {
-    var result =  await blockRepository.AddBlock(block);
+    var result = await blockRepository.AddBlock(block);
     return result;
 });
 

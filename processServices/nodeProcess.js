@@ -41,11 +41,8 @@ var UpdateNodeListFromRemoteNodes = (async () => {
 
 
 var RetrieveBlockchainFromLongestNode = (async () => {
-    //special case.  if running locally with a clean DB, we will be the only db on the network, and we have not yet (at startup) launched
-    //the webservices.  So the call to ImportLongestBlockchain blows up, which then does not allow the webservices to start.  it's an ugly circle.
-    //So if we're on the network alone, for any reason... don't try to import the longest blockchain.  It's pointless anyway. 
     var nodes = await nodeController.GetAllNodesExludingMe();
-    if (!nodes || nodes.length <= 1) {
+    if (!nodes || nodes.length < 1) {
         return;
     } else {
         var longestNode = await nodeController.ImportLongestBlockchain((() => {
