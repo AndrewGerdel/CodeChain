@@ -11,12 +11,14 @@ var Timer_LoadAndRegisterNodes = (async () => {
     try {
         nodeProcessLog.WriteLog("Registering with remote nodes.");
         var res1 = await RegisterWithRemoteNodes();
+        nodeProcessLog.WriteLog("Updating node list from remote nodes.");
         var res2 = await UpdateNodeListFromRemoteNodes();
+        nodeProcessLog.WriteLog("Pulling blockchain from the longest node.");
         var res3 = await RetrieveBlockchainFromLongestNode();
         counter++;
         process.send({ iterationCount: counter });
     } catch (ex) {
-        console.log(`Error in nodeProcess: ${ex}`);
+        nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
     } finally {
         setTimeout(() => {
             Timer_LoadAndRegisterNodes();
@@ -26,9 +28,7 @@ var Timer_LoadAndRegisterNodes = (async () => {
 
 var RegisterWithRemoteNodes = (async () => {
     var nodes = await nodeController.GetAllNodes();//.GetAllNodesExludingMe(); //get all nodes from our local db
-    console.log(`Connected to ${nodes.length} nodes.`);
-
-    // console.log('Registering with', nodes.length, "nodes");
+    nodeProcessLog.WriteLog(`Connected to ${nodes.length} nodes.`);
     var registrationResults = await nodeController.RegisterWithOtherNodes(nodes) //register with each of those nodes
     return (registrationResults);
 });

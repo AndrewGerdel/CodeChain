@@ -14,19 +14,17 @@ var GetAllNodesExludingMe = (() => {
     return promise;
 });
 
-var GetAllNodes = (() => {
-    var promise = new Promise(async (resolve, reject) => {
-        var nodes = await nodeRepository.GetAllNodes();
-        if (nodes.length > 0) {
-            resolve(nodes);
-        } else {
-            // console.log('Adding default master node from config:', config.network.defaultMasterNode);
-            var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort, config.network.defaultMasterNodeUid);
-            var newNodeList = await nodeRepository.GetAllNodesExludingMe();
-            resolve(newNodeList);
-        }
-    });
-    return promise;
+var GetAllNodes = (async () => {
+    var nodes = await nodeRepository.GetAllNodes();
+
+    if (nodes.length > 0) {
+        return (nodes);
+    } else {
+        // console.log('Adding default master node from config:', config.network.defaultMasterNode);
+        var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort, config.network.defaultMasterNodeUid);
+        var newNodeList = await nodeRepository.GetAllNodesExludingMe();
+        return (newNodeList);
+    }
 });
 
 

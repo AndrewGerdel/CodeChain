@@ -9,42 +9,24 @@ mongoose.GetDb().then((db) => {
 });
 
 
-var GetAllNodesExludingMe = (() => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var nodes = db.collection('nodes').find({ "uid": { $ne: config.network.myUid } }).toArray();
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetAllNodesExludingMe = (async () => {
+    var db = await mongoose.GetDb();
+    var nodes = db.collection('nodes').find({ "uid": { $ne: config.network.myUid } }).toArray();
+    return nodes;
 });
 
-var GetMyNode = (() => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var nodes = db.collection('nodes').find({ "uid": { $eq: config.network.myUid } }).toArray();
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetMyNode = (async() => {
+    var db = await mongoose.GetDb();
+    var nodes = db.collection('nodes').find({ "uid": { $eq: config.network.myUid } }).toArray();
+    return nodes;
 });
 
-var GetAllNodes = (() => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var nodes = db.collection('nodes').find().toArray();
-                resolve(nodes);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetAllNodes = (async () => {
+    var db = await mongoose.GetDb();
+    var nodes = db.collection('nodes').find().toArray();
+    return nodes;
 });
+
 var GetNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
@@ -74,7 +56,7 @@ var GetNodeWithLongestChain = (() => {
 
 
 var AddNode = ((protocol, uri, port, uid) => {
-    var promise = new Promise(async(resolve, reject) => {
+    var promise = new Promise(async (resolve, reject) => {
         var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}${uid}`);
 
         GetNode(hash).then((foundNode) => {
@@ -137,7 +119,7 @@ var UpdateNodeRegistration = ((node, details) => {
 
 var GetRandomNodes = (async (numberToReturn) => {
     var db = await mongoose.GetDb();
-    
+
     var nodes = await db.collection('nodes').aggregate([{ $sample: { size: numberToReturn } }]).toArray();
     return nodes;
 });
@@ -151,6 +133,6 @@ module.exports = {
     GetNode,
     GetNodeWithLongestChain,
     GetRandomNodes,
-    GetAllNodes, 
+    GetAllNodes,
     GetMyNode
 }
