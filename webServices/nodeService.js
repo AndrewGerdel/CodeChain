@@ -3,7 +3,6 @@ var hashUtil = require('../utilities/hash.js');
 var blockController = require('../controllers/blockController');
 
 var StartService = ((app, isDebug, callback) => {
-    console.log(1.1);
 
     app.get('/nodes/get', (req, res) => {
         nodeController.GetAllNodesExludingMe()
@@ -16,7 +15,6 @@ var StartService = ((app, isDebug, callback) => {
                 console.log(ex);
             })
     });
-    console.log(1.1);
 
     app.post('/nodes/register', async(req, res) => {
         var ip = req.ip;
@@ -52,7 +50,6 @@ var StartService = ((app, isDebug, callback) => {
                 res.send("Exception:" + ex);
             });
     });
-    console.log(1.1);
 
     app.get('/nodes/whoami', async(req, res) => {
         var ip = req.ip;
@@ -62,8 +59,6 @@ var StartService = ((app, isDebug, callback) => {
         var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`);
         res.send(hash.toString('hex'));
     });
-
-    console.log(1.2);
 
     if (isDebug) {
         //Run the backend block processes on a child thread with inspect-brk

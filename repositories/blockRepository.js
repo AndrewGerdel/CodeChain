@@ -8,6 +8,7 @@ mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "blockNumber": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "blockHash": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "previousBlockHash": 1 }, { unique: true });
+    db.collection("blocks").createIndex({ "data.hash": 1 }, { unique: true });
 });
 
 var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime, nonce, solvedDateTime, difficulty) => {

@@ -117,7 +117,7 @@ function DifficultyAsHumanReadable(difficulty) {
 }
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
-    var promise = new Promise((resolve, reject) => {
+    var promise = new Promise(async(resolve, reject) => {
         let targetBlockNumber = previousBlock.blockNumber + 1;
         console.log(`Difficulty calculated at ${DifficultyAsHumanReadable(difficulty)}LZ. Working on block ${targetBlockNumber}.`);
 
@@ -126,14 +126,14 @@ var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
         var counter = 0;
         do {
             counter++;
-            if (counter == 50000) {
+            if (counter >= 50000) {
                 counter = 0;
-                blockRepository.GetBlock(targetBlockNumber)
-                    .then((block) => {
-                        if (block.length > 0) {
-                            reject(`Abandoning block ${targetBlockNumber}. `)
-                        }
-                    });
+                var block = await blockRepository.GetBlock(targetBlockNumber);
+                if (block.length > 0) {
+                    console.log(`Abandoning work on block ${targetBlockNumber}.`);
+                    reject('Abandoned');
+                    break;
+                }
             }
             var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
             var hash = crypto.createHmac('sha256', hashInput).digest('hex');
@@ -282,6 +282,8 @@ var ValidateAndAddIncomingBlock = (async (block) => {
             console.log("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
             throw new Error("Invalid previous block hash");
         } else {
+            console.log('Adding block!!!!!!');
+            
             var addBlockResult = await AddBlock(block) //Finally... all validations passed.  Add the block to the end of the chain. 
             return ({ blockNumber: block.blockNumber, message: `Successfully imported block ${block.blockNumber}` });
         }
