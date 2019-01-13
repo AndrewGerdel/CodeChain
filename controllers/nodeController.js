@@ -244,7 +244,7 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     if (blockHash == lastBlock.blockHash) {
         return true;
     } else {
-        console.log(`Our hash for block ${lastBlock.blockNumber} is ${lastBlock.blockHash}. Theirs is ${blockHash}`);
+        // console.log(`Our hash for block ${lastBlock.blockNumber} is ${lastBlock.blockHash}. Theirs is ${blockHash}`);
         return false;
     }
 });

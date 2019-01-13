@@ -44,6 +44,37 @@ var GetAllNodesExludingMe = (() => {
     return promise;
 });
 
+var GetMyNode = (() => {
+    var promise = new Promise((resolve, reject) => {
+        mongoose.GetDb()
+            .then((db) => {
+                //Get OUR OWN HASH from registrationDetails.myHash
+                var getMyHash = db.collection('nodes').aggregate([
+                    {
+                        "$group":
+                            { _id: "$registrationDetails.myHash", count: { $sum: 1 } }
+                    },
+                    { $sort: { "count": -1 } }
+                ]).limit(1).toArray();
+
+                getMyHash.then((result) => {
+                    // console.log(`Hey, my hash must be ${result[0]._id}`);
+                    var myHash = '';
+                    if (result.length > 0) {
+                        myHash = result[0]._id;
+                    }
+                    var nodes = db.collection('nodes').find({ "hash": { $eq: myHash } }).toArray();
+                    resolve(nodes);
+                }, (err) => {
+                    reject(`Failed to get my hash: ${err}`);
+                });
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
+});
+
 var GetAllNodes = (() => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
@@ -147,6 +178,7 @@ var UpdateNodeRegistration = ((node, details) => {
 
 var GetRandomNodes = (async (numberToReturn) => {
     var db = await mongoose.GetDb();
+    
     var nodes = await db.collection('nodes').aggregate([{ $sample: { size: numberToReturn } }]).toArray();
     return nodes;
 });
@@ -160,5 +192,6 @@ module.exports = {
     GetNode,
     GetNodeWithLongestChain,
     GetRandomNodes,
-    GetAllNodes
+    GetAllNodes, 
+    GetMyNode
 }

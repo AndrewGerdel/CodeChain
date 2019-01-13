@@ -2,7 +2,7 @@ var nodeController = require('../controllers/nodeController');
 var config = require('../config.json');
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
-    console.log('Unhandled Rejection at:', reason.stack || reason)
+    //console.log('Unhandled Rejection at:', reason.stack || reason)
 });
 
 var Timer_LoadAndRegisterNodes = (async () => {

@@ -21,7 +21,7 @@ var AddIncomingCodeFileToMemPool = (async (memPoolItem) => {
 
 //Adds a file to the mempool.
 var AddCodeFileToMemPool = (async (fileName, base64FileContents, signedMessage, publicKey) => {
-  var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, base64FileContents );
+  var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, base64FileContents);
   if (!verified) {
     throw new Error("Invalid signed message");
   }
@@ -36,25 +36,20 @@ var AddCodeFileToMemPool = (async (fileName, base64FileContents, signedMessage, 
 var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
   //hardcoded to broadcast to 10 nodes.  Consider calculating this value as the network grows.
   var randomNodes = await nodeRepository.GetRandomNodes(10);
+
   randomNodes.forEach((node) => {
+      console.log(`Sending memPoolItem ${mempoolItem.hash} to ${node.port}`);
 
-    var options = {
-      url: nodeEndpoint,
-      method: 'POST',
-      headers: { myVal: JSON.stringify(mempoolItem) }
-    };
+      var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/mempool/add`;
 
-
-    var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/mempool/add`;
-
-    var options = {
-      url: nodeEndpoint,
-      method: 'POST',
-      headers: { mempoolItem: JSON.stringify(mempoolItem) }
-    };
-    request(options, (err, res, body) => {
-      //There's really nothing to do here.  Broadcast it and forget it. 
-    });
+      var options = {
+        url: nodeEndpoint,
+        method: 'POST',
+        headers: { mempoolItem: JSON.stringify(mempoolItem) }
+      };
+      request(options, (err, res, body) => {
+        //There's really nothing to do here.  Broadcast it and forget it. 
+      });
   });
   return;
 });
@@ -74,7 +69,7 @@ var ValidateMemPoolItem = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
 
     // var VerifyMessage = (async (publicKey, signatureHex, message) => {
-debugger;
+    debugger;
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.fileData.fileContents);
     return verified;
   } else {
