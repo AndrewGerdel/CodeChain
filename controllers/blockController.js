@@ -27,38 +27,27 @@ async function MineNextBlock() {
     }
 }
 
-var BreakMemPoolItemsToSize = ((memPoolItemsFromDb, difficulty, lastBlock) => {
-    var promise = new Promise((resolve, reject) => {
-        var sumFileSizeBytes = 0;
-        var counter = 0;
-        var memPoolItems = [];
-        if (memPoolItemsFromDb.length == 0) {
-            reject(""); //no work to do, reject silently.
-        }
-        else {
-            console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
-            for (i = 0; i < memPoolItemsFromDb.length; i++) {
-                var element = memPoolItemsFromDb[i];
-                var fileSizeBytes = (element.fileData.fileContents.length * 0.75) - 2;
-                sumFileSizeBytes += fileSizeBytes;
-                memPoolItems.push(memPoolItemsFromDb[i]);
-                // console.log(element._id, "File name:", element.fileName,  "File Size:", fileSizeBytes);
-                if (sumFileSizeBytes >= maxBlockSizeBytes) {
-                    break;
-                }
-            }//endfor
-            SolveBlock(difficulty, lastBlock[0], memPoolItems)
-                .then((newBlock) => {
-                    resolve(newBlock);
-                }, (err) => {
-                    reject(err);
-                })
-                .catch((error) => {
-                    reject('Error in GetMemPoolItems: ' + error);
-                });
-        }
-    });
-    return promise;
+var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock) => {
+    var sumFileSizeBytes = 0;
+    var counter = 0;
+    var memPoolItems = [];
+    if (memPoolItemsFromDb.length == 0) {
+        return "";
+    }
+    else {
+        console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
+        for (i = 0; i < memPoolItemsFromDb.length; i++) {
+            var element = memPoolItemsFromDb[i];
+            var fileSizeBytes = (element.fileData.fileContents.length * 0.75) - 2;
+            sumFileSizeBytes += fileSizeBytes;
+            memPoolItems.push(memPoolItemsFromDb[i]);
+            if (sumFileSizeBytes >= maxBlockSizeBytes) {
+                break;
+            }
+        }//endfor
+        var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);
+        return newBlock;
+    }
 });
 
 var CreateGenesisBlock = ((lastBlock) => {
@@ -116,43 +105,39 @@ function DifficultyAsHumanReadable(difficulty) {
     return 80 - difficultyAsHexString.length;
 }
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
-var SolveBlock = ((difficulty, previousBlock, mempoolItems) => {
-    var promise = new Promise(async(resolve, reject) => {
-        let targetBlockNumber = previousBlock.blockNumber + 1;
-        console.log(`Difficulty calculated at ${DifficultyAsHumanReadable(difficulty)}LZ. Working on block ${targetBlockNumber}.`);
+var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
+    let targetBlockNumber = previousBlock.blockNumber + 1;
+    console.log(`Difficulty calculated at ${DifficultyAsHumanReadable(difficulty)}LZ. Working on block ${targetBlockNumber}.`);
 
-        var startingDateTime = new Date();
-        var effectiveDate = new Date();
-        var counter = 0;
-        do {
-            counter++;
-            if (counter >= 50000) {
-                counter = 0;
-                var block = await blockRepository.GetBlock(targetBlockNumber);
-                if (block.length > 0) {
-                    console.log(`Abandoning work on block ${targetBlockNumber}.`);
-                    reject('Abandoned');
-                    break;
-                }
+    var startingDateTime = new Date();
+    var effectiveDate = new Date();
+    var counter = 0;
+    do {
+        counter++;
+        if (counter >= 50000) {
+            counter = 0;
+            var block = await blockRepository.GetBlock(targetBlockNumber);
+            if (block.length > 0) {
+                console.log(`Abandoning work on block ${targetBlockNumber}. Block solved by another node.`);
+                return;
             }
-            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
-            var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+        }
+        var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
+        var hash = crypto.createHmac('sha256', hashInput).digest('hex');
 
-            var hashAsDecimal = hexToDec(hash);
-            if (hashAsDecimal <= difficulty) {
-                var endingDateTime = new Date();
-                var millisecondsBlockTime = (endingDateTime - startingDateTime);
-                var newBlock = blockRepository.CreateNewBlock(hash, targetBlockNumber, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), decToHex(difficulty));
-                resolve(newBlock);
-            }
-            nonce++;
-            if (nonce >= Number.MAX_SAFE_INTEGER) {
-                nonce = 0;
-                effectiveDate = new Date();
-            }
-        } while (hashAsDecimal > difficulty)
-    });
-    return promise;
+        var hashAsDecimal = hexToDec(hash);
+        if (hashAsDecimal <= difficulty) {
+            var endingDateTime = new Date();
+            var millisecondsBlockTime = (endingDateTime - startingDateTime);
+            var newBlock = await blockRepository.CreateNewBlock(hash, targetBlockNumber, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), decToHex(difficulty));
+            return newBlock;
+        }
+        nonce++;
+        if (nonce >= Number.MAX_SAFE_INTEGER) {
+            nonce = 0;
+            effectiveDate = new Date();
+        }
+    } while (hashAsDecimal > difficulty)
 });
 
 //Converts all current memPoolItems to json for easy hashing.
@@ -176,9 +161,9 @@ var GetBlock = (async (blockNumber) => {
 
 var GetBlockHash = (async (blockNumber) => {
     var block = await blockRepository.GetBlock(blockNumber);
-    if(block && block.length > 0){
+    if (block && block.length > 0) {
         return block[0].blockHash;
-    }else{
+    } else {
         return '';
     }
 });
@@ -234,16 +219,9 @@ var ValidateBlockHash = (async (block) => {
     }
 });
 
-var AddBlock = ((block) => {
-    var promise = new Promise((resolve, reject) => {
-        blockRepository.AddBlock(block)
-            .then((result) => {
-                resolve(result);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var AddBlock = (async (block) => {
+    var result =  await blockRepository.AddBlock(block);
+    return result;
 });
 
 //appends a collection of blocks to the existing blockchain.
@@ -265,15 +243,15 @@ var AppendBlockchain = ((blockchain) => {
 //Validates the block and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
-    console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
+    // console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
     var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data) //validate each memPoolItem (filecontents, signedmessage, publickey)
-    console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
+    // console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();
     var calculatedDifficulty = await CalculateDifficulty(lastBlock);
     if (calculatedDifficulty != hexToDec(block.difficulty)) {
         throw new Error(`Invalid difficulty on incoming block. Incoming block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
     } else {
-        console.log(`Successfully validated difficulty on incoming block`);
+        // console.log(`Successfully validated difficulty on incoming block`);
     }
     if (block.blockNumber != lastBlock[0].blockNumber + 1) { //Make sure the last blocknumber is one less than the blocknumber being added
         throw new Error(`Invalid block number. Expecting ${lastBlock[0].blockNumber + 1} but instead got ${block.blockNumber}`);
@@ -282,8 +260,7 @@ var ValidateAndAddIncomingBlock = (async (block) => {
             console.log("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
             throw new Error("Invalid previous block hash");
         } else {
-            console.log('Adding block!!!!!!');
-            
+            console.log(`Adding block ${block.blockNumber}`);
             var addBlockResult = await AddBlock(block) //Finally... all validations passed.  Add the block to the end of the chain. 
             return ({ blockNumber: block.blockNumber, message: `Successfully imported block ${block.blockNumber}` });
         }
@@ -306,7 +283,7 @@ var ValidateBlock = (async (block) => {
     }
 });
 
-var OrphanBlocks = (async(blocks) => {
+var OrphanBlocks = (async (blocks) => {
     await blockRepository.MoveBlocksToOrphanCollection(blocks);
 });
 

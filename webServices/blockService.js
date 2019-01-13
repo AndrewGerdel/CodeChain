@@ -10,7 +10,7 @@ var StartService = ((app, isDebug) => {
         res.send(success);
       }, (err) => {
         res.send(err);
-        console.log(`Error validating block: ${err}`);
+        console.log(`Rejecting block ${block.blockNumber} received from remote node`);
       })
   });
 

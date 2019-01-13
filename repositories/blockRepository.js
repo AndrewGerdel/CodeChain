@@ -25,7 +25,9 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
     newBlock.save();
 
     memPoolRepository.DeleteMemPoolItems(memPoolItems)
-        .then((result) => { console.log(`Cleared ${memPoolItems.length} mempool items`); })
+        .then((result) => { 
+            // console.log(`Cleared ${memPoolItems.length} mempool items`); 
+        })
         .catch((error) => { console.log('Error clearing mempool', error); })
 
     return newBlock;
