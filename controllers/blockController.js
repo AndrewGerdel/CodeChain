@@ -1,6 +1,5 @@
 var { MemPool } = require('../models/mempool.js');
 var MemPoolController = require('./memPoolController.js');
-var KeyController = require('./keyController.js');
 var { Block } = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
@@ -267,7 +266,6 @@ var AppendBlockchain = ((blockchain) => {
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
     console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
-    debugger;
     var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data) //validate each memPoolItem (filecontents, signedmessage, publickey)
     console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();

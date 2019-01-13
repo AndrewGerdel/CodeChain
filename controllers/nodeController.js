@@ -6,6 +6,14 @@ var config = require('../config.json');
 var hashUtil = require('../utilities/hash.js');
 var blockController = require('./blockController.js');
 
+var GetAllNodesExludingMe = (() => {
+    var promise = new Promise(async (resolve, reject) => {
+        var nodes = await nodeRepository.GetAllNodesExludingMe();
+        resolve(nodes);
+    });
+    return promise;
+});
+
 var GetAllNodes = (() => {
     var promise = new Promise(async (resolve, reject) => {
         var nodes = await nodeRepository.GetAllNodes();
@@ -14,12 +22,13 @@ var GetAllNodes = (() => {
         } else {
             // console.log('Adding default master node from config:', config.network.defaultMasterNode);
             var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort);
-            var newNodeList = await nodeRepository.GetAllNodes();
+            var newNodeList = await nodeRepository.GetAllNodesExludingMe();
             resolve(newNodeList);
         }
     });
     return promise;
 });
+
 
 var GetNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
@@ -99,9 +108,9 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
                     try {
                         var nodesReceived = JSON.parse(body);
                         // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
-                        nodesReceived.forEach((node) => {
-                            var hash = hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}`).toString('hex');
-                            nodeRepository.GetNode(hash)
+                        nodesReceived.forEach(async(node) => {
+                            var hash = await hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}`);
+                            nodeRepository.GetNode(hash.toString('hex'))
                                 .then((nodesFromDb) => {
                                     if (nodesFromDb.length == 0) {
                                         nodeRepository.AddNode(node.protocol, node.uri, node.port);
@@ -122,7 +131,7 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
 });
 
 var BroadcastBlockToNetwork = ((block) => {
-    GetAllNodes()
+    GetAllNodesExludingMe()
         .then((nodes) => {
             nodes.forEach((node) => {
                 var postUrl = `${node.protocol}://${node.uri}:${node.port}/block/add`;
@@ -244,11 +253,12 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
 
 
 module.exports = {
-    GetAllNodes,
+    GetAllNodesExludingMe,
     AddNode,
     RegisterWithOtherNodes,
     GetNode,
     GetNodesFromRemoteNodes,
     BroadcastBlockToNetwork,
-    ImportLongestBlockchain
+    ImportLongestBlockchain,
+    GetAllNodes
 }

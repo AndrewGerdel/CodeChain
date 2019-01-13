@@ -9,11 +9,16 @@ var StartService = (async (app, isDebug) => {
         if (mempoolItemFromDb.length > 0) {
             //this mempoolItem is already in our database.  Don't do anything.
         } else {
-            if (mempoolItem.type == 1) {
-                await mempoolController.AddCodeFileToMemPool2(mempoolItem);
+            try {
+                if (mempoolItem.type == 1) {
+                    await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem);
+                }
+            } catch (ex) {
+                //If it failed, it probably was a unique index vioation. Either another node already sent
+                //this item, or it came thru with a solved block.
+                response.send('Failed');
             }
         }
-
         response.send("ok");
     });
 });

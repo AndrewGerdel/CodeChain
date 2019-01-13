@@ -6,7 +6,7 @@ var StartService = ((app, isDebug, callback) => {
     console.log(1.1);
 
     app.get('/nodes/get', (req, res) => {
-        nodeController.GetAllNodes()
+        nodeController.GetAllNodesExludingMe()
             .then((resolve) => {
                 res.send(resolve);
             }, (error) => {
@@ -18,14 +18,14 @@ var StartService = ((app, isDebug, callback) => {
     });
     console.log(1.1);
 
-    app.post('/nodes/register', (req, res) => {
+    app.post('/nodes/register', async(req, res) => {
         var ip = req.ip;
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.headers.remoteport
         var remoteProtocol = req.headers.remoteprotocol;
         // console.log(`Received registration request from ${remoteProtocol}://${ip}:${remotePort}`);
-        var hash = hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`).toString('hex');
-        nodeController.GetNode(hash)
+        var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`);
+        nodeController.GetNode(hash.toString('hex'))
             .then((result) => {
                 if (result.length == 0) {
                     nodeController.AddNode(remoteProtocol, ip, remotePort);
@@ -35,7 +35,7 @@ var StartService = ((app, isDebug, callback) => {
                 }
                 blockController.GetLastBlock().then((result) => {
                     if (result.length > 0) {
-                        var responseDetails = { yourHash: hash, myBlockHeight: result[0].blockNumber }
+                        var responseDetails = { yourHash: hash.toString('hex'), myBlockHeight: result[0].blockNumber }
                         res.send(responseDetails);
                     } else {
                         res.send('No blocks found');
@@ -54,13 +54,13 @@ var StartService = ((app, isDebug, callback) => {
     });
     console.log(1.1);
 
-    app.get('/nodes/whoami', (req, res) => {
+    app.get('/nodes/whoami', async(req, res) => {
         var ip = req.ip;
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.headers.remoteport
         var remoteProtocol = req.headers.remoteprotocol;
-        var hash = hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`).toString('hex');
-        res.send(hash);
+        var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`);
+        res.send(hash.toString('hex'));
     });
 
     console.log(1.2);

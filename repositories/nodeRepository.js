@@ -13,9 +13,8 @@ mongoose.GetDb().then((db) => {
 //node will contain a record for themselves.  We want to not use that record, so we're not wasting time broadcasting to ourselves.  But... we need
 //to rely on other nodes to tell us our own hash, because that is calculated based on IP address, which will look different to us vs. the rest of the world.
 //And that's why we use the registrationDetails.myHash value below... because during registration, each node let's us know our own hash, and that's where it gets stored.
-var GetAllNodes = (() => {
+var GetAllNodesExludingMe = (() => {
     var promise = new Promise((resolve, reject) => {
-
         mongoose.GetDb()
             .then((db) => {
                 //Get OUR OWN HASH from registrationDetails.myHash, so it can be excluded from the next query below. 
@@ -45,6 +44,18 @@ var GetAllNodes = (() => {
     return promise;
 });
 
+var GetAllNodes = (() => {
+    var promise = new Promise((resolve, reject) => {
+        mongoose.GetDb()
+            .then((db) => {
+                var nodes = db.collection('nodes').find().toArray();
+                resolve(nodes);
+            }, (err) => {
+                reject(err);
+            });
+    });
+    return promise;
+});
 var GetNode = ((hash) => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
@@ -74,8 +85,9 @@ var GetNodeWithLongestChain = (() => {
 
 
 var AddNode = ((protocol, uri, port) => {
-    var promise = new Promise((resolve, reject) => {
-        var hash = hashUtil.CreateSha256Hash(`${protocol}${uri}${port}`).toString('hex');
+    var promise = new Promise(async(resolve, reject) => {
+        var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}`);
+
         GetNode(hash).then((foundNode) => {
             if (foundNode.length == 0) {
                 var newNode = new Node({
@@ -83,7 +95,7 @@ var AddNode = ((protocol, uri, port) => {
                     uri: uri,
                     port: port,
                     dateAdded: new Date(),
-                    hash: hash,
+                    hash: hash.toString('hex'),
                     dateLastRegistered: new Date()
                 });
                 newNode.save();
@@ -141,11 +153,12 @@ var GetRandomNodes = (async (numberToReturn) => {
 
 
 module.exports = {
-    GetAllNodes,
+    GetAllNodesExludingMe,
     AddNode,
     DeleteNode,
     UpdateNodeRegistration,
     GetNode,
     GetNodeWithLongestChain,
-    GetRandomNodes
+    GetRandomNodes,
+    GetAllNodes
 }

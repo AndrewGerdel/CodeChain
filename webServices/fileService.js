@@ -1,29 +1,20 @@
-let keyController = require('../controllers/keyController.js');
+let hash = require('../utilities/hash.js');
 let memPoolController = require('../controllers/memPoolController.js');
 let blockController = require('../controllers/blockController.js');
 let jsonQuery = require('json-query')
 
 var StartService = ((app) => {
 
-    app.post('/file/upload', (request, response) => {
+    app.post('/file/upload', async (request, response) => {
         var filename = request.body.filename;
         var fileContents = request.body.filecontents;
         var publicKey = request.body.publickey;
         var privateKey = request.body.privatekey;
         console.log(`Received file ${filename}`);
-        
-        // console.log(filename, fileContents, publicKey, privateKey);
 
-        var signedMessage = keyController.SignMessage(fileContents, new Buffer.from(privateKey, 'hex'));
-        memPoolController.AddCodeFileToMemPool(filename, fileContents, signedMessage, publicKey)
-            .then((result) => {
-                response.send(result);
-            }, (err) => {
-                response.send('error: ' + err);
-            })
-            .catch((ex) => {
-                response.send('exception: ' + ex);
-            })
+
+        var result = await ProcessRequest(filename, fileContents, publicKey, privateKey);
+        response.send(result.hash);
     });
 
     app.get('/file/get', (request, response) => {
@@ -34,7 +25,7 @@ var StartService = ((app) => {
                         data: block
                     });
                     response.send({
-                        file: jsonQueryResult.value
+                        fileContents: jsonQueryResult.value.fileData.fileContents
                     });
                 } else {
                     response.send('File not found');
@@ -50,6 +41,15 @@ var StartService = ((app) => {
 
 });
 
+var ProcessRequest = (async (filename, fileContents, publicKey, privateKey) => {
+    let buff = new Buffer.from(fileContents);
+    let base64data = buff.toString('base64');
+    var signedMessage = await hash.SignMessage(privateKey, base64data);
+    var result = await memPoolController.AddCodeFileToMemPool(filename, base64data, signedMessage, publicKey);
+    return result;
+});
+
 module.exports = {
-    StartService
+    StartService,
+    ProcessRequest
 }

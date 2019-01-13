@@ -11,7 +11,7 @@ mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "deleted": 1 }, { unique: false });
 });
 
-var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded) => {
+var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
   var promise = new Promise((resolve, reject) => {
     var memPool = new MemPool({
       type: filetypes.File,
@@ -19,10 +19,10 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, s
         fileName: fileName,
         fileContents: base64FileContents
       },
-      signedMessage: signedMessage.Signature.toString('hex'),
+      signedMessage: signedMessage,
       dateAdded: dateAdded,
       publicKey: publicKey,
-      hash: hashUtil.CreateSha256Hash(fileName + base64FileContents + signedMessage + dateAdded + salt).toString("hex"),
+      hash: hash,
       deleted: false,
       salt: salt
     });

@@ -1,5 +1,4 @@
 var { MongoClient } = require('mongodb');
-var keyController = require('./keyController.js');
 var nodeController = require('./nodeController.js');
 var crypto = require('crypto');
 var hashUtil = require('../utilities/hash.js');
@@ -7,35 +6,29 @@ var memPoolRepository = require('../repositories/mempoolRepository.js');
 var nodeRepository = require('../repositories/nodeRepository.js');
 var mempoolItemTypes = require('../enums/mempoolFiletypes.js');
 var request = require('request');
-var crypto = require('crypto');
 
 //Adds a file to the mempool.
-var AddCodeFileToMemPool2 = (async (memPoolItem) => {
-  
-  var abc = hashUtil.VerifySignedMessage(memPoolItem.fileData.fileContents, memPoolItem.signedMessage, memPoolItem.publicKey);
+var AddIncomingCodeFileToMemPool = (async (memPoolItem) => {
 
-  var verified = await keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer.from(publicKey, 'hex'));
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.fileData.fileContents);
   if (!verified) {
     throw new Error("Invalid signed message");
   }
-  var salt = crypto.randomBytes(16).toString('hex');
-  var dateNow = new Date();
-  var mempoolItem = await memPoolRepository.AddMemPoolItem(fileName, base64data, signedMessage, publicKey, salt, dateNow);
-  BroadcastMempoolItemToRandomNodes(mempoolItem);
-  return mempoolItem;
+  var saveResult = await memPoolRepository.AddMemPoolItem(memPoolItem.fileData.fileName, memPoolItem.fileData.fileContents, memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash);
+  BroadcastMempoolItemToRandomNodes(memPoolItem);
+  return saveResult;
 });
 
 //Adds a file to the mempool.
-var AddCodeFileToMemPool = (async (fileName, fileContents, signedMessage, publicKey) => {
-  let buff = new Buffer.from(fileContents);
-  let base64data = buff.toString('base64');
-  var verified = await keyController.VerifySignedMessage(signedMessage.Digest, signedMessage.Signature, new Buffer.from(publicKey, 'hex'));
+var AddCodeFileToMemPool = (async (fileName, base64FileContents, signedMessage, publicKey) => {
+  var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, base64FileContents );
   if (!verified) {
     throw new Error("Invalid signed message");
   }
   var salt = crypto.randomBytes(16).toString('hex');
   var dateNow = new Date();
-  var mempoolItem = await memPoolRepository.AddMemPoolItem(fileName, base64data, signedMessage, publicKey, salt, dateNow);
+  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signedMessage + dateNow + salt);
+  var mempoolItem = await memPoolRepository.AddMemPoolItem(fileName, base64FileContents, signedMessage, publicKey, salt, dateNow, hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem);
   return mempoolItem;
 });
@@ -68,7 +61,7 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
 
 
 var ValidateMemPoolItems = (async (memPoolItems) => {
-  for (i = 0; i < memPoolItems; i++) {
+  for (i = 0; i < memPoolItems.length; i++) {
     var verified = await ValidateMemPoolItem(memPoolItems[i]);
     if (!verified) {
       throw new Error("Failed to verify mempoolitems: ", memPoolItems);
@@ -78,10 +71,12 @@ var ValidateMemPoolItems = (async (memPoolItems) => {
 });
 
 var ValidateMemPoolItem = (async (memPoolItem) => {
-  debugger;
   if (memPoolItem.type == mempoolItemTypes.File) {
 
-    return hashUtil.VerifySignedMessage(memPoolItems[i].fileData.fileContents, memPoolItems[i].signedMessage, memPoolItems[i].publicKey);
+    // var VerifyMessage = (async (publicKey, signatureHex, message) => {
+debugger;
+    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.fileData.fileContents);
+    return verified;
   } else {
     throw new Error(`Unknown memPoolItem type: ${memPoolItem.type}`);
   }
@@ -96,5 +91,5 @@ module.exports = {
   AddCodeFileToMemPool,
   ValidateMemPoolItems,
   GetMemPoolItem,
-  AddCodeFileToMemPool2
+  AddIncomingCodeFileToMemPool
 }
