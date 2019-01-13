@@ -26,11 +26,6 @@ var MemPool = mongoose.model('MemPool', {
     required: true,
     trim: true
   },
-  publicKeyHash: {
-    type: String,
-    required: true,
-    trim: true
-  },
   signedMessage: {
     type: String,
     required: true,

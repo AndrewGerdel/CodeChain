@@ -77,16 +77,21 @@ var StartService = ((app, isDebug) => {
 });
 
 function StartOrForkProcess(isDebug) {
-  if (isDebug) {
-    //Run the backend block processes on a child thread with inspect-brk.
-    //NOTE: In chrome, 'Open dedicated DevTools for Node'.  Add localhost:7778 and localhost:7779
-    const { fork } = require('child_process');
-    const forked = fork('processServices/blockProcess.js', [], { execArgv: ['--inspect-brk=7779'] });
+  if (!config.mining.publicKey || config.mining.publicKey == '') {
+    console.log('Public key not set in config. Mining will not start.');
   } else {
-    //Run the backend block processes on a child thread
-    const { fork } = require('child_process');
-    const forked = fork('processServices/blockProcess.js');
+    if (isDebug) {
+      //Run the backend block processes on a child thread with inspect-brk.
+      //NOTE: In chrome, 'Open dedicated DevTools for Node'.  Add localhost:7778 and localhost:7779
+      const { fork } = require('child_process');
+      const forked = fork('processServices/blockProcess.js', [], { execArgv: ['--inspect-brk=7779'] });
+    } else {
+      //Run the backend block processes on a child thread
+      const { fork } = require('child_process');
+      const forked = fork('processServices/blockProcess.js');
+    }
   }
+
 }
 
 module.exports = {

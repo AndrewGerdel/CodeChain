@@ -20,8 +20,7 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, s
       },
       signedMessage: signedMessage,
       dateAdded: dateAdded,
-      publicKey: publicKey,
-      publicKeyHash: publicKeyHash.toString('hex'),
+      publicKey: publicKeyHash.toString('hex'),
       hash: hash,
       deleted: false,
       salt: salt
@@ -76,8 +75,7 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey) => {
   var memPool = new MemPool({
     type: filetypes.MiningReward,
     dateAdded: dateAdded,
-    publicKey: publicKey,
-    publicKeyHash: publicKeyHash.toString('hex'),
+    publicKey: publicKeyHash.toString('hex'),
     hash: memPoolItemHash.toString('hex')
   });
   return memPool;

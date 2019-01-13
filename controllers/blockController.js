@@ -36,7 +36,7 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
     else {
         console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
-        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), 'abc');
+        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey);
         memPoolItems.push(miningReward);
         for (i = 0; i < memPoolItemsFromDb.length; i++) {
             var element = memPoolItemsFromDb[i];
@@ -47,7 +47,6 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
                 break;
             }
         }//endfor
-  debugger;
 
         var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);
         return newBlock;
