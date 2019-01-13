@@ -1,11 +1,10 @@
-var { MongoClient } = require('mongodb');
-var nodeController = require('./nodeController.js');
 var crypto = require('crypto');
 var hashUtil = require('../utilities/hash.js');
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 var nodeRepository = require('../repositories/nodeRepository.js');
 var mempoolItemTypes = require('../enums/mempoolFiletypes.js');
 var request = require('request');
+var config = require('../config.json');
 
 //Adds a file to the mempool.
 var AddIncomingCodeFileToMemPool = (async (memPoolItem) => {
@@ -38,6 +37,7 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
   var randomNodes = await nodeRepository.GetRandomNodes(10);
 
   randomNodes.forEach((node) => {
+    if (node.uid != config.network.myUid) { //Don't broadcast a mempool to our self.
       console.log(`Sending memPoolItem ${mempoolItem.hash} to ${node.port}`);
 
       var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/mempool/add`;
@@ -50,6 +50,8 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
       request(options, (err, res, body) => {
         //There's really nothing to do here.  Broadcast it and forget it. 
       });
+    }
+
   });
   return;
 });

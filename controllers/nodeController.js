@@ -60,6 +60,7 @@ var AddNode = ((protocol, uri, port, uid) => {
 
 var RegisterWithOtherNodes = (async (nodeList) => {
     nodeList.forEach(node => {
+        
         var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
         var options = {
             url: nodeRegisterEndPoint,
