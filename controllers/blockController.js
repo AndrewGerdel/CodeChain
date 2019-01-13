@@ -36,6 +36,8 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
     else {
         console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
+        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), 'abc');
+        memPoolItems.push(miningReward);
         for (i = 0; i < memPoolItemsFromDb.length; i++) {
             var element = memPoolItemsFromDb[i];
             var fileSizeBytes = (element.fileData.fileContents.length * 0.75) - 2;
@@ -45,6 +47,8 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
                 break;
             }
         }//endfor
+  debugger;
+
         var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);
         return newBlock;
     }

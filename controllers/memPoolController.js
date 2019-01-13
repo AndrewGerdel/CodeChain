@@ -71,7 +71,6 @@ var ValidateMemPoolItem = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
 
     // var VerifyMessage = (async (publicKey, signatureHex, message) => {
-    debugger;
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.fileData.fileContents);
     return verified;
   } else {

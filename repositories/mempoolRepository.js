@@ -1,10 +1,8 @@
-var { MongoClient } = require('mongodb');
-var mongo = require('mongoskin');
 var mongoose = require('../db/mongoose.js');
-var connectionString = require('../config.json').database;
 var filetypes = require('../enums/mempoolFiletypes.js');
 var { MemPool } = require('../models/mempool.js');
 var hashUtil = require('../utilities/hash.js');
+var crypto = require('crypto');
 
 mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "hash": 1 }, { unique: true });
@@ -12,7 +10,8 @@ mongoose.GetDb().then((db) => {
 });
 
 var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
-  var promise = new Promise((resolve, reject) => {
+  var promise = new Promise(async(resolve, reject) => {
+    var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
     var memPool = new MemPool({
       type: filetypes.File,
       fileData: {
@@ -22,6 +21,7 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, s
       signedMessage: signedMessage,
       dateAdded: dateAdded,
       publicKey: publicKey,
+      publicKeyHash: publicKeyHash.toString('hex'),
       hash: hash,
       deleted: false,
       salt: salt
@@ -67,9 +67,26 @@ var GetMemPoolItem = (async (hash) => {
   return db.collection('mempools').find({ hash: hash }).toArray();
 });
 
+//Note: This DOES NOT SAVE the item to the database.  MiningRewards are not ever saved to the mempools collection. They
+//are only included in the block data.
+var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey) => {
+  var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+  var salt = crypto.randomBytes(16);
+  var memPoolItemHash = await hashUtil.CreateSha256Hash(`${publicKey}${dateAdded}${salt.toString('hex')}`);
+  var memPool = new MemPool({
+    type: filetypes.MiningReward,
+    dateAdded: dateAdded,
+    publicKey: publicKey,
+    publicKeyHash: publicKeyHash.toString('hex'),
+    hash: memPoolItemHash.toString('hex')
+  });
+  return memPool;
+});
+
 module.exports = {
   DeleteMemPoolItems,
   GetMemPoolItems,
   AddMemPoolItem,
-  GetMemPoolItem
+  GetMemPoolItem,
+  CreateMiningRewardMemPoolItem
 }

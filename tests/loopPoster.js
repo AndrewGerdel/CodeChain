@@ -2,7 +2,6 @@ var request = require('request');
 
 var loopPost = (() => {
     var nodeEndpoint = `http://localhost:65341/file/upload`;
-debugger;
     var options = {
       url: nodeEndpoint,
       method: 'POST',
@@ -86,7 +85,6 @@ debugger;
         console.log('res is ', res);
         console.log('body is ', body);
         
-      debugger;
     });
 });
 
