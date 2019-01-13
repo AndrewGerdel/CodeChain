@@ -60,38 +60,35 @@ var AddNode = ((protocol, uri, port, uid) => {
     return promise;
 });
 
-var RegisterWithOtherNodes = ((nodeList) => {
-    var promise = new Promise((resolve, reject) => {
-        nodeList.forEach(node => {
-            var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
-            var options = {
-                url: nodeRegisterEndPoint,
-                method: 'POST',
-                headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
-            };
-            var counter = 0;
-            try {
-                request(options, (err, res, body) => {
-                    if (err) {
-                        // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
-                        nodeRepository.DeleteNode(node.hash);
-                    } else {
-                        // console.log('Registered with', node.uri);
-                        var returnData = JSON.parse(body);
-                        nodeRepository.UpdateNodeRegistration(node, returnData)
-                            .then((result) => {
-                            })
-                            .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
-                    }
-                });
-            } catch (ex) {
-                console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
-                nodeRepository.DeleteNode(node.hash);
-            }
-        });
-        resolve('All requests launched');
+var RegisterWithOtherNodes = (async (nodeList) => {
+    nodeList.forEach(node => {
+        var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
+        var options = {
+            url: nodeRegisterEndPoint,
+            method: 'POST',
+            headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
+        };
+        var counter = 0;
+        try {
+            request(options, (err, res, body) => {
+                if (err) {
+                    // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                    nodeRepository.DeleteNode(node.hash);
+                } else {
+                    // console.log('Registered with', node.uri);
+                    var returnData = JSON.parse(body);
+                    nodeRepository.UpdateNodeRegistration(node, returnData)
+                        .then((result) => {
+                        })
+                        .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
+                }
+            });
+        } catch (ex) {
+            console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
+            nodeRepository.DeleteNode(node.hash);
+        }
     });
-    return promise;
+    return true;
 });
 
 var GetNodesFromRemoteNodes = ((nodeList) => {
@@ -108,7 +105,7 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
                     try {
                         var nodesReceived = JSON.parse(body);
                         // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
-                        nodesReceived.forEach(async(node) => {
+                        nodesReceived.forEach(async (node) => {
                             var hash = await hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}${node.uid}`);
                             nodeRepository.GetNode(hash.toString('hex'))
                                 .then((nodesFromDb) => {

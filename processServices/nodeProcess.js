@@ -1,5 +1,7 @@
 var nodeController = require('../controllers/nodeController');
 var config = require('../config.json');
+var nodeProcessLog = require('../loggers/nodeProcessLog');
+
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
     //console.log('Unhandled Rejection at:', reason.stack || reason)
@@ -7,6 +9,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 var Timer_LoadAndRegisterNodes = (async () => {
     try {
+        nodeProcessLog.WriteLog("Registering with remote nodes.");
         var res1 = await RegisterWithRemoteNodes();
         var res2 = await UpdateNodeListFromRemoteNodes();
         var res3 = await RetrieveBlockchainFromLongestNode();
