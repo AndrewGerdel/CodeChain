@@ -21,7 +21,7 @@ var StartService = ((app, isDebug, callback) => {
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.headers.remoteport
         var remoteProtocol = req.headers.remoteprotocol;
-        var remoteUid = req.headers.remoteUid;
+        var remoteUid = req.headers.remoteuid;
         // console.log(`Received registration request from ${remoteProtocol}://${ip}:${remotePort}`);
         var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}${remoteUid}`);
         nodeController.GetNode(hash.toString('hex'))

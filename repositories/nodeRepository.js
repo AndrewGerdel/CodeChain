@@ -2,6 +2,7 @@ var { Node } = require('../models/node.js');
 var mongoose = require('../db/mongoose.js');
 var hashUtil = require('../utilities/hash.js');
 var config = require('../config.json');
+var nodeProcessLog = require('../loggers/nodeProcessLog');
 
 mongoose.GetDb().then((db) => {
     db.collection("nodes").createIndex({ "hash": 1 }, { unique: true });
@@ -15,7 +16,7 @@ var GetAllNodesExludingMe = (async () => {
     return nodes;
 });
 
-var GetMyNode = (async() => {
+var GetMyNode = (async () => {
     var db = await mongoose.GetDb();
     var nodes = db.collection('nodes').find({ "uid": { $eq: config.network.myUid } }).toArray();
     return nodes;
@@ -55,29 +56,25 @@ var GetNodeWithLongestChain = (() => {
 });
 
 
-var AddNode = ((protocol, uri, port, uid) => {
-    var promise = new Promise(async (resolve, reject) => {
-        var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}${uid}`);
-
-        GetNode(hash).then((foundNode) => {
-            if (foundNode.length == 0) {
-                var newNode = new Node({
-                    protocol: protocol,
-                    uri: uri,
-                    port: port,
-                    dateAdded: new Date(),
-                    hash: hash.toString('hex'),
-                    dateLastRegistered: new Date(),
-                    uid: uid
-                });
-                newNode.save();
-                resolve(newNode);
-            } else {
-                resolve(foundNode[0]);
-            }
+var AddNode = (async (protocol, uri, port, uid) => {
+    var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}${uid}`);
+    var foundNode = await GetNode(hash);
+    if (foundNode.length == 0) {
+        nodeProcessLog.WriteLog(`Adding node: ${protocol}://${uri}:${port} (${uid})`);
+        var newNode = new Node({
+            protocol: protocol,
+            uri: uri,
+            port: port,
+            dateAdded: new Date(),
+            hash: hash.toString('hex'),
+            dateLastRegistered: new Date(),
+            uid: uid
         });
-    });
-    return promise;
+        newNode.save();
+        return newNode;
+    } else {
+        return foundNode[0];
+    }
 });
 
 //Deletes node by hash
