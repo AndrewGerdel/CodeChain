@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 var config = require('./config.json');
 const argv = require('yargs').argv
+const fs = require('fs');
+const crypto = require('crypto');
 
 let port = config.network.myPort;
 
@@ -22,12 +24,22 @@ app.get('/', (req, res) => {
 
 const isDebug = process.execArgv.includes("--debug") || process.execArgv.includes("--inspect-brk") || process.execArgv.includes("--inspect") || process.execArgv.includes("--debug-brk")
 if (isDebug == true) {
-  console.log('Launching in debug mode. Backend process will run synchronous.');
+  console.log('Launching in debug mode. Backend process will launch debuggers on separate ports. (7778 and 7779)');
 }
 
 //start listening for node requests, and spin up any node-related processes.
 var nodeService = require('./webServices/nodeService.js');
 console.log('Syncing with the network...');
+
+//If we don't have a unique identifier saved in the config, generate/save one now. 
+if(!config.network.myUid || config.network.myUid == ''){
+  config.network.myUid = crypto.randomBytes(16).toString('hex');
+  fs.writeFile('config.json', JSON.stringify(config, null, 2),  function(err) {
+    if(err){
+      console.log(`Error saving config: ${err}`);
+    }
+  });
+}
 
 
 nodeService.StartService(app, isDebug, (() => {
