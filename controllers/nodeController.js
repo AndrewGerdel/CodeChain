@@ -21,7 +21,7 @@ var GetAllNodes = (() => {
             resolve(nodes);
         } else {
             // console.log('Adding default master node from config:', config.network.defaultMasterNode);
-            var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort);
+            var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort, config.network.defaultMasterNodeUid);
             var newNodeList = await nodeRepository.GetAllNodesExludingMe();
             resolve(newNodeList);
         }
@@ -45,9 +45,9 @@ var GetNode = ((hash) => {
     return promise;
 });
 
-var AddNode = ((protocol, uri, port) => {
+var AddNode = ((protocol, uri, port, uid) => {
     var promise = new Promise((resolve, reject) => {
-        nodeRepository.AddNode(protocol, uri, port)
+        nodeRepository.AddNode(protocol, uri, port, uid)
             .then((res) => {
                 resolve(res);
             }, (error) => {
@@ -67,7 +67,7 @@ var RegisterWithOtherNodes = ((nodeList) => {
             var options = {
                 url: nodeRegisterEndPoint,
                 method: 'POST',
-                headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol }
+                headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
             };
             var counter = 0;
             try {
@@ -109,11 +109,11 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
                         var nodesReceived = JSON.parse(body);
                         // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
                         nodesReceived.forEach(async(node) => {
-                            var hash = await hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}`);
+                            var hash = await hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}${node.uid}`);
                             nodeRepository.GetNode(hash.toString('hex'))
                                 .then((nodesFromDb) => {
                                     if (nodesFromDb.length == 0) {
-                                        nodeRepository.AddNode(node.protocol, node.uri, node.port);
+                                        nodeRepository.AddNode(node.protocol, node.uri, node.port, node.uid);
                                     }
                                 })
                         });

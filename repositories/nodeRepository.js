@@ -1,42 +1,19 @@
 var { Node } = require('../models/node.js');
-var { MongoClient } = require('mongodb');
 var mongoose = require('../db/mongoose.js');
-var connectionString = require('../config.json').database;
 var hashUtil = require('../utilities/hash.js');
+var config = require('../config.json');
 
 mongoose.GetDb().then((db) => {
     db.collection("nodes").createIndex({ "hash": 1 }, { unique: true });
+    db.collection("nodes").createIndex({ "uid": 1 }, { unique: true });
 });
 
 
-//Should return all nodes EXCEPT FOR YOURSELF.  Because all nodes continuously broadcast their full nodelist to each other, it's known that each 
-//node will contain a record for themselves.  We want to not use that record, so we're not wasting time broadcasting to ourselves.  But... we need
-//to rely on other nodes to tell us our own hash, because that is calculated based on IP address, which will look different to us vs. the rest of the world.
-//And that's why we use the registrationDetails.myHash value below... because during registration, each node let's us know our own hash, and that's where it gets stored.
 var GetAllNodesExludingMe = (() => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
             .then((db) => {
-                //Get OUR OWN HASH from registrationDetails.myHash, so it can be excluded from the next query below. 
-                var getMyHash = db.collection('nodes').aggregate([
-                    {
-                        "$group":
-                            { _id: "$registrationDetails.myHash", count: { $sum: 1 } }
-                    },
-                    { $sort: { "count": -1 } }
-                ]).limit(1).toArray();
-
-                getMyHash.then((result) => {
-                    // console.log(`Hey, my hash must be ${result[0]._id}`);
-                    var myHash = '';
-                    if (result.length > 0) {
-                        myHash = result[0]._id;
-                    }
-                    var nodes = db.collection('nodes').find({ "hash": { $ne: myHash } }).toArray();
-                    resolve(nodes);
-                }, (err) => {
-                    reject(`Failed to get my hash: ${err}`);
-                });
+                var nodes = db.collection('nodes').find({ "uid": { $ne: config.network.myUid } }).toArray();
             }, (err) => {
                 reject(err);
             });
@@ -48,26 +25,7 @@ var GetMyNode = (() => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
             .then((db) => {
-                //Get OUR OWN HASH from registrationDetails.myHash
-                var getMyHash = db.collection('nodes').aggregate([
-                    {
-                        "$group":
-                            { _id: "$registrationDetails.myHash", count: { $sum: 1 } }
-                    },
-                    { $sort: { "count": -1 } }
-                ]).limit(1).toArray();
-
-                getMyHash.then((result) => {
-                    // console.log(`Hey, my hash must be ${result[0]._id}`);
-                    var myHash = '';
-                    if (result.length > 0) {
-                        myHash = result[0]._id;
-                    }
-                    var nodes = db.collection('nodes').find({ "hash": { $eq: myHash } }).toArray();
-                    resolve(nodes);
-                }, (err) => {
-                    reject(`Failed to get my hash: ${err}`);
-                });
+                var nodes = db.collection('nodes').find({ "uid": { $eq: config.network.myUid } }).toArray();
             }, (err) => {
                 reject(err);
             });
@@ -115,9 +73,9 @@ var GetNodeWithLongestChain = (() => {
 });
 
 
-var AddNode = ((protocol, uri, port) => {
+var AddNode = ((protocol, uri, port, uid) => {
     var promise = new Promise(async(resolve, reject) => {
-        var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}`);
+        var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}${uid}`);
 
         GetNode(hash).then((foundNode) => {
             if (foundNode.length == 0) {
@@ -127,7 +85,8 @@ var AddNode = ((protocol, uri, port) => {
                     port: port,
                     dateAdded: new Date(),
                     hash: hash.toString('hex'),
-                    dateLastRegistered: new Date()
+                    dateLastRegistered: new Date(),
+                    uid: uid
                 });
                 newNode.save();
                 resolve(newNode);

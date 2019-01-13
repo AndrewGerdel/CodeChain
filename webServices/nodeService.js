@@ -21,12 +21,13 @@ var StartService = ((app, isDebug, callback) => {
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.headers.remoteport
         var remoteProtocol = req.headers.remoteprotocol;
+        var remoteUid = req.headers.remoteUid;
         // console.log(`Received registration request from ${remoteProtocol}://${ip}:${remotePort}`);
-        var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`);
+        var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}${remoteUid}`);
         nodeController.GetNode(hash.toString('hex'))
             .then((result) => {
                 if (result.length == 0) {
-                    nodeController.AddNode(remoteProtocol, ip, remotePort);
+                    nodeController.AddNode(remoteProtocol, ip, remotePort, remoteUid);
                     console.log(`Added remote node ${remoteProtocol}://${ip}:${remotePort}`)
                 } else {
                     // console.log('I didnt add the registration because that node already exists');

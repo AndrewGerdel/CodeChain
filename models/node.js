@@ -26,13 +26,13 @@ var Node = mongoose.model('Node', {
     type: String,
     require: true
   },
+  uid : {
+    type: String,
+    require: true
+  },
   registrationDetails : {
     blockHeight : {
       type: Number,
-      require: false
-    },
-    myHash : {
-      type: String,
       require: false
     }
   }
