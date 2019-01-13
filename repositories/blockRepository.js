@@ -25,7 +25,7 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
     newBlock.save();
 
     memPoolRepository.DeleteMemPoolItems(memPoolItems)
-        .then((result) => { 
+        .then((result) => {
             // console.log(`Cleared ${memPoolItems.length} mempool items`); 
         })
         .catch((error) => { console.log('Error clearing mempool', error); })
@@ -33,28 +33,24 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
     return newBlock;
 });
 
-var AddBlock = ((block) => {
-    var promise = new Promise((resolve, reject) => {
-        var newBlock = new Block({
-            blockHash: block.blockHash,
-            blockNumber: block.blockNumber,
-            previousBlockHash: block.previousBlockHash,
-            data: block.data,
-            millisecondsBlockTime: block.millisecondsBlockTime,
-            nonce: block.nonce,
-            solvedDateTime: block.solvedDateTime,
-            difficulty: block.difficulty
-        });
-        newBlock.save();
-
-        memPoolRepository.DeleteMemPoolItems(block.data)
-            .then((result) => { console.log(`Cleared ${block.data.length} mempool items`); })
-            .catch((error) => { console.log('Error clearing mempool', error); })
-
-        resolve(newBlock);
+var AddBlock = (async (block) => {
+    var newBlock = new Block({
+        blockHash: block.blockHash,
+        blockNumber: block.blockNumber,
+        previousBlockHash: block.previousBlockHash,
+        data: block.data,
+        millisecondsBlockTime: block.millisecondsBlockTime,
+        nonce: block.nonce,
+        solvedDateTime: block.solvedDateTime,
+        difficulty: block.difficulty
     });
-    return promise;
+    newBlock.save();
 
+    memPoolRepository.DeleteMemPoolItems(block.data)
+        .then((result) => { console.log(`Cleared ${block.data.length} mempool items`); })
+        .catch((error) => { console.log('Error clearing mempool', error); })
+
+    return newBlock;
 });
 
 //Gets the most recent block from the chain

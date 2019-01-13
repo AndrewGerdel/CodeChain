@@ -123,7 +123,7 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
             }
             for (m = 0; m < mempoolItems.length; m++) {
                 var memPoolResult = memPoolRepository.GetMemPoolItem(mempoolItems[m].hash);
-                if(memPoolResult.length == 0){
+                if (memPoolResult.length == 0) {
                     console.log(`Abandoning work on block ${targetBlockNumber}. MemPoolItem was included in a previous block.`);
                     return;
                 }
