@@ -17,21 +17,23 @@ var MemPool = mongoose.model('MemPool', {
       trim: true
     }
   },  
+  publicKey: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  publicKeyHash: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  blockReward: {
+    type: Number,
+    required: false
+  },
   dateAdded: {
     type: Date,
     required: true
-  },
-  publicKey: {
-    full: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    hash: {
-      type: String,
-      required: true,
-      trim: true
-    }
   },
   signedMessage: {
     type: String,

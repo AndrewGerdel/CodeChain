@@ -39,7 +39,6 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
   randomNodes.forEach((node) => {
     if (node.uid != config.network.myUid) { //Don't broadcast a mempool to our self.
       console.log(`Sending memPoolItem ${mempoolItem.hash} to ${node.port}`);
-
       var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/mempool/add`;
 
       var options = {

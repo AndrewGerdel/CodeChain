@@ -20,10 +20,8 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, s
       },
       signedMessage: signedMessage,
       dateAdded: dateAdded,
-      publicKey: {
-        full: publicKey,
-        hash: publicKeyHash.toString('hex')
-      },
+      publicKey: publicKey,
+      publicKeyHash: publicKeyHash.toString('hex'),
       hash: hash,
       deleted: false,
       salt: salt
@@ -71,17 +69,15 @@ var GetMemPoolItem = (async (hash) => {
 
 //Note: This DOES NOT SAVE the item to the database.  MiningRewards are not ever saved to the mempools collection. They
 //are only included in the block data.
-var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey) => {
-  var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey, blockReward) => {
   var salt = crypto.randomBytes(16);
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${publicKey}${dateAdded}${salt.toString('hex')}`);
   var memPool = new MemPool({
     type: filetypes.MiningReward,
     dateAdded: dateAdded,
-    publicKey: {
-      hash: publicKey
-    },
-    hash: memPoolItemHash.toString('hex')
+    publicKeyHash: publicKey,
+    hash: memPoolItemHash.toString('hex'), 
+    blockReward: blockReward
   });
   return memPool;
 });

@@ -1,17 +1,12 @@
-var { MemPool } = require('../models/mempool.js');
 var MemPoolController = require('./memPoolController.js');
-var { Block } = require('../models/block.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
 var decToHex = require('dec-to-hex');
 var nonce = 0;
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
-var nodeRepository = require('../repositories/nodeRepository.js');
-var request = require('request');
-var requestPromise = require('request-promise');
 var config = require('../config.json');
-var pad = require('pad-left');
+var mempoolFileTypes = require('../enums/mempoolFiletypes');
 
 const maxBlockSizeBytes = 1000000;
 const targetBlockTimeMs = config.network.targetBlockTimeMs; //target a one minute block time. 
@@ -27,6 +22,7 @@ async function MineNextBlock() {
     }
 }
 
+
 var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock) => {
     var sumFileSizeBytes = 0;
     var counter = 0;
@@ -36,7 +32,8 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
     else {
         console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
-        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey);
+        var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
+        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
         memPoolItems.push(miningReward);
         for (i = 0; i < memPoolItemsFromDb.length; i++) {
             var element = memPoolItemsFromDb[i];
@@ -60,7 +57,7 @@ var CreateGenesisBlock = ((lastBlock) => {
             var nonce = 0;
             var effectiveDate = new Date('1/1/2000');
             var mempoolItems = [];
-            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems);
+            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + 'None';
             var hash = crypto.createHmac('sha256', hashInput).digest('hex');
             var endingDateTime = new Date();
             var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target
@@ -73,6 +70,41 @@ var CreateGenesisBlock = ((lastBlock) => {
         }
     });
     return promise;
+});
+
+
+var CalculateBlockReward = (async (blockNumber) => {
+    //Assumed 525,600 blocks per year
+    if (blockNumber <= 525600) { //first year
+        return 50;
+    }
+    else if (blockNumber > 525600 && blockNumber <= 1051200) { //second year
+        return 25;
+    }
+    else if (blockNumber > 1051200 && blockNumber <= 1576800) { //third year
+        return 12.5;
+    }
+    else if (blockNumber > 1576800 && blockNumber <= 2102400) { //fourth year
+        return 6.25;
+    }
+    else if (blockNumber > 2102400 && blockNumber <= 2628000) { //fifth year
+        return 6.25;
+    }
+    else if (blockNumber > 2628000 && blockNumber <= 3153600) { //sixth year
+        return 3.125;
+    }
+    else if (blockNumber > 3153600 && blockNumber <= 3679200) { //seventh year
+        return 1.5625;
+    }
+    else if (blockNumber > 3679200 && blockNumber <= 4204800) { //eigth year
+        return 1.5625;
+    }
+    else if (blockNumber > 4204800 && blockNumber <= 4730400) { //ninth year
+        return 0.78125;
+    }
+    else if (blockNumber > 4730400) { //tenth year and onward.
+        return 0.3906;
+    }
 });
 
 var CalculateDifficulty = (async (lastBlock) => {
@@ -132,7 +164,7 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
                 }
             }
         }
-        var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty);
+        var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty) + previousBlock.blockHash;
         var hash = crypto.createHmac('sha256', hashInput).digest('hex');
 
         var hashAsDecimal = hexToDec(hash);
@@ -220,7 +252,7 @@ var GetFileFromBlock = ((filehash) => {
 });
 
 var ValidateBlockHash = (async (block) => {
-    var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data) + block.difficulty;
+    var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data) + block.difficulty + block.previousBlockHash;
     var hash = crypto.createHmac('sha256', hashInput).digest('hex');
     if (hash == block.blockHash) {
         return (hash);
@@ -258,6 +290,13 @@ var ValidateAndAddIncomingBlock = (async (block) => {
     // console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();
     var calculatedDifficulty = await CalculateDifficulty(lastBlock);
+    var blockReward = await CalculateBlockReward(block.blockNumber);
+    if(block.memPoolItems[0].type != mempoolFileTypes.MiningReward){
+        throw new Error("First mempool item should be the block reward.");
+    }
+    if(block.memPoolItems[0].blockReward != blockReward){
+        throw new Error("Invalid block reward.");
+    }
     if (calculatedDifficulty != hexToDec(block.difficulty)) {
         throw new Error(`Invalid difficulty on incoming block. Incoming block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
     } else {
