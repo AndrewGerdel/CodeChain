@@ -1,91 +1,103 @@
 var request = require('request');
 
 var loopPost = (() => {
-    var nodeEndpoint = `http://localhost:65341/file/upload`;
-    var options = {
-      url: nodeEndpoint,
-      method: 'POST',
-      json: {
-          filename: 'loopPoster.txt',
-          filecontents: 'Some text that is in the loop file',
-          publickey: `-----BEGIN PUBLIC KEY-----
-          MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtiy8AEYK6hbLkEFkHLVV
-          tX90v3D/y4pfts716IJvN8NMA7CgmST6tFKCzx7H9SyuIWUIuhMqf2Ria09H8azz
-          YuQ15xipsJwwLKO7O7raoEG/9v3Zo4fe5660bGgHKBM8rNLyGFT9EZlWA3zFoBhL
-          Dqdiz7sLhEqPPr7i7mSItTaacNIZAvPoU0I68UGlKm16Z1/cd3BpkoujEntDwsXi
-          7PaoS90S6bjiDEAe6bcuT1G8BYSvY/tueK/10n+CSlUy6qMXFIDgq5cxnoOIuJvV
-          s89CAiDPyBQBMienHXvARtL9FUQFug+Ztbal8uXhFtLP/UbUorCTJ0SskhsJ7kjA
-          v68pjKoCsh4SDKfz1xfC6iHQ6mquNdzabZaQBggsIBL9xCiKyLST5KfWCbGn4lAt
-          Qd9y21E23SiMJ5hYRyb/znzWJMMXBhgK6CElKHVlgV9+GygznMabT65L4uT235ZC
-          o8qeXI7rY/4ectsszoMFqnAejxJHH0ePIjYbDWq4URmnA1KHX38T89XR23+wS8tX
-          O1LwHUQPGVVVWr1bOSi0ueSFkl+y/PmgwTnvJIktxDEY5ck8u2SRfKfXjfY3qaQp
-          NcF81mIRzgvKvtrLVpP67UBhuhchQIIh4jaDacB9UOFLgHOsjMlIZN4FO2s7IxZp
-          LIiO18nqs4bFPGfuFlQ/QUMCAwEAAQ==
-          -----END PUBLIC KEY-----`, 
-          privatekey: `-----BEGIN PRIVATE KEY-----
-          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
-          vuAJApEY9YdcOZVAOZB4tC+RN9LNhQ==
-          -----END PRIVATE KEY-----`
-      },  
-      headers: {
-        'Content-Length': 4000,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-    };
-    request(options, (err, res, body) => {
-        console.log('err is ', err);
-        console.log('res is ', res);
-        console.log('body is ', body);
-        
+    var nodeEndpoint = `http://localhost:65340/file/upload`;
+
+    const data = JSON.stringify({
+        filename: 'postedFile.txt',
+        filecontents: 'filecontentshere',
+        publickey: `
+-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxg7ikluLtaMUE0CwRXEG
+XMv+FxT0zRG1LecfnE1wnGzlkecL15ss271DOJOYyY/F7QDW3LDx4BaYwU0jOwZn
+teF0x2fREoQCthX5eADNeRBJwnwwcDbYTNiD/01kKiGrxDWvblPdPbB8NRVI1Z2M
+bxvVBtkKMmIYnLLQbK3aqnGqjO+u8BaoUqo8nXFjrax1I3Fm9DwoRQLFI+M3iHIF
+yKlRy8rhs7c5RqAmK47yTgdxgaE9CuSKjeazxKjx9FAEWFB/H2tkwLeZqQVUjyAZ
+2KZ/9h8DFwaqJaXk8In+3TQKB6zbQIUr859p9Nb3kpqSGLl4uoAfxW0iha5LWWlO
+H3RF0aJrn38Kyzz4oJFF/h2bDgtLim0kmg/IyUxlDJoJhcc9+FvcN+aq13oGRIaM
+1U+ViokgDJzLykkXgfZzhNXhRE0/iqiy+Gd9G7Krqn08c4YdoBvpaRdtDnG6RmN3
+GGHqrN3DCsddP6jE2DRCztuf0CaJJ8pcS9dtLoWMnqzZggbS/4EAVSoJcTWmH9BV
+HrQzGqlQ2mDzSZNalzSi5ADn42qM9oX+vHxUNNrpzAXwTXr8VAbumpBRSxmq/wfX
+wuRLkwAczL4pGi5zL4DfJntYj4S31ynwCfLGxxgFzAkL/lAtk7ItBG/YkFYLLTfj
+9hZnWBfKmWMGxi/3/4HfRPsCAwEAAQ==
+-----END PUBLIC KEY-----`,
+        privatekey: `
+-----BEGIN PRIVATE KEY-----
+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
+zEKS3/ZNonEKaNsBXhxUDAxZ31IE
+-----END PRIVATE KEY-----`
+    
     });
+
+    const options = {
+        uri: nodeEndpoint,
+        path: '/file/upload',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': data.length
+        },
+        body: data
+    }
+
+
+    request(options, (err, res, body) => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(body);
+            // console.log('Registered with', node.uri);
+        }
+    });
+    
 });
 
 loopPost();

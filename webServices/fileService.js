@@ -12,31 +12,27 @@ var StartService = ((app) => {
         var privateKey = request.body.privatekey;
         console.log(`Received file ${filename}`);
 
-
-        var result = await ProcessRequest(filename, fileContents, publicKey, privateKey);
-        response.send(result.hash);
+        try
+        {
+            var result = await ProcessRequest(filename, fileContents, publicKey, privateKey);
+            response.send({Success: true, Hash: result.hash});
+        }catch(ex){
+            response.send({Success: false, ErrorMessage: ex.toString()});
+        }
     });
 
-    app.get('/file/get', (request, response) => {
-        blockController.GetFileFromBlock(request.query.filehash)
-            .then((block) => {
-                if (block.length > 0) {
-                    var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
-                        data: block
-                    });
-                    response.send({
-                        fileContents: jsonQueryResult.value.fileData.fileContents
-                    });
-                } else {
-                    response.send('File not found');
-                }
-            }, (error) => {
-                console.log(error);
-            })
-            .catch((ex) => {
-                console.log(ex);
-            })
-
+    app.get('/file/get', async(request, response) => {
+        var block = await blockController.GetFileFromBlock(request.query.filehash);
+        if (block.length > 0) {
+            var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
+                data: block
+            });
+            response.send({
+                fileContents: jsonQueryResult.value.fileData.fileContents
+            });
+        } else {
+            response.send('File not found');
+        }
     });
 
 });
@@ -44,6 +40,7 @@ var StartService = ((app) => {
 var ProcessRequest = (async (filename, fileContents, publicKey, privateKey) => {
     let buff = new Buffer.from(fileContents);
     let base64data = buff.toString('base64');
+    debugger;
     var signedMessage = await hash.SignMessage(privateKey, base64data);
     var result = await memPoolController.AddCodeFileToMemPool(filename, base64data, signedMessage, publicKey);
     return result;

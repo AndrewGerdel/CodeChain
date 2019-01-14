@@ -57,6 +57,9 @@ nodeService.StartService(app, isDebug, (() => {
   var mempoolService = require('./webServices/mempoolService.js');
   mempoolService.StartService(app, isDebug);
 
+  var keyService = require('./webServices/keyService');
+  keyService.StartService(app);
+
   //start listening for communications from users via a browser, or from other nodes on the network. 
   app.listen(port, () => {
     console.log('Server is up and running on port', port);
