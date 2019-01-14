@@ -68,23 +68,23 @@ var RegisterWithOtherNodes = (async (nodeList) => {
             headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
         };
         var counter = 0;
-            request(options, async (err, res, body) => {
-                if (err) {
-                    // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+        request(options, async (err, res, body) => {
+            if (err) {
+                // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                nodeRepository.DeleteNode(node.hash);
+            } else {
+                try {
+                    // console.log('Registered with', node.uri);
+                    var returnData = JSON.parse(body);
+                    var result = await nodeRepository.UpdateNodeRegistration(node, returnData);
+                } catch (ex) {
+                    console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
                     nodeRepository.DeleteNode(node.hash);
-                } else {
-                    try {
-                        // console.log('Registered with', node.uri);
-                        var returnData = JSON.parse(body);
-                        var result = await nodeRepository.UpdateNodeRegistration(node, returnData);
-                    } catch (ex) {
-                        console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
-                        nodeRepository.DeleteNode(node.hash);
-                    }
                 }
-            });
-
+            }
         });
+
+    });
     return true;
 });
 
@@ -136,10 +136,15 @@ var BroadcastBlockToNetwork = ((block) => {
                 };
                 request(options, (err, res, body) => {
                     if (err) {
-                        console.log(`Failed to send block ${block.BlockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
-                        //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
-                        nodeRepository.DeleteNode(node.hash)
-                            .catch((ex) => { reject(`Failed to delete node after block submit failed ${node.uri}: ${ex}`); });
+                        console.log(`Failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Retrying...`);
+                        //Retry after three seconds.  Then delete the node if it fails again
+                        setTimeout(() => {
+                            request(options, async (err2, res2, body2) => {
+                                //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
+                                console.log(`Second attempt failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                                nodeRepository.DeleteNode(node.hash);
+                            });
+                        }, 3000);
                     } else {
                         //it worked.  Nothing to report. 
                     }

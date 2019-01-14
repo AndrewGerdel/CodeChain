@@ -176,6 +176,7 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
         }
         nonce++;
         if (nonce >= Number.MAX_SAFE_INTEGER) {
+            console.log(`Nonce max value. Resetting nonce.`);
             nonce = 0;
             effectiveDate = new Date();
         }
