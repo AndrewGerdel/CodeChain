@@ -60,7 +60,7 @@ var AddNode = ((protocol, uri, port, uid) => {
 
 var RegisterWithOtherNodes = (async (nodeList) => {
     nodeList.forEach(node => {
-        
+
         var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
         var options = {
             url: nodeRegisterEndPoint,
@@ -68,25 +68,23 @@ var RegisterWithOtherNodes = (async (nodeList) => {
             headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
         };
         var counter = 0;
-        try {
-            request(options, (err, res, body) => {
+            request(options, async (err, res, body) => {
                 if (err) {
                     // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
                     nodeRepository.DeleteNode(node.hash);
                 } else {
-                    // console.log('Registered with', node.uri);
-                    var returnData = JSON.parse(body);
-                    nodeRepository.UpdateNodeRegistration(node, returnData)
-                        .then((result) => {
-                        })
-                        .catch((ex) => { reject(`Failed to update node ${node.uri}: ${ex}`); });
+                    try {
+                        // console.log('Registered with', node.uri);
+                        var returnData = JSON.parse(body);
+                        var result = await nodeRepository.UpdateNodeRegistration(node, returnData);
+                    } catch (ex) {
+                        console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
+                        nodeRepository.DeleteNode(node.hash);
+                    }
                 }
             });
-        } catch (ex) {
-            console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
-            nodeRepository.DeleteNode(node.hash);
-        }
-    });
+
+        });
     return true;
 });
 
