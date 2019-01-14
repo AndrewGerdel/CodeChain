@@ -1,11 +1,12 @@
 var request = require('request');
 
-var loopPost = (() => {
-    var nodeEndpoint = `http://localhost:65340/file/upload`;
+var loopPost = (async (port) => {
+    var nodeEndpoint = `http://localhost:${port}/file/upload`;
+    console.log('Endpoint is', nodeEndpoint);
 
     const data = JSON.stringify({
         filename: 'postedFile.txt',
-        filecontents: 'filecontentshere',
+        filecontents: 'The current time is ' + new Date(),
         publickey: `
 -----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxg7ikluLtaMUE0CwRXEG
@@ -74,7 +75,7 @@ ZC9rjdVBGJDXw4MJENHWHixKPyC0kyAeR9CLpjV6ldnUnFQAcV5aPJ3j6h/7kDa/
 TqbXAPCxaSzQOrxjJIOBhlmrGk4HUP57cZjjWbm2fXrEkN8ae8yN4gjUYwLpSkoK
 zEKS3/ZNonEKaNsBXhxUDAxZ31IE
 -----END PRIVATE KEY-----`
-    
+
     });
 
     const options = {
@@ -88,16 +89,23 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
         body: data
     }
 
-
     request(options, (err, res, body) => {
         if (err) {
-            console.log(err);
+            console.log('!!!!!!!!!!!!!!!! FAILURE:', err);
         } else {
             console.log(body);
-            // console.log('Registered with', node.uri);
         }
+
+        setTimeout((evenOdd) => {
+            if (port == 65340) {
+                port = 65341;
+            } else {
+                port = 65340;
+            }
+            loopPost(port);
+        }, 60000);
     });
-    
+
 });
 
-loopPost();
+loopPost(65340);
