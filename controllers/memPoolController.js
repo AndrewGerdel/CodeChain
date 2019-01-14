@@ -68,10 +68,11 @@ var ValidateMemPoolItems = (async (memPoolItems) => {
 
 var ValidateMemPoolItem = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
-
-    // var VerifyMessage = (async (publicKey, signatureHex, message) => {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.fileData.fileContents);
     return verified;
+  } else if (memPoolItem.type == mempoolItemTypes.MiningReward) {
+    //Mining rewards are verified in blockController, before this function even gets called. 
+    return true;
   } else {
     throw new Error(`Unknown memPoolItem type: ${memPoolItem.type}`);
   }

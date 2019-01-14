@@ -4,7 +4,7 @@ var nodeProcessLog = require('../loggers/nodeProcessLog');
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
-    //console.log('Unhandled Rejection at:', reason.stack || reason)
+    console.log('Error (unhandled rejection) in nodeProcess: ', reason);
 });
 
 var Timer_LoadAndRegisterNodes = (async () => {

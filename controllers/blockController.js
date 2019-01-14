@@ -286,17 +286,17 @@ var AppendBlockchain = ((blockchain) => {
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
     // console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
-    var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data) //validate each memPoolItem (filecontents, signedmessage, publickey)
+    var blockReward = await CalculateBlockReward(block.blockNumber);
+    if(block.data[0].type != mempoolFileTypes.MiningReward){
+        throw new Error("The first mempool item should be the block reward.");
+    }
+    if(block.data[0].blockReward != blockReward){
+        throw new Error("Invalid block reward.");
+    }
+    var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data); //validate each memPoolItem (filecontents, signedmessage, publickey)
     // console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();
     var calculatedDifficulty = await CalculateDifficulty(lastBlock);
-    var blockReward = await CalculateBlockReward(block.blockNumber);
-    if(block.memPoolItems[0].type != mempoolFileTypes.MiningReward){
-        throw new Error("First mempool item should be the block reward.");
-    }
-    if(block.memPoolItems[0].blockReward != blockReward){
-        throw new Error("Invalid block reward.");
-    }
     if (calculatedDifficulty != hexToDec(block.difficulty)) {
         throw new Error(`Invalid difficulty on incoming block. Incoming block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
     } else {
@@ -351,5 +351,6 @@ module.exports = {
     GetBlockHashesFromStartingBlock,
     GetBlock,
     GetBlockHash,
-    OrphanBlocks
+    OrphanBlocks,
+    CalculateBlockReward
 }
