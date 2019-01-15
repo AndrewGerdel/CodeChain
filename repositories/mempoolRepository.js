@@ -9,51 +9,50 @@ mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "deleted": 1 }, { unique: false });
 });
 
-var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
-  var promise = new Promise(async(resolve, reject) => {
-    var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
-    var memPool = new MemPool({
-      type: filetypes.File,
-      fileData: {
-        fileName: fileName,
-        fileContents: base64FileContents
-      },
-      signedMessage: signedMessage,
-      dateAdded: dateAdded,
-      publicKey: publicKey,
-      publicKeyHash: publicKeyHash.toString('hex'),
-      hash: hash,
-      deleted: false,
-      salt: salt
-    });
-    memPool.save();
-    resolve(memPool);
+var AddMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
+  var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+  var memPool = new MemPool({
+    type: filetypes.File,
+    fileData: {
+      fileName: fileName,
+      fileContents: base64FileContents
+    },
+    signedMessage: signedMessage,
+    dateAdded: dateAdded,
+    publicKey: publicKey,
+    publicKeyHash: publicKeyHash.toString('hex'),
+    hash: hash,
+    deleted: false,
+    salt: salt
   });
-  return promise;
+  memPool.save();
+  return memPool;
 });
 
-var AddTransactionMemPoolItem = ((publicKeyFrom, publicKeyTo, amount, signedMessage, publicKey, salt, dateAdded, hash) => {
-  var promise = new Promise(async(resolve, reject) => {
-    var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
-    var memPool = new MemPool({
-      type: filetypes.File,
-      transactionData: {
-        from: publicKeyFrom,
-        to: publicKeyTo,
-        amount: amount
-      },
-      signedMessage: signedMessage,
-      dateAdded: dateAdded,
-      publicKey: publicKey,
-      publicKeyHash: publicKeyHash.toString('hex'),
-      hash: hash,
-      deleted: false,
-      salt: salt
-    });
-    memPool.save();
-    resolve(memPool);
+var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicKey, salt, dateAdded, hash) => {
+  var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+  if (publicKeyHash.toString('hex') != from) {
+    //safety check
+    throw new Error(`Supplied data mismatch: From: ${from}, CalculatedHash: ${publicKeyHash.toString('hex')}`);
+  }
+
+  var memPool = new MemPool({
+    type: filetypes.Transaction,
+    transactionData: {
+      from: from,
+      to: to,
+      amount: amount
+    },
+    signedMessage: signedMessage,
+    dateAdded: dateAdded,
+    publicKey: publicKey,
+    publicKeyHash: from,
+    hash: hash,
+    deleted: false,
+    salt: salt
   });
-  return promise;
+  memPool.save();
+  return memPool;
 });
 
 //Gets all mempool items.
@@ -99,7 +98,7 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey, blockReward) =
     type: filetypes.MiningReward,
     dateAdded: dateAdded,
     publicKeyHash: publicKey,
-    hash: memPoolItemHash.toString('hex'), 
+    hash: memPoolItemHash.toString('hex'),
     blockReward: blockReward
   });
   return memPool;
@@ -110,5 +109,6 @@ module.exports = {
   GetMemPoolItems,
   AddMemPoolItem,
   GetMemPoolItem,
-  CreateMiningRewardMemPoolItem
+  CreateMiningRewardMemPoolItem,
+  AddTransactionMemPoolItem
 }

@@ -1,8 +1,6 @@
 var { Block } = require('../models/block.js');
-var { MongoClient } = require('mongodb');
 var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
-var connectionString = require('../config.json').database;
 
 mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "blockNumber": 1 }, { unique: true });
@@ -144,6 +142,20 @@ var MoveBlocksToOrphanCollection = (async (blocks) => {
     }
 });
 
+var GetBalance = (async(publicKey) => {
+    console.log(`!!!!!ANDREW, finish this code`);
+    
+    return 100;
+    // var db = await mongoose.GetDb();
+    // var blocks = await db.getCollection('blocks').find(
+    //     { $and :[ 
+    //         {"data.type": 4}, 
+    //         {"data.blockReward": 50}   
+    //     ]})
+    });
+
+    
+
 module.exports = {
     CreateNewBlock,
     GetLastBlock,
@@ -153,5 +165,6 @@ module.exports = {
     GetBlocks,
     GetBlock,
     GetBlockHashesFromStartingBlock,
-    MoveBlocksToOrphanCollection
+    MoveBlocksToOrphanCollection,
+    GetBalance
 }

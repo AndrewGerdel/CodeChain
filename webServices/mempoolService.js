@@ -16,9 +16,7 @@ var StartService = (async (app, isDebug) => {
                 if (mempoolItem.type == mempoolItemTypes.File) {
                     await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem);
                 }else if (mempoolItem.type == mempoolItemTypes.Transaction) {
-                    throw new Error("Andrew, start here. Finish function below. Also create endpoint for submitting transaction.").
-                    // todo
-                    // await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem);
+                    await mempoolController.addin(mempoolItem);
                 }
             } catch (ex) {
                 //If it failed, it probably was a unique index vioation. Either another node already sent

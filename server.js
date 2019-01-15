@@ -32,10 +32,10 @@ var nodeService = require('./webServices/nodeService.js');
 console.log('Syncing with the network...');
 
 //If we don't have a unique identifier saved in the config, generate/save one now. 
-if(!config.network.myUid || config.network.myUid == ''){
+if (!config.network.myUid || config.network.myUid == '') {
   config.network.myUid = crypto.randomBytes(16).toString('hex');
-  fs.writeFile('config.json', JSON.stringify(config, null, 2),  function(err) {
-    if(err){
+  fs.writeFile('config.json', JSON.stringify(config, null, 2), function (err) {
+    if (err) {
       console.log(`Error saving config: ${err}`);
     }
   });
@@ -59,6 +59,9 @@ nodeService.StartService(app, isDebug, (() => {
 
   var keyService = require('./webServices/keyService');
   keyService.StartService(app);
+
+  var transactService = require('./webServices/transactService');
+  transactService.StartService(app);
 
   //start listening for communications from users via a browser, or from other nodes on the network. 
   app.listen(port, () => {

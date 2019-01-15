@@ -1,7 +1,7 @@
 var crypto = require('crypto');
 const secp256k1 = require('secp256k1');
 
-var CreateSha256Hash = (async(input) => {
+var CreateSha256Hash = (async (input) => {
   var hash = await crypto.createHash("sha256").update(input).digest();
   return hash
 });
@@ -30,27 +30,24 @@ var VerifyMessage = (async (publicKey, signatureHex, message) => {
   return verified;
 });
 
-var GenerateKeyPair = (() => {
-  var promise = new Promise((resolve, reject) => {
-    crypto.generateKeyPair('rsa', {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem'
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem'
-      }
-    }, (err, publicKey, privateKey) => {
-      if (err) {
-        reject('Failed to generate kepair:' + err);
-      } else {
-        resolve({ PublicKey: publicKey, PrivateKey: privateKey });
-      }
-    });
+var GenerateKeyPair = (async () => {
+  crypto.generateKeyPair('rsa', {
+    modulusLength: 4096,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem'
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem'
+    }
+  }, (err, publicKey, privateKey) => {
+    if (err) {
+      reject('Failed to generate kepair:' + err);
+    } else {
+      return { PublicKey: publicKey, PrivateKey: privateKey };
+    }
   });
-  return promise;
 });
 
 var TestThis = (async () => {
@@ -60,11 +57,11 @@ var TestThis = (async () => {
   var verified = await VerifyMessage(keypair.PublicKey, signedMessage, message);
   var publicKeyHash = await CreateSha256Hash(keypair.PublicKey);
   var privateKeyHash = await CreateSha256Hash(keypair.PrivateKey);
-  
-  console.log('PublicKey is ',  keypair.PublicKey);
+
+  console.log('PublicKey is ', keypair.PublicKey);
   console.log('PrivateKey is ', keypair.PrivateKey);
-  
-  console.log('PublicKey is hash ',  publicKeyHash.toString('hex'));
+
+  console.log('PublicKey is hash ', publicKeyHash.toString('hex'));
   console.log('PrivateKey is ', privateKeyHash.toString('hex'));
   console.log(`verified is ${verified}`);
 });
