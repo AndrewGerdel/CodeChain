@@ -150,12 +150,11 @@ var BroadcastBlockToNetwork = (async(block) => {
     });
 });
 
-var ImportLongestBlockchain = (async (callback) => {
+var ImportLongestBlockchain = (async () => {
     var lastBlock = await blockController.GetLastBlock();
     if (!lastBlock || lastBlock.length == 0) {
         lastBlock = await blockController.CreateGenesisBlock();
     }
-    var blockNumber = 0;
     if (lastBlock && lastBlock.length > 0) {
         blockNumber = lastBlock[0].blockNumber;
     }
