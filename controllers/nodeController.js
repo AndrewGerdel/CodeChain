@@ -123,42 +123,38 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
     });
     return promise;
 });
-
-var BroadcastBlockToNetwork = ((block) => {
-    GetAllNodesExludingMe()
-        .then((nodes) => {
-            nodes.forEach((node) => {
-                var postUrl = `${node.protocol}://${node.uri}:${node.port}/block/add`;
-                var options = {
-                    url: postUrl,
-                    method: 'POST',
-                    headers: { block: JSON.stringify(block) }
-                };
-                request(options, (err, res, body) => {
-                    if (err) {
-                        console.log(`Failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Retrying...`);
-                        //Retry after three seconds.  Then delete the node if it fails again
-                        setTimeout(() => {
-                            request(options, async (err2, res2, body2) => {
-                                //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
-                                console.log(`Second attempt failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
-                                nodeRepository.DeleteNode(node.hash);
-                            });
-                        }, 3000);
-                    } else {
-                        //it worked.  Nothing to report. 
-                    }
-                });
-            });
+var BroadcastBlockToNetwork = (async(block) => {
+    var nodes = await GetAllNodesExludingMe();
+    nodes.forEach((node) => {
+        var postUrl = `${node.protocol}://${node.uri}:${node.port}/block/add`;
+        var options = {
+            url: postUrl,
+            method: 'POST',
+            headers: { block: JSON.stringify(block) }
+        };
+        request(options, (err, res, body) => {
+            if (err) {
+                console.log(`Failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Retrying...`);
+                //Retry after three seconds.  Then delete the node if it fails again
+                setTimeout(() => {
+                    request(options, async (err2, res2, body2) => {
+                        //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
+                        console.log(`Second attempt failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                        nodeRepository.DeleteNode(node.hash);
+                    });
+                }, 3000);
+            } else {
+                //it worked.  Nothing to report. 
+            }
         });
+    });
 });
 
-var ImportLongestBlockchain = (async (callback) => {
+var ImportLongestBlockchain = (async () => {
     var lastBlock = await blockController.GetLastBlock();
     if (!lastBlock || lastBlock.length == 0) {
         lastBlock = await blockController.CreateGenesisBlock();
     }
-    var blockNumber = 0;
     if (lastBlock && lastBlock.length > 0) {
         blockNumber = lastBlock[0].blockNumber;
     }
@@ -175,9 +171,13 @@ var ImportLongestBlockchain = (async (callback) => {
             if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 6) {
                 var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
                 console.log(`Orphaning all blocks after ${lastMatchingBlockNumber}`);
+                console.log(1);
+                
                 await OrphanLocalBlocks(lastMatchingBlockNumber);
+                console.log(2);
                 //Now that the bad blocks have been removed, immediately get blocks from the longest node and append them, so we can become current again. 
                 GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
+                console.log(3);
             }
         }
     }

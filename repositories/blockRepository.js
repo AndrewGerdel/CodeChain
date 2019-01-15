@@ -129,14 +129,18 @@ var GetFileFromBlock = ((filehash) => {
 });
 
 var MoveBlocksToOrphanCollection = (async (blocks) => {
-    var db = await mongoose.GetDb();
-    await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
-        throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
-    });
-    for (i = 0; i < blocks.length; i++) {
-        db.collection('blocks').deleteOne({ _id: blocks[i]._id }).catch((ex) => {
-            throw new Error('Failed to remove orphaned block: ' + ex);
-        })
+    if (blocks.length > 0) {
+        var db = await mongoose.GetDb();
+        await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
+            console.log('Failed to add blocks to orphanedBlocks. Error: ' + ex); //shouldn't the error be caught/logged without this?
+            throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
+        });
+        for (i = 0; i < blocks.length; i++) {
+            db.collection('blocks').deleteOne({ _id: blocks[i]._id }).catch((ex) => {
+                console.log('Failed to remove orphaned block.  Error: ' + ex);
+                throw new Error('Failed to remove orphaned block: ' + ex);
+            })
+        }
     }
 });
 

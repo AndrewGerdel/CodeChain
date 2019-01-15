@@ -45,9 +45,8 @@ var RetrieveBlockchainFromLongestNode = (async () => {
     if (!nodes || nodes.length < 1) {
         return;
     } else {
-        var longestNode = await nodeController.ImportLongestBlockchain((() => {
-            return longestNode;
-        }));
+        var longestNode = await nodeController.ImportLongestBlockchain();
+        return longestNode;
     }
 });
 

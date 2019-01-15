@@ -57,9 +57,8 @@ var CreateGenesisBlock = ((lastBlock) => {
             var nonce = 0;
             var effectiveDate = new Date('1/1/2000');
             var mempoolItems = [];
-            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + 'None';
+            var hashInput = 'The Genesis Block';
             var hash = crypto.createHmac('sha256', hashInput).digest('hex');
-            var endingDateTime = new Date();
             var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target
             var genesisDifficulty = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
             var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), genesisDifficulty);
@@ -288,10 +287,10 @@ var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
     // console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
     var blockReward = await CalculateBlockReward(block.blockNumber);
-    if(block.data[0].type != mempoolFileTypes.MiningReward){
+    if (block.data[0].type != mempoolFileTypes.MiningReward) {
         throw new Error("The first mempool item should be the block reward.");
     }
-    if(block.data[0].blockReward != blockReward){
+    if (block.data[0].blockReward != blockReward) {
         throw new Error("Invalid block reward.");
     }
     var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data); //validate each memPoolItem (filecontents, signedmessage, publickey)
