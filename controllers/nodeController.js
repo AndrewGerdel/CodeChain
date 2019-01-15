@@ -185,7 +185,9 @@ var ImportLongestBlockchain = (async (callback) => {
 });
 
 var OrphanLocalBlocks = (async (lastMatchingBlockNumber) => {
+    console.log(1.1);
     var blocks = await blockController.GetBlocksFromStartingBlock(lastMatchingBlockNumber);
+    console.log(1.2);
     await blockController.OrphanBlocks(blocks);
 });
 
