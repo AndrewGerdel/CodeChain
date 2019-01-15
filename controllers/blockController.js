@@ -57,13 +57,10 @@ var CreateGenesisBlock = ((lastBlock) => {
             var nonce = 0;
             var effectiveDate = new Date('1/1/2000');
             var mempoolItems = [];
-            var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + 'None';
+            var hashInput = 'The Genesis Block';
             var hash = crypto.createHmac('sha256', hashInput).digest('hex');
-            var endingDateTime = new Date();
             var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target
             var genesisDifficulty = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-            // var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty) + previousBlock.blockHash;
-            // var newBlock = await blockRepository.CreateNewBlock(hash, targetBlockNumber, previousBlock.blockHash, mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), decToHex(difficulty));
             var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), genesisDifficulty);
             lastBlock.push(newBlock);
             resolve(lastBlock);
