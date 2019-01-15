@@ -134,12 +134,14 @@ var MoveBlocksToOrphanCollection = (async (blocks) => {
     console.log("1.2.2");
     await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
         console.log("1.2.2.1");
+        console.log('Failed to add blocks to orphanedBlocks. Error: ' + ex); //shouldn't the error be caught/logged?
         throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
     });
     console.log("1.2.3");
     for (i = 0; i < blocks.length; i++) {
         db.collection('blocks').deleteOne({ _id: blocks[i]._id }).catch((ex) => {
             console.log("1.2.3.1");
+            console.log('Failed to remove orphaned block.  Error: ' + ex);
             throw new Error('Failed to remove orphaned block: ' + ex);
         })
     }
