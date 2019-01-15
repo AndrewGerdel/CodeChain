@@ -129,15 +129,22 @@ var GetFileFromBlock = ((filehash) => {
 });
 
 var MoveBlocksToOrphanCollection = (async (blocks) => {
+    console.log("1.2.1");
     var db = await mongoose.GetDb();
+    console.log("1.2.2");
     await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
+        console.log("1.2.2.1");
         throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
     });
+    console.log("1.2.3");
     for (i = 0; i < blocks.length; i++) {
         db.collection('blocks').deleteOne({ _id: blocks[i]._id }).catch((ex) => {
+            console.log("1.2.3.1");
             throw new Error('Failed to remove orphaned block: ' + ex);
         })
     }
+    console.log("1.2.4");
+
 });
 
 module.exports = {
