@@ -24,7 +24,7 @@ var StartService = ((app, isDebug, callback) => {
         var remoteUid = req.headers.remoteuid;
         // console.log(`Received registration request from ${remoteProtocol}://${ip}:${remotePort}`);
         var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}${remoteUid}`);
-        nodeController.GetNode(hash.toString('hex'))
+        nodeController.GetNode(remoteUid)
             .then((result) => {
                 if (result.length == 0) {
                     nodeController.AddNode(remoteProtocol, ip, remotePort, remoteUid);

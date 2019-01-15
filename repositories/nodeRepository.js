@@ -28,11 +28,11 @@ var GetAllNodes = (async () => {
     return nodes;
 });
 
-var GetNode = ((hash) => {
+var GetNode = ((uid) => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
             .then((db) => {
-                var nodes = db.collection('nodes').find({ hash: hash }).toArray();
+                var nodes = db.collection('nodes').find({ uid: uid }).toArray();
                 resolve(nodes);
             }, (err) => {
                 reject(err);
@@ -58,7 +58,7 @@ var GetNodeWithLongestChain = (() => {
 
 var AddNode = (async (protocol, uri, port, uid) => {
     var hash = await hashUtil.CreateSha256Hash(`${protocol}${uri}${port}${uid}`);
-    var foundNode = await GetNode(hash);
+    var foundNode = await GetNode(uid);
     if (foundNode.length == 0) {
         nodeProcessLog.WriteLog(`Adding node: ${protocol}://${uri}:${port} (${uid})`);
         var newNode = new Node({

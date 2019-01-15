@@ -28,9 +28,9 @@ var GetAllNodes = (async () => {
 });
 
 
-var GetNode = ((hash) => {
+var GetNode = ((uid) => {
     var promise = new Promise((resolve, reject) => {
-        nodeRepository.GetNode(hash)
+        nodeRepository.GetNode(uid)
             .then((node) => {
                 resolve(node);
             }, (err) => {
@@ -103,8 +103,7 @@ var GetNodesFromRemoteNodes = ((nodeList) => {
                         var nodesReceived = JSON.parse(body);
                         // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
                         nodesReceived.forEach(async (node) => {
-                            var hash = await hashUtil.CreateSha256Hash(`${node.protocol}${node.uri}${node.port}${node.uid}`);
-                            nodeRepository.GetNode(hash.toString('hex'))
+                            nodeRepository.GetNode(node.uid)
                                 .then((nodesFromDb) => {
                                     if (nodesFromDb.length == 0) {
                                         nodeRepository.AddNode(node.protocol, node.uri, node.port, node.uid);
