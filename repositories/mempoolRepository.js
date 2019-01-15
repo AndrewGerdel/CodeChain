@@ -32,6 +32,29 @@ var AddMemPoolItem = ((fileName, base64FileContents, signedMessage, publicKey, s
   return promise;
 });
 
+var AddTransactionMemPoolItem = ((publicKeyFrom, publicKeyTo, amount, signedMessage, publicKey, salt, dateAdded, hash) => {
+  var promise = new Promise(async(resolve, reject) => {
+    var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+    var memPool = new MemPool({
+      type: filetypes.File,
+      transactionData: {
+        from: publicKeyFrom,
+        to: publicKeyTo,
+        amount: amount
+      },
+      signedMessage: signedMessage,
+      dateAdded: dateAdded,
+      publicKey: publicKey,
+      publicKeyHash: publicKeyHash.toString('hex'),
+      hash: hash,
+      deleted: false,
+      salt: salt
+    });
+    memPool.save();
+    resolve(memPool);
+  });
+  return promise;
+});
 
 //Gets all mempool items.
 var GetMemPoolItems = (() => {

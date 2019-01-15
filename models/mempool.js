@@ -17,6 +17,22 @@ var MemPool = mongoose.model('MemPool', {
       trim: true
     }
   },  
+  transactionData: {
+    from: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    to: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    amount: {
+      type: Number,
+      required: false,
+    }
+  },  
   publicKey: {
     type: String,
     required: true,

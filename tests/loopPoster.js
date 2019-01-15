@@ -1,14 +1,13 @@
 var request = require('request');
 
-var loopPost = (async (port) => {
-    var nodeEndpoint = `http://localhost:${port}/file/upload`;
+var loopPost = (async (nodeEndpoint) => {
+    
     console.log('Endpoint is', nodeEndpoint);
 
     const data = JSON.stringify({
         filename: 'postedFile.txt',
         filecontents: 'The current time is ' + new Date(),
-        publickey: `
------BEGIN PUBLIC KEY-----
+        publickey: `-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxg7ikluLtaMUE0CwRXEG
 XMv+FxT0zRG1LecfnE1wnGzlkecL15ss271DOJOYyY/F7QDW3LDx4BaYwU0jOwZn
 teF0x2fREoQCthX5eADNeRBJwnwwcDbYTNiD/01kKiGrxDWvblPdPbB8NRVI1Z2M
@@ -22,8 +21,7 @@ HrQzGqlQ2mDzSZNalzSi5ADn42qM9oX+vHxUNNrpzAXwTXr8VAbumpBRSxmq/wfX
 wuRLkwAczL4pGi5zL4DfJntYj4S31ynwCfLGxxgFzAkL/lAtk7ItBG/YkFYLLTfj
 9hZnWBfKmWMGxi/3/4HfRPsCAwEAAQ==
 -----END PUBLIC KEY-----`,
-        privatekey: `
------BEGIN PRIVATE KEY-----
+        privatekey: `-----BEGIN PRIVATE KEY-----
 MIIJQQIBADANBgkqhkiG9w0BAQEFAASCCSswggknAgEAAoICAQDGDuKSW4u1oxQT
 QLBFcQZcy/4XFPTNEbUt5x+cTXCcbOWR5wvXmyzbvUM4k5jJj8XtANbcsPHgFpjB
 TSM7Bme14XTHZ9EShAK2Ffl4AM15EEnCfDBwNthM2IP/TWQqIavENa9uU909sHw1
@@ -97,15 +95,15 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
         }
 
         setTimeout((evenOdd) => {
-            if (port == 65340) {
-                port = 65341;
+            if (nodeEndpoint == "http://localhost:65340/file/upload") {
+                nodeEndpoint = "http://23.99.177.29/file/upload";
             } else {
-                port = 65340;
+                nodeEndpoint = "http://localhost:65340/file/upload";
             }
-            loopPost(port);
+            loopPost(nodeEndpoint);
         }, 60000);
     });
 
 });
 
-loopPost(65340);
+loopPost('http://localhost:65340/file/upload');

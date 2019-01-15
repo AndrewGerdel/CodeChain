@@ -19,6 +19,20 @@ var AddIncomingCodeFileToMemPool = (async (memPoolItem) => {
 });
 
 //Adds a file to the mempool.
+var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
+
+  //todo: check the balance of the sender.
+
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.transactionData);
+  if (!verified) {
+    throw new Error("Invalid signed message");
+  }
+  var saveResult = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount, memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash);
+  BroadcastMempoolItemToRandomNodes(memPoolItem);
+  return saveResult;
+});
+
+//Adds a file to the mempool.
 var AddCodeFileToMemPool = (async (fileName, base64FileContents, signedMessage, publicKey) => {
   var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, base64FileContents);
   if (!verified) {
