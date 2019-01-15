@@ -189,6 +189,7 @@ var OrphanLocalBlocks = (async (lastMatchingBlockNumber) => {
     var blocks = await blockController.GetBlocksFromStartingBlock(lastMatchingBlockNumber);
     console.log(1.2);
     await blockController.OrphanBlocks(blocks);
+    console.log(1.3);
 });
 
 var FindWhereBlockchainsDiffer = (async (node, lastBlock) => {
