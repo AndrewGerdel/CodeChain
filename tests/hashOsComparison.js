@@ -8,4 +8,6 @@ var mempoolItems = [];
 var hashInput = nonce + effectiveDate.toISOString() + JSON.stringify(mempoolItems) + 'None';
 var hash = crypto.createHmac('sha256', hashInput).digest('hex');
 
+console.log('effectivedate string is', effectiveDate.toISOString() );
+
 console.log('The hash is', hash);
