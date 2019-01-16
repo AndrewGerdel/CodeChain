@@ -3,8 +3,9 @@ var StartService = ((app) => {
 
     app.get('/keys/get', async (request, response) => {
         var keypair = await hash.GenerateKeyPair();
-        response.send(keypair);
-        // response.send({ PublicKey: keypair.publicKey, PrivateKey: keypair.privateKey })
+        debugger;
+        //response.send(keypair);
+         response.send({Note: "The keys below contain escaped newline characters that should be replaced with new lines.", PublicKey: keypair.publicKey, PrivateKey: keypair.privateKey });
     });
 
 });

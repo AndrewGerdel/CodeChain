@@ -16,7 +16,7 @@ var MemPool = mongoose.model('MemPool', {
       required: false,
       trim: true
     }
-  },  
+  },
   transactionData: {
     from: {
       type: String,
@@ -32,7 +32,7 @@ var MemPool = mongoose.model('MemPool', {
       type: Number,
       required: false,
     }
-  },  
+  },
   publicKey: {
     type: String,
     required: true,
@@ -66,16 +66,16 @@ var MemPool = mongoose.model('MemPool', {
     required: true,
     trim: true
   },
-  deleted: {
-    type: Boolean
-  },
   salt: {
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
+  deleted: {
+    type: Boolean
+  }
 });
 
 module.exports = {
-  MemPool : MemPool
+  MemPool: MemPool
 }

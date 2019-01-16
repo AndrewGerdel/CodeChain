@@ -83,6 +83,7 @@ function StartOrForkProcess(isDebug) {
     if (isDebug) {
       //Run the backend block processes on a child thread with inspect-brk.
       //NOTE: In chrome, 'Open dedicated DevTools for Node'.  Add localhost:7778 and localhost:7779
+      console.log(`Launching block process attached to debugger on port 7779.`);
       const { fork } = require('child_process');
       const forked = fork('processServices/blockProcess.js', [], { execArgv: ['--inspect-brk=7779'] });
     } else {

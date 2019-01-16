@@ -1,3 +1,5 @@
+//Not used currently.  May use pastebin to store a list of active nodes, for when brand new nodes join the network.
+
 const request = require("request");
 request("https://pastebin.com/raw/9fEBvGFz", { json: true }, (err, res, body) => {
 if (err) { return console.log(err); }

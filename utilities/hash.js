@@ -1,5 +1,4 @@
 var crypto = require('crypto');
-const secp256k1 = require('secp256k1');
 
 var CreateSha256Hash = (async (input) => {
   var hash = await crypto.createHash("sha256").update(input).digest();
@@ -31,7 +30,8 @@ var VerifyMessage = (async (publicKey, signatureHex, message) => {
 });
 
 var GenerateKeyPair = (async () => {
-  crypto.generateKeyPair('rsa', {
+  debugger;
+  var abc = crypto.generateKeyPairSync('rsa', {
     modulusLength: 4096,
     publicKeyEncoding: {
       type: 'spki',
@@ -41,32 +41,17 @@ var GenerateKeyPair = (async () => {
       type: 'pkcs8',
       format: 'pem'
     }
-  }, (err, publicKey, privateKey) => {
-    if (err) {
-      reject('Failed to generate kepair:' + err);
-    } else {
-      return { PublicKey: publicKey, PrivateKey: privateKey };
-    }
   });
+  return abc;
+  //, (err, publicKey, privateKey) => {
+  //   if (err) {
+  //     reject('Failed to generate kepair:' + err);
+  //   } else {
+  //     return { PublicKey: publicKey, PrivateKey: privateKey };
+  //   }
+  // });
 });
 
-var TestThis = (async () => {
-  var keypair = await GenerateKeyPair();
-  var message = "This is my message";
-  var signedMessage = await SignMessage(keypair.PrivateKey, message);
-  var verified = await VerifyMessage(keypair.PublicKey, signedMessage, message);
-  var publicKeyHash = await CreateSha256Hash(keypair.PublicKey);
-  var privateKeyHash = await CreateSha256Hash(keypair.PrivateKey);
-
-  console.log('PublicKey is ', keypair.PublicKey);
-  console.log('PrivateKey is ', keypair.PrivateKey);
-
-  console.log('PublicKey is hash ', publicKeyHash.toString('hex'));
-  console.log('PrivateKey is ', privateKeyHash.toString('hex'));
-  console.log(`verified is ${verified}`);
-});
-
-//  TestThis();
 
 module.exports = {
   CreateSha256Hash,

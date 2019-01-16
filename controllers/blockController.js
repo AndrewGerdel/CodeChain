@@ -138,6 +138,7 @@ function DifficultyAsHumanReadable(difficulty) {
     // console.log(`as hex string ${difficultyAsHexString}`);
     return 80 - difficultyAsHexString.length;
 }
+
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
     let targetBlockNumber = previousBlock.blockNumber + 1;
@@ -210,45 +211,19 @@ var GetBlockHash = (async (blockNumber) => {
     }
 });
 
-var GetBlocksFromStartingBlock = ((startingBlock) => {
-    var promise = new Promise((resolve, reject) => {
-        blockRepository.GetBlocksFromStartingBlock(startingBlock)
-            .then((blocks) => {
-                resolve(blocks);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetBlocksFromStartingBlock = (async (startingBlock) => {
+    var blocks = await blockRepository.GetBlocksFromStartingBlock(startingBlock);
+    return blocks;
 });
 
-var GetBlockHashesFromStartingBlock = ((startingBlock) => {
-    var promise = new Promise((resolve, reject) => {
-        blockRepository.GetBlockHashesFromStartingBlock(startingBlock)
-            .then((blocks) => {
-                resolve(blocks);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
+    var blocks = await blockRepository.GetBlockHashesFromStartingBlock(startingBlock);
+    return blocks;
 });
 
-
-
-var GetFileFromBlock = ((filehash) => {
-    var promise = new Promise((resolve, reject) => {
-        blockRepository.GetFileFromBlock(filehash)
-            .then((res) => {
-                resolve(res);
-            }, (err) => {
-                reject(err);
-            })
-            .catch((ex) => {
-                reject(ex);
-            })
-    });
-    return promise;
+var GetFileFromBlock = (async (filehash) => {
+    var file = await blockRepository.GetFileFromBlock(filehash);
+    return file;
 });
 
 var ValidateBlockHash = (async (block) => {
@@ -267,20 +242,9 @@ var AddBlock = (async (block) => {
 });
 
 //appends a collection of blocks to the existing blockchain.
-var AppendBlockchain = ((blockchain) => {
-    var promise = new Promise((resolve, reject) => {
-        GetLastBlock()
-            .then((lastBlockResult) => {
-                var lastBlock = lastBlockResult[0];
-
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var AppendBlockchain = (async (blockchain) => {
+    var lastBlockResult = await GetLastBlock();
 });
-
-
 
 //Validates the block and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
@@ -316,22 +280,6 @@ var ValidateAndAddIncomingBlock = (async (block) => {
     }
 });
 
-//Validates JUST the block.  Does NOT validate that it fits on the end of the chain. 
-var ValidateBlock = (async (block) => {
-    var hashValidationResult = await ValidateBlockHash(block);
-    console.log(`Successfully validated block: ${block.blockNumber}`);
-    var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data) //validate each memPoolItem (filecontents, signedmessage, publickey)
-    console.log(`Successfully validated memPoolItems on block ${block.blockNumber}`);
-    //get the block that's right before this one. 
-    var previousBlock = await GetBlock(block.blockNumber - 1);
-    var calculatedDifficulty = await CalculateDifficulty(previousBlock);
-    if (calculatedDifficulty != hexToDec(block.difficulty)) {
-        throw new Error(`Invalid difficulty on block. Block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
-    } else {
-        console.log(`Successfully validated difficulty on block`);
-    }
-});
-
 var OrphanBlocks = (async (blocks) => {
     await blockRepository.MoveBlocksToOrphanCollection(blocks);
 });
@@ -347,7 +295,6 @@ module.exports = {
     GetBlocksFromStartingBlock,
     ValidateAndAddIncomingBlock,
     CreateGenesisBlock,
-    ValidateBlock,
     GetBlockHashesFromStartingBlock,
     GetBlock,
     GetBlockHash,

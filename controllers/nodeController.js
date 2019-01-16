@@ -3,16 +3,7 @@ var nodeRepository = require('../repositories/nodeRepository');
 var request = require('request');
 var requestPromise = require('request-promise');
 var config = require('../config.json');
-var hashUtil = require('../utilities/hash.js');
 var blockController = require('./blockController.js');
-
-var GetAllNodesExludingMe = (() => {
-    var promise = new Promise(async (resolve, reject) => {
-        var nodes = await nodeRepository.GetAllNodesExludingMe();
-        resolve(nodes);
-    });
-    return promise;
-});
 
 var GetAllNodes = (async () => {
     var nodes = await nodeRepository.GetAllNodes();
@@ -27,40 +18,23 @@ var GetAllNodes = (async () => {
     }
 });
 
-
-var GetNode = ((uid) => {
-    var promise = new Promise((resolve, reject) => {
-        nodeRepository.GetNode(uid)
-            .then((node) => {
-                resolve(node);
-            }, (err) => {
-                reject('An error occurred: ' + err);
-            })
-            .catch((ex) => {
-                reject(ex);
-            });
-    });
-    return promise;
+var GetAllNodesExludingMe = (async () => {
+    var nodes = await nodeRepository.GetAllNodesExludingMe();
+    return nodes;
 });
 
-var AddNode = ((protocol, uri, port, uid) => {
-    var promise = new Promise((resolve, reject) => {
-        nodeRepository.AddNode(protocol, uri, port, uid)
-            .then((res) => {
-                resolve(res);
-            }, (error) => {
-                reject('An error occurred:' + error);
-            })
-            .catch((ex) => {
-                reject(ex);
-            });
-    });
-    return promise;
+var GetNode = (async (uid) => {
+    var node = await nodeRepository.GetNode(uid);
+    return node;
+});
+
+var AddNode = (async (protocol, uri, port, uid) => {
+    var result = await nodeRepository.AddNode(protocol, uri, port, uid);
+    return result;
 });
 
 var RegisterWithOtherNodes = (async (nodeList) => {
     nodeList.forEach(node => {
-
         var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/register';
         var options = {
             url: nodeRegisterEndPoint,
@@ -88,41 +62,36 @@ var RegisterWithOtherNodes = (async (nodeList) => {
     return true;
 });
 
-var GetNodesFromRemoteNodes = ((nodeList) => {
-    var promise = new Promise((resolve, reject) => {
-        nodeList.forEach(node => {
-            var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/get';
-            request(nodeRegisterEndPoint, {}, (err, res, body) => {
-                if (err) {
-                    // console.log(`Failed to get nodes from ${node.uri}:${node.port}, deleting`);
-                    nodeRepository.DeleteNode(node.hash)
-                        .then((result) => { })
-                        .catch((ex) => { reject(`Failed to delete node ${node.uri}: ${ex}`); });
-                } else {
-                    try {
-                        var nodesReceived = JSON.parse(body);
-                        // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
-                        nodesReceived.forEach(async (node) => {
-                            nodeRepository.GetNode(node.uid)
-                                .then((nodesFromDb) => {
-                                    if (nodesFromDb.length == 0) {
-                                        nodeRepository.AddNode(node.protocol, node.uri, node.port, node.uid);
-                                    }
-                                })
-                        });
-                    } catch (error) {
-                        nodeRepository.DeleteNode(node.hash)
-                            .catch((ex) => { reject(`Failed to delete node... ${node.uri}: ${ex}`); });
-                        reject(error);
-                    }
+var GetNodesFromRemoteNodes = (async (nodeList) => {
+    nodeList.forEach(node => {
+        var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/get';
+        request(nodeRegisterEndPoint, {}, (err, res, body) => {
+            if (err) {
+                // console.log(`Failed to get nodes from ${node.uri}:${node.port}, deleting`);
+                nodeRepository.DeleteNode(node.hash);
+            } else {
+                try {
+                    var nodesReceived = JSON.parse(body);
+                    // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
+                    nodesReceived.forEach(async (node) => {
+                        nodeRepository.GetNode(node.uid)
+                            .then((nodesFromDb) => {
+                                if (nodesFromDb.length == 0) {
+                                    nodeRepository.AddNode(node.protocol, node.uri, node.port, node.uid);
+                                }
+                            })
+                    });
+                } catch (error) {
+                    console.log('Deleting node ', node.hash);
+                    nodeRepository.DeleteNode(node.hash);
                 }
-            });
+            }
         });
-        resolve('Requests sent to all nodes.');
     });
-    return promise;
+     return 'Requests sent to all nodes.';
 });
-var BroadcastBlockToNetwork = (async(block) => {
+
+var BroadcastBlockToNetwork = (async (block) => {
     var nodes = await GetAllNodesExludingMe();
     nodes.forEach((node) => {
         var postUrl = `${node.protocol}://${node.uri}:${node.port}/block/add`;
@@ -137,7 +106,6 @@ var BroadcastBlockToNetwork = (async(block) => {
                 //Retry after three seconds.  Then delete the node if it fails again
                 setTimeout(() => {
                     request(options, async (err2, res2, body2) => {
-                        //... or delete the node.  let's not delete the node.  Instead, just don't update the last registration datetime.  We'll clean them up later. 
                         console.log(`Second attempt failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
                         nodeRepository.DeleteNode(node.hash);
                     });
@@ -170,13 +138,9 @@ var ImportLongestBlockchain = (async () => {
             if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 6) {
                 var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
                 console.log(`Orphaning all blocks after ${lastMatchingBlockNumber}`);
-                console.log(1);
-                
                 await OrphanLocalBlocks(lastMatchingBlockNumber);
-                console.log(2);
                 //Now that the bad blocks have been removed, immediately get blocks from the longest node and append them, so we can become current again. 
                 GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
-                console.log(3);
             }
         }
     }

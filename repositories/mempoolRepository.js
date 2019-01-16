@@ -10,9 +10,11 @@ mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "signedMessageHash": 1 }, { unique: true });
 });
 
-var AddMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
+var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
   var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
+
+
   var memPool = new MemPool({
     type: filetypes.File,
     fileData: {
@@ -101,7 +103,7 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey, blockReward) =
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${publicKey}${dateAdded}${salt.toString('hex')}`);
   var signedMessageHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
   console.log('signedMessageHash is ', signedMessageHash.toString('hex'));
-  
+
   var memPool = new MemPool({
     type: filetypes.MiningReward,
     dateAdded: dateAdded,
@@ -116,7 +118,7 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey, blockReward) =
 module.exports = {
   DeleteMemPoolItems,
   GetMemPoolItems,
-  AddMemPoolItem,
+  AddCodeFileMemPoolItem,
   GetMemPoolItem,
   CreateMiningRewardMemPoolItem,
   AddTransactionMemPoolItem

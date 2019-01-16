@@ -15,16 +15,18 @@ var StartService = (async (app, isDebug) => {
             try {
                 if (mempoolItem.type == mempoolItemTypes.File) {
                     await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem);
-                }else if (mempoolItem.type == mempoolItemTypes.Transaction) {
-                    await mempoolController.addin(mempoolItem);
+                } else if (mempoolItem.type == mempoolItemTypes.Transaction) {
+                    await mempoolController.AddIncomingTransactionToMemPool(mempoolItem);
                 }
+                response.send("ok");
+
             } catch (ex) {
                 //If it failed, it probably was a unique index vioation. Either another node already sent
                 //this item, or it came thru with a solved block.
+                console.log(`Error in mempool/add: ${ex}`);
                 response.send('Failed');
             }
         }
-        response.send("ok");
     });
 });
 
