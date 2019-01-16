@@ -37,18 +37,12 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
         memPoolItems.push(miningReward);
         for (i = 0; i < memPoolItemsFromDb.length; i++) {
             var element = memPoolItemsFromDb[i];
-            if (element.type == mempoolFileTypes.File) {
-                var fileSizeBytes = (element.fileData.fileContents.length * 0.75) - 2;
-                sumFileSizeBytes += fileSizeBytes;
-                memPoolItems.push(memPoolItemsFromDb[i]);
-                if (sumFileSizeBytes >= maxBlockSizeBytes) {
-                    break;
-                }
+            var fileSizeBytes = (JSON.stringify(element).length * 0.75) - 2;
+            sumFileSizeBytes += fileSizeBytes;
+            memPoolItems.push(memPoolItemsFromDb[i]);
+            if (sumFileSizeBytes >= maxBlockSizeBytes) {
+                break;
             }
-            else if (element.type == mempoolFileTypes.Transaction) {
-throw new Error('todo');
-            }
-
         }//endfor
 
         var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);

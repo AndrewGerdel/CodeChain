@@ -7,10 +7,12 @@ var crypto = require('crypto');
 mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "hash": 1 }, { unique: true });
   db.collection("mempools").createIndex({ "deleted": 1 }, { unique: false });
+  db.collection("mempools").createIndex({ "signedMessageHash": 1 }, { unique: true });
 });
 
 var AddMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+  var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
   var memPool = new MemPool({
     type: filetypes.File,
     fileData: {
@@ -18,6 +20,7 @@ var AddMemPoolItem = (async (fileName, base64FileContents, signedMessage, public
       fileContents: base64FileContents
     },
     signedMessage: signedMessage,
+    signedMessageHash: signatureHash.toString('hex'),
     dateAdded: dateAdded,
     publicKey: publicKey,
     publicKeyHash: publicKeyHash.toString('hex'),
@@ -31,6 +34,7 @@ var AddMemPoolItem = (async (fileName, base64FileContents, signedMessage, public
 
 var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicKey, salt, dateAdded, hash) => {
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+  var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
   if (publicKeyHash.toString('hex') != from) {
     //safety check
     throw new Error(`Supplied data mismatch: From: ${from}, CalculatedHash: ${publicKeyHash.toString('hex')}`);
@@ -44,6 +48,7 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicK
       amount: amount
     },
     signedMessage: signedMessage,
+    signedMessageHash: signatureHash.toString('hex'),
     dateAdded: dateAdded,
     publicKey: publicKey,
     publicKeyHash: from,
@@ -94,10 +99,14 @@ var GetMemPoolItem = (async (hash) => {
 var CreateMiningRewardMemPoolItem = (async (dateAdded, publicKey, blockReward) => {
   var salt = crypto.randomBytes(16);
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${publicKey}${dateAdded}${salt.toString('hex')}`);
+  var signedMessageHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
+  console.log('signedMessageHash is ', signedMessageHash.toString('hex'));
+  
   var memPool = new MemPool({
     type: filetypes.MiningReward,
     dateAdded: dateAdded,
     publicKeyHash: publicKey,
+    signedMessageHash: signedMessageHash.toString('hex'), //meaningless, but required for the unique index
     hash: memPoolItemHash.toString('hex'),
     blockReward: blockReward
   });

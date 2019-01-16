@@ -8,7 +8,6 @@ var StartService = ((app) => {
 
     //create a signed transaction. Should be done from secure (preferably air-gapped) node as it requires the private key
     app.post('/transact/create', async (request, response) => {
-        debugger;
         try {
             var from = request.body.from;
             var to = request.body.to;
@@ -27,9 +26,6 @@ var StartService = ((app) => {
 
     //submit a signed transaction.  Should be done from online node
     app.post('/transact/submit', async (request, response) => {
-        debugger;
-
-        //todo
         try {
             var from = request.body.from;
             var to = request.body.to;
@@ -37,7 +33,7 @@ var StartService = ((app) => {
             var publicKey = request.body.publickey;
             var signedMessage = request.body.signedmessage;
             var result = await memPoolController.AddTransactionToMemPool(from, to, amount, signedMessage, publicKey);
-            response.send({ Success: true, Result: hash });
+            response.send({ Success: true, Result: result.hash });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }

@@ -40,7 +40,6 @@ var StartService = ((app) => {
 var ProcessRequest = (async (filename, fileContents, publicKey, privateKey) => {
     let buff = new Buffer.from(fileContents);
     let base64data = buff.toString('base64');
-    debugger;
     var signedMessage = await hash.SignMessage(privateKey, base64data);
     var result = await memPoolController.AddCodeFileToMemPool(filename, base64data, signedMessage, publicKey);
     return result;
