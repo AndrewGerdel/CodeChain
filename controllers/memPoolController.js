@@ -5,7 +5,7 @@ var nodeRepository = require('../repositories/nodeRepository.js');
 var mempoolItemTypes = require('../enums/mempoolFiletypes.js');
 var request = require('request');
 var config = require('../config.json');
-var blockRepositry = require('../repositories/blockRepository');
+var transactionRepository = require('../repositories/transactionRepository');
 
 //Adds a file to the mempool, from the fileService
 var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signedMessage, publicKey) => {
@@ -53,9 +53,9 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
   let base64data = buff.toString('base64');
   var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
   if (!verified) {
-    throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash );
+    throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
   }
-  var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount, 
+  var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount,
     memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem);
   return mempoolItem;
@@ -105,10 +105,17 @@ var ValidateMemPoolItem = (async (memPoolItem) => {
     let buff = new Buffer.from(`${memPoolItem.transactionData.from}${memPoolItem.transactionData.amount}${memPoolItem.transactionData.to}${memPoolItem.salt}`);
     let base64data = buff.toString('base64');
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
-
-    //Right here, let's check that the sender has enough funds.  
-
-    return verified;
+    if (verified == true) {
+      //let's check that the sender has enough funds.  
+      var balance = await transactionRepository.GetBalance(memPoolItem.publicKey);
+      if (balance < memPoolItem.transactionData.amount) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return false; //message was invalid
+    }
   } else {
     throw new Error(`Unknown memPoolItem type: ${memPoolItem.type}`);
   }

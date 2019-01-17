@@ -52,31 +52,17 @@ var AddBlock = (async (block) => {
 });
 
 //Gets the most recent block from the chain
-var GetBlocks = ((blockCount) => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(blockCount).toArray();
-                resolve(lastBlock);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetBlocks = (async (blockCount) => {
+    var db = await mongoose.GetDb();
+    var lastBlocks = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(blockCount).toArray();
+    return lastBlocks;
 });
 
 //Gets the most recent block from the chain
-var GetLastBlock = (() => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
-                resolve(lastBlock);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetLastBlock = (async () => {
+    var db = await mongoose.GetDb();
+    var lastBlock = db.collection('blocks').find().sort({ blockNumber: -1 }).limit(1).toArray();
+    return lastBlock;
 });
 
 //Gets the a block from the chain
@@ -86,44 +72,23 @@ var GetBlock = (async (blockNumber) => {
     return lastBlock;
 });
 
-var GetBlocksFromStartingBlock = ((startingBlock) => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }).sort({ blockNumber: 1 }).toArray();
-                resolve(blocks);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetBlocksFromStartingBlock = (async (startingBlock) => {
+    var db = await mongoose.GetDb();
+    var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }).sort({ blockNumber: 1 }).toArray();
+    return blocks;
 });
 
 
-var GetBlockHashesFromStartingBlock = ((startingBlock) => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }, { blockNumber: 1, blockHash: 1 }).sort({ blockNumber: 1 }).toArray();
-                resolve(blocks);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
+    var db = await mongoose.GetDb();
+    var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }, { blockNumber: 1, blockHash: 1 }).sort({ blockNumber: 1 }).toArray();
+    return blocks;
 });
 
-var GetFileFromBlock = ((filehash) => {
-    var promise = new Promise((resolve, reject) => {
-        mongoose.GetDb()
-            .then((db) => {
-                var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
-                resolve(lastBlock);
-            }, (err) => {
-                reject(err);
-            });
-    });
-    return promise;
+var GetFileFromBlock = (async (filehash) => {
+    var db = await mongoose.GetDb();
+    var lastBlock = db.collection('blocks').find({ 'data.hash': filehash }).sort({ blockNumber: -1 }).limit(1).toArray();
+    return lastBlock;
 });
 
 var MoveBlocksToOrphanCollection = (async (blocks) => {
@@ -142,19 +107,9 @@ var MoveBlocksToOrphanCollection = (async (blocks) => {
     }
 });
 
-var GetBalance = (async(publicKey) => {
-    console.log(`!!!!!ANDREW, finish this code`);
-    
-    return 100;
-    // var db = await mongoose.GetDb();
-    // var blocks = await db.getCollection('blocks').find(
-    //     { $and :[ 
-    //         {"data.type": 4}, 
-    //         {"data.blockReward": 50}   
-    //     ]})
-    });
 
-    
+
+
 
 module.exports = {
     CreateNewBlock,
@@ -165,6 +120,5 @@ module.exports = {
     GetBlocks,
     GetBlock,
     GetBlockHashesFromStartingBlock,
-    MoveBlocksToOrphanCollection,
-    GetBalance
+    MoveBlocksToOrphanCollection
 }
