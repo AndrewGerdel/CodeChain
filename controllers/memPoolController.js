@@ -56,7 +56,7 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
     throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
   }
   //let's check that the sender has enough funds.  
-  var balance = await transactionRepository.GetBalance(memPoolItem.publicKey);
+  var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
   if (balance < memPoolItem.transactionData.amount) {
     throw new Error("Insufficient balance.");
   }

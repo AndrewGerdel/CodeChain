@@ -26,7 +26,7 @@ var GetDb = (() => {
         }
         DB = client.db(connectionString.database);
         var end = new Date();
-        console.log(`${end-start}ms to open connection`);
+        // console.log(`${end-start}ms to open connection`);
         resolve(DB);
       });
     }

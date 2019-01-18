@@ -21,7 +21,7 @@ var GetBalance = (async (publicKey) => {
 
     console.log(`Total time: ${end - start}ms`);
 
-    console.log('finalSum ', finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3]);
+    // console.log('finalSum ', finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3]);
     return finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3];
 });
 
