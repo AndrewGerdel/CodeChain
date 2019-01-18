@@ -95,15 +95,15 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
         }
 
         setTimeout((evenOdd) => {
-            if (nodeEndpoint == "http://localhost:65340/file/upload") {
-                nodeEndpoint = "http://23.99.177.29/file/upload";
+            if (nodeEndpoint == "http://localhost:65340/file/createSubmitRequest") {
+                nodeEndpoint = "http://localhost:65340/file/createSubmitRequest";  //put your alternating url here. 
             } else {
-                nodeEndpoint = "http://localhost:65340/file/upload";
+                nodeEndpoint = "http://localhost:65340/file/createSubmitRequest";
             }
             loopPost(nodeEndpoint);
-        }, 60000);
+        }, 6000);
     });
 
 });
 
-loopPost('http://localhost:65340/file/upload');
+loopPost('http://localhost:65340/file/createSubmitRequest');
