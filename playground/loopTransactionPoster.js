@@ -45,7 +45,7 @@ var SubmitRequest = (async (createRequestResults, callback) => {
         salt: createRequestResults.Salt,
     });
 
-    debugger;
+    
     const options = {
         uri: nodeEndpoint,
         method: 'POST',

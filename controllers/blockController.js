@@ -232,7 +232,7 @@ var ValidateBlockHash = (async (block) => {
     if (hash == block.blockHash) {
         return (hash);
     } else {
-        throw new Error("Invalid hash. Validation failed.");
+        throw new Error("Invalid hash. Validation failed, block " + block.blockNumber);
     }
 });
 

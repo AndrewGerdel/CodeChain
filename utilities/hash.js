@@ -30,7 +30,6 @@ var VerifyMessage = (async (publicKey, signatureHex, message) => {
 });
 
 var GenerateKeyPair = (async () => {
-  debugger;
   var abc = crypto.generateKeyPairSync('rsa', {
     modulusLength: 4096,
     publicKeyEncoding: {

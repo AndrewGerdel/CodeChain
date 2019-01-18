@@ -92,6 +92,7 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
 var ValidateMemPoolItems = (async (memPoolItems) => {
   for (i = 0; i < memPoolItems.length; i++) {
     var verified = await ValidateMemPoolItem(memPoolItems[i]);
+    debugger;
     if (!verified) {
       throw new Error("Failed to verify mempoolitems: ", memPoolItems);
     }
@@ -112,7 +113,7 @@ var ValidateMemPoolItem = (async (memPoolItem) => {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
     if (verified == true) {
       //let's check that the sender has enough funds.  
-      var balance = await transactionRepository.GetBalance(memPoolItem.publicKey);
+      var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
       if (balance < memPoolItem.transactionData.amount) {
         return false;
       } else {
