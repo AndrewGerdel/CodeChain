@@ -262,7 +262,7 @@ var ValidateAndAddIncomingBlock = (async (block) => {
     var lastBlock = await GetLastBlock();
     var calculatedDifficulty = await CalculateDifficulty(lastBlock);
     if (calculatedDifficulty != hexToDec(block.difficulty)) {
-        throw new Error(`Invalid difficulty on incoming block. Incoming block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
+        throw new Error(`Invalid difficulty on incoming block ${block.blockNumber}. Incoming block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
     } else {
         // console.log(`Successfully validated difficulty on incoming block`);
     }
