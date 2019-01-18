@@ -55,6 +55,11 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
   if (!verified) {
     throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
   }
+  //let's check that the sender has enough funds.  
+  var balance = await transactionRepository.GetBalance(memPoolItem.publicKey);
+  if (balance < memPoolItem.transactionData.amount) {
+    throw new Error("Insufficient balance.");
+  }
   var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount,
     memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem);

@@ -18,12 +18,15 @@ var GetDb = (() => {
     if (DB) {
       resolve(DB);
     } else {
+      var start = new Date();
       MongoClient.connect(connectionString.host, { useNewUrlParser: true }, (error, client) => {
         if (error) {
           console.log('Unable to connect to Mongo');
           return;
         }
         DB = client.db(connectionString.database);
+        var end = new Date();
+        console.log(`${end-start}ms to open connection`);
         resolve(DB);
       });
     }

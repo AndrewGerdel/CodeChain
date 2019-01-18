@@ -1,11 +1,8 @@
-var mongoose1 = require('../db/mongoose.js');
-var mongoose2 = require('../db/mongoose.js');
-var mongoose3 = require('../db/mongoose.js');
-var mongoose4 = require('../db/mongoose.js');
+var mongoose = require('../db/mongoose.js');
 var mempoolItemTypes = require('../enums/mempoolFiletypes');
 let jsonQuery = require('json-query')
 
-mongoose1.GetDb().then((db) => {
+mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "data.type": 1, "data.transactionData.to": 1 }, { unique: false });
     db.collection("blocks").createIndex({ "data.type": 1, "data.transactionData.from": 1 }, { unique: false });
     db.collection("blocks").createIndex({ "data.type": 1, "data.publicKeyHash": 1 }, { unique: false });
@@ -24,15 +21,14 @@ var GetBalance = (async (publicKey) => {
 
     console.log(`Total time: ${end - start}ms`);
 
-    // console.log('final: ', finalResult);
-    console.log('finalSum ', finalResult[1] + finalResult[2] - finalResult[0]);
+    console.log('finalSum ', finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3]);
     return finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3];
 });
 
 var GetSumFrom = (async (publicKey) => {
     //Get all blocks that contain a transaction FROM this address. Loop through the transactions within each block and sum just the ones from this address.
+    var db = await mongoose.GetDb();
     var sum = 0;
-    var db = await mongoose1.GetDb();
     var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.Transaction }, { "data.transactionData.from": publicKey }] }).toArray();
     for (doc = 0; doc < blocks.length; doc++) {
         var documents = JSON.parse(JSON.stringify(blocks[doc]));
@@ -49,8 +45,8 @@ var GetSumFrom = (async (publicKey) => {
 
 var GetMempoolSumFrom = (async (publicKey) => {
     //Get all current memPoolItems from this address.  We don't need to worry about mempoolitems TO this address. We just want to be sure the sender isn't overspending.
+    var db = await mongoose.GetDb();
     var sum = 0;
-    var db = await mongoose2.GetDb();
     var mempoolItems = await db.collection('mempools').find({ $and: [{ "type": mempoolItemTypes.Transaction }, { "transactionData.from": publicKey }] }).toArray();
     for (itemCount = 0; itemCount < mempoolItems.length; itemCount++) {
         var data = JSON.parse(JSON.stringify(mempoolItems[itemCount]));
@@ -65,8 +61,8 @@ var GetMempoolSumFrom = (async (publicKey) => {
 
 var GetSumTo = (async (publicKey) => {
     //Get all blocks that contain a transaction TO this address. Loop through the transactions within each block and sum just the ones to this address.
+    var db = await mongoose.GetDb();
     var sum = 0;
-    var db = await mongoose3.GetDb();
     var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.Transaction }, { "data.transactionData.to": publicKey }] }).toArray();
     for (doc = 0; doc < blocks.length; doc++) {
         var documents = JSON.parse(JSON.stringify(blocks[doc]));
@@ -82,7 +78,7 @@ var GetSumTo = (async (publicKey) => {
 
 var GetMiningRewards = (async (publicKey) => {
     //Get all blocks that contain mining rewards for this address. 
-    var db = await mongoose4.GetDb();
+    var db = await mongoose.GetDb();
     var sum = 0;
     var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.MiningReward }, { "data.publicKeyHash": publicKey }] }).toArray();
     for (doc = 0; doc < blocks.length; doc++) {
@@ -101,5 +97,5 @@ module.exports = {
     GetBalance
 }
 
-GetBalance("cc98c75e4432207cafd02b2d1e02e5fdd44f008aaa3818db00c1c96f189bfc27_y");
+// GetBalance("cc98c75e4432207cafd02b2d1e02e5fdd44f008aaa3818db00c1c96f189bfc27_y");
 
