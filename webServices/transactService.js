@@ -16,13 +16,14 @@ var StartService = ((app) => {
             var salt = crypto.randomBytes(16).toString('hex');
             console.log(`Generating signed transaction for: ${from} sending ${amount} to ${to}.`);
 
-            //let's check that the sender has enough funds.  
+            //let's check that the sender has enough funds, as a courtesy
             var balance = await transactionRepository.GetBalance(from);
             if (balance < amount) {
                 response.send({ Success: false, ErrorMessage: "Insufficient balance" });
             } else {
                 let buff = new Buffer.from(`${from}${amount}${to}${salt}`);
                 let base64data = buff.toString('base64');
+                debugger;
                 var signedMessage = await hash.SignMessage(privateKey, base64data);
                 response.send({ Success: true, Signature: signedMessage, Salt: salt });
             }
@@ -41,7 +42,8 @@ var StartService = ((app) => {
             var signedMessage = request.body.signedmessage;
             var salt = request.body.salt;
 
-            //let's check that the sender has enough funds.  
+            //let's check that the sender has enough funds, as a courtesy. 
+            debugger;
             var balance = await transactionRepository.GetBalance(from);
             if (balance < amount) {
                 response.send({ Success: false, ErrorMessage: "Insufficient balance" });
@@ -54,6 +56,26 @@ var StartService = ((app) => {
         }
     });
 
+    app.get('/transact/getBalance', async (request, response) => {
+        try {
+            var address = request.query.address;
+            var balance = await transactionRepository.GetBalance(address);
+            response.send({ Success: true, Balance: balance });
+        } catch (ex) {
+            response.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+    });
+
+    app.get('/transact/getTransactions', async (request, response) => {
+        try {
+            var address = request.query.address;
+            debugger;
+            var transactions = await transactionRepository.GetTransactions(address);
+            response.send({ Success: true, Transactions: transactions });
+        } catch (ex) {
+            response.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+    });
 });
 
 module.exports = {

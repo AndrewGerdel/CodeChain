@@ -30,7 +30,7 @@ var VerifyMessage = (async (publicKey, signatureHex, message) => {
 });
 
 var GenerateKeyPair = (async () => {
-  var abc = crypto.generateKeyPairSync('rsa', {
+  var keyPair = crypto.generateKeyPairSync('rsa', {
     modulusLength: 4096,
     publicKeyEncoding: {
       type: 'spki',
@@ -41,14 +41,9 @@ var GenerateKeyPair = (async () => {
       format: 'pem'
     }
   });
-  return abc;
-  //, (err, publicKey, privateKey) => {
-  //   if (err) {
-  //     reject('Failed to generate kepair:' + err);
-  //   } else {
-  //     return { PublicKey: publicKey, PrivateKey: privateKey };
-  //   }
-  // });
+  var address = await CreateSha256Hash(keyPair.publicKey);
+  return { Address: address.toString('hex'), PublicKey: keyPair.publicKey, PrivateKey: keyPair.privateKey };
+
 });
 
 

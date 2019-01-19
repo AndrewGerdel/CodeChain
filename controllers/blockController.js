@@ -7,7 +7,7 @@ var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
 var config = require('../config.json');
 var mempoolFileTypes = require('../enums/mempoolFiletypes');
-
+var transactionRepository = require('../repositories/transactionRepository');
 const maxBlockSizeBytes = 1000000;
 const targetBlockTimeMs = config.network.targetBlockTimeMs; //target a one minute block time. 
 
@@ -37,9 +37,20 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
         memPoolItems.push(miningReward);
         for (i = 0; i < memPoolItemsFromDb.length; i++) {
             var element = memPoolItemsFromDb[i];
-            var fileSizeBytes = (JSON.stringify(element).length * 0.75) - 2;
-            sumFileSizeBytes += fileSizeBytes;
-            memPoolItems.push(memPoolItemsFromDb[i]);
+            var mempoolItemSizeBytes = (JSON.stringify(element).length * 0.75) - 2;
+            sumFileSizeBytes += mempoolItemSizeBytes;
+            if (element.type == mempoolFileTypes.Transaction) {
+                var balance = await transactionRepository.GetBalance(element.publicKeyHash);
+                if (balance >= element.transactionData.amount) {
+                    debugger;
+                    memPoolItems.push(element);
+                }else{
+                    debugger;
+                    memPoolRepository.DeleteMemPoolItems(element);
+                }
+            } else {
+                memPoolItems.push(element);
+            }
             if (sumFileSizeBytes >= maxBlockSizeBytes) {
                 break;
             }
@@ -149,6 +160,9 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
     var counter = 0;
     do {
         counter++;
+        //This is a "pulse" check.  Every so often (50000 iterations) check if another node has solved the block, OR if any of our current mempoolitems
+        //exist in another block.  If either of these conditions are true, then we are wasting our time, so quit.  Even if we solved the block we'll end
+        //up with a unique index violation.
         if (counter >= 50000) {
             counter = 0;
             var block = await blockRepository.GetBlock(targetBlockNumber);
@@ -246,7 +260,7 @@ var AppendBlockchain = (async (blockchain) => {
     var lastBlockResult = await GetLastBlock();
 });
 
-//Validates the block and makes sure it fits on the end of the chain. 
+//Validates an incoming block (received from another node) and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
     // console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
@@ -257,7 +271,7 @@ var ValidateAndAddIncomingBlock = (async (block) => {
     if (block.data[0].blockReward != blockReward) {
         throw new Error("Invalid block reward.");
     }
-    var mempoolValidationResults = await MemPoolController.ValidateMemPoolItems(block.data); //validate each memPoolItem (filecontents, signedmessage, publickey)
+    var mempoolValidationResults = await MemPoolController.ValidateMemPoolItemsOnIncomingBlock(block.data); //validate each memPoolItem (filecontents, signedmessage, publickey)
     // console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();
     var calculatedDifficulty = await CalculateDifficulty(lastBlock);

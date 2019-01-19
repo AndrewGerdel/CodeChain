@@ -10,12 +10,16 @@ mongoose.GetDb().then((db) => {
 
 //Queries the entire chain for FROM and TO transactions, as wll as mining rewards.  Sums and returns.  I suspect we will need a faster
 //way to do this in the future, but to get us out of the gate this should probably suffice. 
-var GetBalance = (async (publicKey) => {
+var GetBalance = (async (publicKey, includeMemPoolItems) => {
     var start = new Date();
     var sumFrom = GetSumFrom(publicKey);
     var sumTo = GetSumTo(publicKey);
-    var sumMining = GetMiningRewards(publicKey);
-    var sumFromMempool = GetMempoolSumFrom(publicKey);
+    var sumMining = GetSumMiningRewards(publicKey);
+    //Only include memPoolItems in certain situations. 
+    var sumFromMempool = 0;
+    if(includeMemPoolItems == true){
+        sumFromMempool = GetMempoolSumFrom(publicKey);
+    }
     var finalResult = [await sumFrom, await sumTo, await sumMining, await sumFromMempool];
     var end = new Date();
 
@@ -58,7 +62,6 @@ var GetMempoolSumFrom = (async (publicKey) => {
     return sum;
 });
 
-
 var GetSumTo = (async (publicKey) => {
     //Get all blocks that contain a transaction TO this address. Loop through the transactions within each block and sum just the ones to this address.
     var db = await mongoose.GetDb();
@@ -76,7 +79,7 @@ var GetSumTo = (async (publicKey) => {
     return sum;
 });
 
-var GetMiningRewards = (async (publicKey) => {
+var GetSumMiningRewards = (async (publicKey) => {
     //Get all blocks that contain mining rewards for this address. 
     var db = await mongoose.GetDb();
     var sum = 0;
@@ -93,8 +96,97 @@ var GetMiningRewards = (async (publicKey) => {
     return sum;
 });
 
+
+
+
+
+
+
+
+
+//Queries the entire chain for FROM and TO transactions, as wll as mining rewards.  I suspect we will need a faster
+//way to do this in the future, but to get us out of the gate this should probably suffice. 
+var GetTransactions = (async (publicKey) => {
+    var start = new Date();
+    var from = GetTransactionsFrom(publicKey);
+    var to = GetTransactionsTo(publicKey);
+    var miningRewards = GetTransactionsMiningRewards(publicKey);
+    //NOTE: transactions in the mempool are not returned. 
+    var transactions = [await from, await to, await miningRewards];
+    var end = new Date();
+    console.log(`Total time: ${end - start}ms`);
+
+    var allTransactions = [];
+    for (t = 0; t < transactions[0].length; t++) {
+        allTransactions.push(transactions[0][t]);
+    }
+    for (t = 0; t < transactions[1].length; t++) {
+        allTransactions.push(transactions[1][t]);
+    }
+    for (t = 0; t < transactions[2].length; t++) {
+        allTransactions.push(transactions[2][t]);
+    }
+
+    allTransactions.sort((a, b)=> {
+        return a.dateAdded - b.dateAdded;
+    });
+    return allTransactions;
+});
+
+var GetTransactionsFrom = (async (publicKey) => {
+    //Get all blocks that contain a transaction FROM this address. Loop through the transactions within each block and sum just the ones from this address.
+    var db = await mongoose.GetDb();
+    var results = [];
+    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.Transaction }, { "data.transactionData.from": publicKey }] }).toArray();
+    for (doc = 0; doc < blocks.length; doc++) {
+        var documents = JSON.parse(JSON.stringify(blocks[doc]));
+        for (dataCount = 0; dataCount < documents.data.length; dataCount++) {
+            var data = JSON.parse(JSON.stringify(documents.data[dataCount]));
+            if (data.transactionData && data.transactionData.from && data.transactionData.from == publicKey) {
+                results.push(data);
+            }
+        }
+    }
+    return results;
+});
+
+var GetTransactionsTo = (async (publicKey) => {
+    //Get all blocks that contain a transaction TO this address. Loop through the transactions within each block and sum just the ones to this address.
+    var db = await mongoose.GetDb();
+    var results = [];
+    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.Transaction }, { "data.transactionData.to": publicKey }] }).toArray();
+    for (doc = 0; doc < blocks.length; doc++) {
+        var documents = JSON.parse(JSON.stringify(blocks[doc]));
+        for (dataCount = 0; dataCount < documents.data.length; dataCount++) {
+            var data = JSON.parse(JSON.stringify(documents.data[dataCount]));
+            if (data.transactionData && data.transactionData.to && data.transactionData.to == publicKey) {
+                results.push(data);
+            }
+        }
+    }
+    return results;
+});
+
+var GetTransactionsMiningRewards = (async (publicKey) => {
+    //Get all blocks that contain mining rewards for this address. 
+    var db = await mongoose.GetDb();
+    var results = [];
+    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.MiningReward }, { "data.publicKeyHash": publicKey }] }).toArray();
+    for (doc = 0; doc < blocks.length; doc++) {
+        var block = JSON.parse(JSON.stringify(blocks[doc]));
+        for (dataCount = 0; dataCount < block.data.length; dataCount++) {
+            var data = JSON.parse(JSON.stringify(block.data[dataCount]));
+            if (data.type == mempoolItemTypes.MiningReward && data.publicKeyHash && data.publicKeyHash == publicKey) {
+                results.push(data);
+            }
+        }
+    }
+    return results;
+});
+
 module.exports = {
-    GetBalance
+    GetBalance, 
+    GetTransactions
 }
 
 // GetBalance("cc98c75e4432207cafd02b2d1e02e5fdd44f008aaa3818db00c1c96f189bfc27_y");

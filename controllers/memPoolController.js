@@ -38,7 +38,7 @@ var AddTransactionToMemPool = (async (from, to, amount, salt, signedMessage, pub
   let base64data = buff.toString('base64');
   var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, base64data);
   if (!verified) {
-    throw new Error("Invalid signed message " + memPoolItem.hash);
+    throw new Error("Invalid transaction " + from + " to " + to);
   }
   var dateNow = new Date();
   var hash = await hashUtil.CreateSha256Hash(from + to + amount + signedMessage + dateNow + salt);
@@ -55,11 +55,12 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
   if (!verified) {
     throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
   }
-  //let's check that the sender has enough funds.  
-  var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
-  if (balance < memPoolItem.transactionData.amount) {
-    throw new Error("Insufficient balance.");
-  }
+  //NOTE: Don't validate funds on mempool-adds.  They will get validated when they are added to a block. 
+  // //let's check that the sender has enough funds.  
+  // var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
+  // if (balance < memPoolItem.transactionData.amount) {
+  //   throw new Error("Insufficient balance.");
+  // }
   var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount,
     memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem);
@@ -89,23 +90,30 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
   return;
 });
 
-var ValidateMemPoolItems = (async (memPoolItems) => {
+var ValidateMemPoolItemsOnIncomingBlock = (async (memPoolItems) => {
   for (i = 0; i < memPoolItems.length; i++) {
-    var verified = await ValidateMemPoolItem(memPoolItems[i]);
+    if(memPoolItems[i].type == mempoolItemTypes.MiningReward && i != 0){
+      throw new Error("Failed to validate incoming block. MiningReward only allowed as the first element.");
+    }
+    var verified = await ValidateMemPoolItemOnIncomingBlock(memPoolItems[i]);
     debugger;
     if (!verified) {
-      throw new Error("Failed to verify mempoolitems: ", memPoolItems);
+      throw new Error("Failed to verify mempoolitems: ", memPoolItems[i]);
     }
   }
   return true;
 });
 
-var ValidateMemPoolItem = (async (memPoolItem) => {
+var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents);
     return verified;
   } else if (memPoolItem.type == mempoolItemTypes.MiningReward) {
     //Mining rewards are verified in blockController, before this function even gets called. 
+
+    //ANDREW, CHANGE THIS.
+
+
     return true;
   } else if (memPoolItem.type == mempoolItemTypes.Transaction) {
     let buff = new Buffer.from(`${memPoolItem.transactionData.from}${memPoolItem.transactionData.amount}${memPoolItem.transactionData.to}${memPoolItem.salt}`);
@@ -134,7 +142,7 @@ var GetMemPoolItem = (async (hash) => {
 
 module.exports = {
   AddCodeFileToMemPool,
-  ValidateMemPoolItems,
+  ValidateMemPoolItemsOnIncomingBlock,
   GetMemPoolItem,
   AddIncomingCodeFileToMemPool,
   AddTransactionToMemPool,
