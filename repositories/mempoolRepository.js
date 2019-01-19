@@ -38,7 +38,6 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicK
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
   var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
   if (publicKeyHash.toString('hex') != from) {
-    debugger;
     //safety check
     throw new Error(`Supplied data mismatch: From: ${from}, CalculatedHash: ${publicKeyHash.toString('hex')}`);
   }

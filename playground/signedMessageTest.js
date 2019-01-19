@@ -19,7 +19,6 @@ var Test1 = (async () => {
   // // get the public key in a compressed format
   // const pubKey = secp256k1.publicKeyCreate(privKey)
 
-  debugger;
   let pubKey = testAddresses.Timmy().PublicKey;
   var signature = await hashUtil.SignMessage(privKey, msg);
   var verified = await hashUtil.VerifyMessage(pubKey, signature, msg);

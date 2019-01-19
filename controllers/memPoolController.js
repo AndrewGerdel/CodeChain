@@ -96,7 +96,6 @@ var ValidateMemPoolItemsOnIncomingBlock = (async (memPoolItems) => {
       throw new Error("Failed to validate incoming block. MiningReward only allowed as the first element.");
     }
     var verified = await ValidateMemPoolItemOnIncomingBlock(memPoolItems[i]);
-    debugger;
     if (!verified) {
       throw new Error("Failed to verify mempoolitems: ", memPoolItems[i]);
     }

@@ -42,10 +42,8 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
             if (element.type == mempoolFileTypes.Transaction) {
                 var balance = await transactionRepository.GetBalance(element.publicKeyHash);
                 if (balance >= element.transactionData.amount) {
-                    debugger;
                     memPoolItems.push(element);
                 }else{
-                    debugger;
                     memPoolRepository.DeleteMemPoolItems(element);
                 }
             } else {

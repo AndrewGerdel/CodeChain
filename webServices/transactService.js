@@ -23,7 +23,6 @@ var StartService = ((app) => {
             } else {
                 let buff = new Buffer.from(`${from}${amount}${to}${salt}`);
                 let base64data = buff.toString('base64');
-                debugger;
                 var signedMessage = await hash.SignMessage(privateKey, base64data);
                 response.send({ Success: true, Signature: signedMessage, Salt: salt });
             }
@@ -43,7 +42,6 @@ var StartService = ((app) => {
             var salt = request.body.salt;
 
             //let's check that the sender has enough funds, as a courtesy. 
-            debugger;
             var balance = await transactionRepository.GetBalance(from);
             if (balance < amount) {
                 response.send({ Success: false, ErrorMessage: "Insufficient balance" });
@@ -69,7 +67,6 @@ var StartService = ((app) => {
     app.get('/transact/getTransactions', async (request, response) => {
         try {
             var address = request.query.address;
-            debugger;
             var transactions = await transactionRepository.GetTransactions(address);
             response.send({ Success: true, Transactions: transactions });
         } catch (ex) {
