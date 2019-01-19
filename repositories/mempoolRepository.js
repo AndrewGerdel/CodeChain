@@ -36,11 +36,12 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage
 
 var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicKey, salt, dateAdded, hash) => {
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
-  var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
   if (publicKeyHash.toString('hex') != from) {
     //safety check
+    debugger;
     throw new Error(`Supplied data mismatch: From: ${from}, CalculatedHash: ${publicKeyHash.toString('hex')}`);
   }
+  var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
 
   var memPool = new MemPool({
     type: filetypes.Transaction,

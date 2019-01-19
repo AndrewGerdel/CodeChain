@@ -1,7 +1,7 @@
 var crypto = require('crypto');
 
 var CreateSha256Hash = (async (input) => {
-  var hash = await crypto.createHash("sha256").update(input).digest();
+  var hash = await crypto.createHash("sha256").update(input.trim()).digest();
   return hash
 });
 
