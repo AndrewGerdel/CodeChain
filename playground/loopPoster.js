@@ -95,15 +95,15 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
         }
 
         setTimeout((evenOdd) => {
-            if (nodeEndpoint == "http://localhost:65340/file/createSubmitRequest") {
-                nodeEndpoint = "http://localhost:65340/file/createSubmitRequest";  //put your alternating url here. 
+            if (nodeEndpoint == "http://52.165.30.161/file/createSubmitRequest") {
+                nodeEndpoint = "http://23.101.3.32/file/createSubmitRequest";  //put your alternating url here. 
             } else {
-                nodeEndpoint = "http://localhost:65340/file/createSubmitRequest";
+                nodeEndpoint = "http://52.165.30.161/file/createSubmitRequest";
             }
             loopPost(nodeEndpoint);
-        }, 6000);
+        }, 50000);
     });
 
 });
 
-loopPost('http://localhost:65340/file/createSubmitRequest');
+loopPost('http://52.165.30.161/file/createSubmitRequest');

@@ -5,8 +5,9 @@ var yargs = require('yargs');
 var CreateAndSubmitTransaction = (async () => {
     var amount = yargs.argv.amount;
     if (!amount) {
-        console.log('Missing --amount parameter.');
-        return;
+         // console.log('Missing --amount parameter.');
+        // return;
+        amount = 7; 
     }
 
     var from = testAddress.Tommy();
