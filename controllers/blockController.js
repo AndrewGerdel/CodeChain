@@ -35,16 +35,16 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
         var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
         var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
         memPoolItems.push(miningReward);
-        for (i = 0; i < memPoolItemsFromDb.length; i++) {
-            var element = memPoolItemsFromDb[i];
+        for (memPoolCounter = 0; memPoolCounter < memPoolItemsFromDb.length; memPoolCounter++) {
+            var element = memPoolItemsFromDb[memPoolCounter];
             var mempoolItemSizeBytes = (JSON.stringify(element).length * 0.75) - 2;
             sumFileSizeBytes += mempoolItemSizeBytes;
             if (element.type == mempoolFileTypes.Transaction) {
                 var balance = await transactionRepository.GetBalance(element.publicKeyHash);
                 if (balance >= element.transactionData.amount) {
                     memPoolItems.push(element);
-                }else{
-                    memPoolRepository.DeleteMemPoolItems(element);
+                } else {
+                    memPoolRepository.DeleteMemPoolItem(element);
                 }
             } else {
                 memPoolItems.push(element);
@@ -54,8 +54,10 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
             }
         }//endfor
 
-        var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);
-        return newBlock;
+        if (memPoolItems.length > 1) { //If it only has the block reward, then don't do anything. 
+            var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);
+            return newBlock;
+        }
     }
 });
 

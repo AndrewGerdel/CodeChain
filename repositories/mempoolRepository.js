@@ -38,7 +38,6 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicK
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
   if (publicKeyHash.toString('hex') != from) {
     //safety check
-    debugger;
     throw new Error(`Supplied data mismatch: From: ${from}, CalculatedHash: ${publicKeyHash.toString('hex')}`);
   }
   var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
@@ -77,20 +76,19 @@ var GetMemPoolItems = (() => {
 });
 
 //Deletes by _id all memPoolItems in the list
-var DeleteMemPoolItems = ((memPoolItems) => {
-  var promise = new Promise((resolve, reject) => {
-    mongoose.GetDb()
-      .then((db) => {
-        for (i = 0; i < memPoolItems.length; i++) {
-          db.collection('mempools').deleteOne({ hash: memPoolItems[i].hash });
-        }
-        resolve(true);
-      }, (err) => {
-        reject(err);
-      });
-  });
-  return promise;
+var DeleteMemPoolItems = (async(memPoolItems) => {
+    var db = await mongoose.GetDb();
+    for (i = 0; i < memPoolItems.length; i++) {
+      db.collection('mempools').deleteOne({ hash: memPoolItems[i].hash });
+    }
+    return true;
 });
+
+var DeleteMemPoolItem = (async (memPoolItem) => {
+  var db = await mongoose.GetDb();
+  db.collection('mempools').deleteOne({ hash: memPoolItem.hash });
+});
+
 
 var GetMemPoolItem = (async (hash) => {
   var db = await mongoose.GetDb();
@@ -122,5 +120,6 @@ module.exports = {
   AddCodeFileMemPoolItem,
   GetMemPoolItem,
   CreateMiningRewardMemPoolItem,
-  AddTransactionMemPoolItem
+  AddTransactionMemPoolItem, 
+  DeleteMemPoolItem
 }
