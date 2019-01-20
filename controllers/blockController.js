@@ -118,7 +118,7 @@ var CalculateBlockReward = (async (blockNumber) => {
 });
 
 var CalculateDifficulty = (async (lastBlock) => {
-    var result = await blockRepository.GetBlocks(10);
+    var result = await blockRepository.GetBlocks(100);
     var totalMilliseconds = 0;
     for (i = 0; i < result.length; i++) {
         totalMilliseconds += result[i].millisecondsBlockTime;
