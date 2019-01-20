@@ -135,7 +135,8 @@ var ImportLongestBlockchain = (async () => {
         } else {
             //We are behind AND out of sync.  We have a collision.  If the other node's chain is SIX BLOCKS OR MORE ahead of ours, then 
             //accept his "rightness".  Orphan ours and merge his. 
-            if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 6) {
+            //Six blocks might be too long.  Reducing to 1.  Let's see how that plays out. 
+            if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 1) {
                 var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
                 console.log(`Orphaning all blocks after ${lastMatchingBlockNumber}`);
                 await OrphanLocalBlocks(lastMatchingBlockNumber);
