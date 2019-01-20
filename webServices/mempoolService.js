@@ -6,6 +6,7 @@ var StartService = (async (app, isDebug) => {
     //transactions, etc. This endpoint is only intended to be used for node-to-node communication.
     app.post('/mempool/add', async (request, response) => {
         var mempoolItem = JSON.parse(request.headers.mempoolitem);
+        var remoteNodeUid = request.headers.uid;
 
         var mempoolItemFromDb = await mempoolController.GetMemPoolItem(mempoolItem.hash);
         if (mempoolItemFromDb.length > 0) {
@@ -14,12 +15,11 @@ var StartService = (async (app, isDebug) => {
             console.log(`Received memPoolItem ${mempoolItem.hash}`);
             try {
                 if (mempoolItem.type == mempoolItemTypes.File) {
-                    await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem);
+                    await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem, remoteNodeUid);
                 } else if (mempoolItem.type == mempoolItemTypes.Transaction) {
-                    await mempoolController.AddIncomingTransactionToMemPool(mempoolItem);
+                    await mempoolController.AddIncomingTransactionToMemPool(mempoolItem, remoteNodeUid);
                 }
                 response.send("ok");
-
             } catch (ex) {
                 //If it failed, it probably was a unique index vioation. Either another node already sent
                 //this item, or it came thru with a solved block.

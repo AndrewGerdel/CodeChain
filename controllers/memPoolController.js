@@ -21,14 +21,14 @@ var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signedMes
 });
 
 //Adds an "incoming' file to the mempool.  "Incoming transactions" are transactions that were broadcast from other nodes, not submited via an endpoint.
-var AddIncomingCodeFileToMemPool = (async (memPoolItem) => {
+var AddIncomingCodeFileToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
 
   var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents);
   if (!verified) {
     throw new Error("Invalid signed message");
   }
   var saveResult = await memPoolRepository.AddCodeFileMemPoolItem(memPoolItem.fileData.fileName, memPoolItem.fileData.fileContents, memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash);
-  BroadcastMempoolItemToRandomNodes(memPoolItem);
+  BroadcastMempoolItemToRandomNodes(memPoolItem, incomingFromNodeUid);
   return saveResult;
 });
 
@@ -43,12 +43,12 @@ var AddTransactionToMemPool = (async (from, to, amount, salt, signedMessage, pub
   var dateNow = new Date();
   var hash = await hashUtil.CreateSha256Hash(from + to + amount + signedMessage + dateNow + salt);
   var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(from, to, amount, signedMessage, publicKey, salt, dateNow, hash.toString("hex"));
-  BroadcastMempoolItemToRandomNodes(mempoolItem);
+  BroadcastMempoolItemToRandomNodes(mempoolItem, '');
   return mempoolItem;
 });
 
 //Adds an "incoming" transaction to the mempool. "Incoming transactions" are transactions that were broadcast from other nodes, not submited via an endpoint.
-var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
+var AddIncomingTransactionToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
   let buff = new Buffer.from(`${memPoolItem.transactionData.from}${memPoolItem.transactionData.amount}${memPoolItem.transactionData.to}${memPoolItem.salt}`);
   let base64data = buff.toString('base64');
   var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
@@ -63,23 +63,23 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem) => {
   // }
   var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount,
     memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
-  BroadcastMempoolItemToRandomNodes(mempoolItem);
+  BroadcastMempoolItemToRandomNodes(mempoolItem, incomingFromNodeUid);
   return mempoolItem;
 });
 
-var BroadcastMempoolItemToRandomNodes = (async (mempoolItem) => {
+var BroadcastMempoolItemToRandomNodes = (async (mempoolItem, incomingFromNodeUid) => {
   //hardcoded to broadcast to 10 nodes.  Consider calculating this value as the network grows.
   var randomNodes = await nodeRepository.GetRandomNodes(10);
 
   randomNodes.forEach((node) => {
-    if (node.uid != config.network.myUid) { //Don't broadcast a mempool to our self.
+    if (node.uid != config.network.myUid && node.uid != incomingFromNodeUid) { //Don't broadcast a mempool to ourselves OR to the node that broadcast it to us. 
       console.log(`Sending memPoolItem ${mempoolItem.hash} to ${node.port}`);
       var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/mempool/add`;
 
       var options = {
         url: nodeEndpoint,
         method: 'POST',
-        headers: { mempoolItem: JSON.stringify(mempoolItem) }
+        headers: { uid: config.network.myUid, mempoolItem: JSON.stringify(mempoolItem) }
       };
       request(options, (err, res, body) => {
         //There's really nothing to do here.  Broadcast it and forget it. 
