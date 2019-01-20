@@ -2,6 +2,10 @@ let blockController = require('../controllers/blockController.js');
 let nodeController = require('../controllers/nodeController.js');
 var config = require('../config.json');
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.log('Error (unhandled rejection) in nodeProcess: ', reason);
+});
+
 console.log('Block process starting...');
 MempoolLoop();
 
