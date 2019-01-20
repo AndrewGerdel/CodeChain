@@ -41,7 +41,7 @@ var GenerateKeyPair = (async () => {
       format: 'pem'
     }
   });
-  var address = await CreateSha256Hash(keyPair.publicKey);
+  var address = await CreateSha256Hash(keyPair.publicKey.toString('hex'));
   return { Address: address.toString('hex'), PublicKey: keyPair.publicKey, PrivateKey: keyPair.privateKey };
 
 });
