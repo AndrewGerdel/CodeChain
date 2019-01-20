@@ -13,9 +13,9 @@ var CreateAndSubmitTransaction = (async () => {
     var to = testAddress.Timmy();
 
     GetBalance(from.Address, (fromBalance) => {
-        console.log(`${from.Name} balance is: `, fromBalance);
+        console.log(`${from.Name} (${from.Address})  balance is: `, fromBalance);
         GetBalance(to.Address, (toBalance) => {
-            console.log(`${to.Name} balance is: `, toBalance);
+            console.log(`${to.Name} (${to.Address}) balance is: `, toBalance);
             CreateRequest(from.Address, to.Address, amount, from.PrivateKey, (resultBody) => {
                 var bodyObj = JSON.parse(resultBody);
                 if (bodyObj.Success == true) {
