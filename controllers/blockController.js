@@ -9,7 +9,7 @@ var config = require('../config.json');
 var mempoolFileTypes = require('../enums/mempoolFiletypes');
 var transactionRepository = require('../repositories/transactionRepository');
 const maxBlockSizeBytes = 1000000;
-const targetBlockTimeMs = config.network.targetBlockTimeMs; //target a one minute block time. 
+const targetBlockTimeMs = 60000; //target a one minute block time. 
 
 // Adds memPoolItems to the collection, then fires SolveBlock
 async function MineNextBlock() {

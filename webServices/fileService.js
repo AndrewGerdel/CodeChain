@@ -11,10 +11,14 @@ var StartService = ((app) => {
         try {
             var fileContents = request.body.filecontents;
             var privateKey = request.body.privatekey;
+            var repo = request.body.repo;
+
+            // var repoName = request.body.repoName;
+            // var repoHash = request.body.repoHash;
             var salt = crypto.randomBytes(16).toString('hex');
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
-            var signature = await hash.SignMessage(privateKey, salt + base64data);
+            var signature = await hash.SignMessage(privateKey, `${salt}${base64data}${repo}`);
             response.send({ Success: true, Signature: signature, Salt: salt });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -27,13 +31,14 @@ var StartService = ((app) => {
             var filename = request.body.filename;
             var signature = request.body.signature;
             var publicKey = request.body.publickey;
+            var repo = request.body.repo;
             var fileContents = request.body.filecontents;
             var salt = request.body.salt;
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
 
             console.log(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -47,14 +52,15 @@ var StartService = ((app) => {
             var fileContents = request.body.filecontents;
             var publicKey = request.body.publickey;
             var privateKey = request.body.privatekey;
+            var repo = request.body.repo;
 
             var salt = crypto.randomBytes(16).toString('hex');
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
-            var signature = await hash.SignMessage(privateKey, salt + base64data);
+            var signature = await hash.SignMessage(privateKey, `${salt}${base64data}${repo}`);
 
             console.log(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo);
             response.send({ Success: true, Hash: result.hash });
 
         } catch (ex) {
@@ -74,6 +80,17 @@ var StartService = ((app) => {
             } else {
                 response.send('File not found');
             }
+        } catch (ex) {
+            response.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+    });
+
+    app.get('/file/getNewRepoHash', async (request, response) => {
+        try {
+            //For now this is just a random hash.  In the future, we could want to add additional functionality. 
+            var random = crypto.randomBytes(16);
+            var randomHash = await hash.CreateSha256Hash(random.toString('hex'));
+            response.send({ Hash: randomHash.toString('hex') });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }

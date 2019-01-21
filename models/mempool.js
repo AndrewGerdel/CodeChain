@@ -15,6 +15,23 @@ var MemPool = mongoose.model('MemPool', {
       type: String,
       required: false,
       trim: true
+    },
+    repo:{
+      name: {
+        type: String,
+        require: false,
+        trim: true
+      },
+      hash: {
+        type: String,
+        require: false,
+        trim: true
+      },
+      file:{
+        type: String,
+        require: false,
+        trim: true
+      }
     }
   },
   transactionData: {

@@ -10,16 +10,20 @@ mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "signedMessageHash": 1 }, { unique: true });
 });
 
-var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash) => {
+var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash, repo) => {
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
   var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
-
 
   var memPool = new MemPool({
     type: filetypes.File,
     fileData: {
       fileName: fileName,
-      fileContents: base64FileContents
+      fileContents: base64FileContents,
+      repo: {
+        name: repo.Name,
+        hash: repo.Hash,
+        file: repo.File
+      } 
     },
     signedMessage: signedMessage,
     signedMessageHash: signatureHash.toString('hex'),
@@ -28,7 +32,7 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage
     publicKeyHash: publicKeyHash.toString('hex'),
     hash: hash,
     deleted: false,
-    salt: salt
+    salt: salt,
   });
   memPool.save();
   return memPool;
@@ -76,12 +80,12 @@ var GetMemPoolItems = (() => {
 });
 
 //Deletes by _id all memPoolItems in the list
-var DeleteMemPoolItems = (async(memPoolItems) => {
-    var db = await mongoose.GetDb();
-    for (i = 0; i < memPoolItems.length; i++) {
-      db.collection('mempools').deleteOne({ hash: memPoolItems[i].hash });
-    }
-    return true;
+var DeleteMemPoolItems = (async (memPoolItems) => {
+  var db = await mongoose.GetDb();
+  for (i = 0; i < memPoolItems.length; i++) {
+    db.collection('mempools').deleteOne({ hash: memPoolItems[i].hash });
+  }
+  return true;
 });
 
 var DeleteMemPoolItem = (async (memPoolItem) => {
@@ -120,6 +124,6 @@ module.exports = {
   AddCodeFileMemPoolItem,
   GetMemPoolItem,
   CreateMiningRewardMemPoolItem,
-  AddTransactionMemPoolItem, 
+  AddTransactionMemPoolItem,
   DeleteMemPoolItem
 }

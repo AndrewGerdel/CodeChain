@@ -8,14 +8,14 @@ var config = require('../config.json');
 var transactionRepository = require('../repositories/transactionRepository');
 
 //Adds a file to the mempool, from the fileService
-var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signedMessage, publicKey) => {
-  var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, salt + base64FileContents);
+var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature, publicKey, repo) => {
+  var verified = await hashUtil.VerifyMessage(publicKey, signature, salt + base64FileContents + repo);
   if (!verified) {
-    throw new Error("Invalid signed message");
+    throw new Error("Invalid signature");
   }
   var dateNow = new Date();
-  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signedMessage + dateNow + salt);
-  var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signedMessage, publicKey, salt, dateNow, hash.toString("hex"));
+  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + dateNow + salt + repo);
+  var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signature, publicKey, salt, dateNow, hash.toString("hex"), repo);
   BroadcastMempoolItemToRandomNodes(mempoolItem);
   return mempoolItem;
 });
