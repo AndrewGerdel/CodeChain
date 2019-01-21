@@ -95,10 +95,10 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
         }
 
         setTimeout((evenOdd) => {
-            if (nodeEndpoint == "http://52.165.30.161/file/createSubmitRequest") {
-                nodeEndpoint = "http://23.101.3.32/file/createSubmitRequest";  //put your alternating url here. 
+            if (nodeEndpoint == "http://127.0.0.1:65340/file/createSubmitRequest") {
+                nodeEndpoint = "http://127.0.0.1:65340/file/createSubmitRequest";  //put your alternating url here. 
             } else {
-                nodeEndpoint = "http://52.165.30.161/file/createSubmitRequest";
+                nodeEndpoint = "http://127.0.0.1:65340/file/createSubmitRequest";
             }
             loopPost(nodeEndpoint);
         }, 50000);
@@ -106,4 +106,4 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
 
 });
 
-loopPost('http://52.165.30.161/file/createSubmitRequest');
+loopPost('http://127.0.0.1:65340/file/createSubmitRequest');
