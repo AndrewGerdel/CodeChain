@@ -47,6 +47,7 @@ var loopPostRepo = (async (nodeEndpoint) => {
 
 var CreateRequest = (async (repoHash, file, filecontents) => {
     var repo = { Name: 'Friendly Project', Hash: repoHash, File: file };
+    debugger;
     const data = JSON.stringify({
         filecontents: filecontents,
         privatekey: testAddresses.Timmy().PrivateKey,
@@ -58,7 +59,6 @@ var CreateRequest = (async (repoHash, file, filecontents) => {
         headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
         body: data
     }
-
     request(options, (err, res, body) => {
         if (err) {
             console.log('!!!!!!!!!!!!!!!! FAILURE:', err);
@@ -91,7 +91,6 @@ var SubmitRequest = ((filename, filecontents, signature, salt, publickey, repo) 
             console.log('!!!!!!!!!!!!!!!! FAILURE:', err);
         } else {
             console.log('SubmitResult: ', body);
-
         }
     });
 });
@@ -106,7 +105,6 @@ var WalkDir = function (dir, parentDir, done) {
         var pending = list.length;
         if (!pending) return done(null, results);
         list.forEach(function (file) {
-            debugger;
             file = path.resolve(dir, file);
             fs.stat(file, function (err, stat) {
                 if (stat && stat.isDirectory()) {
@@ -127,7 +125,9 @@ var WalkDir = function (dir, parentDir, done) {
 var PostDirToNewRepo = (() => {
 
     request('http://localhost:65340/file/getNewRepoHash', (res, err, body) => {
-        var hash = body.Hash;
+        debugger;
+        var bodyObj = JSON.parse(body);
+        var hash = bodyObj.Hash;
         var rootDir = `C:\\Users\\Andrew\\Documents\\New folder`;
         WalkDir(rootDir, '', (err, result) => {
             result.forEach((item) => {
