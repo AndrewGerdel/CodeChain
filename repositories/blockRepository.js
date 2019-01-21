@@ -7,6 +7,7 @@ mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "blockHash": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "previousBlockHash": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "data.signedMessageHash": 1 }, { unique: true });
+    db.collection("blocks").createIndex({ "data.fileData.repo.hash": 1 }, { unique: false });
 });
 
 var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, millisecondsBlockTime, nonce, solvedDateTime, difficulty) => {
@@ -91,6 +92,12 @@ var GetFileFromBlock = (async (filehash) => {
     return lastBlock;
 });
 
+var GetRepoFromBlock = (async (repohash) => {
+    var db = await mongoose.GetDb();
+    var lastBlock = db.collection('blocks').find({ 'data.fileData.repo.hash': repohash }).sort({ blockNumber: -1 }).toArray();
+    return lastBlock;
+});
+
 var MoveBlocksToOrphanCollection = (async (blocks) => {
     if (blocks.length > 0) {
         var db = await mongoose.GetDb();
@@ -115,6 +122,7 @@ module.exports = {
     CreateNewBlock,
     GetLastBlock,
     GetFileFromBlock,
+    GetRepoFromBlock,
     AddBlock,
     GetBlocksFromStartingBlock,
     GetBlocks,

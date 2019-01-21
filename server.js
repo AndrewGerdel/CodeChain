@@ -13,8 +13,8 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 var app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({limit: '10mb', extended: true}));
+app.use(bodyParser.json({limit: '2mb', extended: true}));
 
 
 //render out a simple default page. 

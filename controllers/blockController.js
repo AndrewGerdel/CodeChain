@@ -240,6 +240,14 @@ var GetFileFromBlock = (async (filehash) => {
     return file;
 });
 
+var GetRepoFromBlock = (async (repohash) => {
+    var file = await blockRepository.GetRepoFromBlock(repohash);
+
+    //todo: loop thru each block, pulling out the right mempoolitems, keep them unique, return to caller in array. 
+    
+    return file;
+});
+
 var ValidateBlockHash = (async (block) => {
     var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data) + block.difficulty + block.previousBlockHash;
     var hash = crypto.createHmac('sha256', hashInput).digest('hex');
@@ -313,5 +321,6 @@ module.exports = {
     GetBlock,
     GetBlockHash,
     OrphanBlocks,
-    CalculateBlockReward
+    CalculateBlockReward,
+    GetRepoFromBlock
 }

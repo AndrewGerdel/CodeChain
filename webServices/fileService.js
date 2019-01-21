@@ -31,6 +31,7 @@ var StartService = ((app) => {
             var filename = request.body.filename;
             var signature = request.body.signature;
             var publicKey = request.body.publickey;
+            debugger;
             var repo = request.body.repo;
             var fileContents = request.body.filecontents;
             var salt = request.body.salt;
@@ -91,6 +92,16 @@ var StartService = ((app) => {
             var random = crypto.randomBytes(16);
             var randomHash = await hash.CreateSha256Hash(random.toString('hex'));
             response.send({ Hash: randomHash.toString('hex') });
+        } catch (ex) {
+            response.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+    });
+
+    app.get('/file/getRepo', async (request, response) => {
+        try {
+            //  request.query.repohash
+            var todo = await blockController.GetRepoFromBlock(request.query.repohash);
+            response.send(todo);
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }
