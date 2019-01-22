@@ -14,28 +14,49 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
   var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
 
-  var memPool = new MemPool({
-    type: filetypes.File,
-    fileData: {
-      fileName: fileName,
-      fileContents: base64FileContents,
-      repo: {
-        name: repo.Name,
-        hash: repo.Hash,
-        file: repo.File
-      } 
-    },
-    signedMessage: signedMessage,
-    signedMessageHash: signatureHash.toString('hex'),
-    dateAdded: dateAdded,
-    publicKey: publicKey,
-    publicKeyHash: publicKeyHash.toString('hex'),
-    hash: hash,
-    deleted: false,
-    salt: salt,
-  });
-  memPool.save();
-  return memPool;
+  if(repo){
+    var memPool = new MemPool({
+      type: filetypes.File,
+      fileData: {
+        fileName: fileName,
+        fileContents: base64FileContents,
+        repo: {
+          name: repo.Name,
+          hash: repo.Hash,
+          file: repo.File
+        } 
+      },
+      signedMessage: signedMessage,
+      signedMessageHash: signatureHash.toString('hex'),
+      dateAdded: dateAdded,
+      publicKey: publicKey,
+      publicKeyHash: publicKeyHash.toString('hex'),
+      hash: hash,
+      deleted: false,
+      salt: salt,
+    });
+    memPool.save();
+    return memPool;
+  }else{
+    var memPool = new MemPool({
+      type: filetypes.File,
+      fileData: {
+        fileName: fileName,
+        fileContents: base64FileContents
+      },
+      signedMessage: signedMessage,
+      signedMessageHash: signatureHash.toString('hex'),
+      dateAdded: dateAdded,
+      publicKey: publicKey,
+      publicKeyHash: publicKeyHash.toString('hex'),
+      hash: hash,
+      deleted: false,
+      salt: salt,
+    });
+    memPool.save();
+    return memPool;
+  }
+  
 });
 
 var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicKey, salt, dateAdded, hash) => {

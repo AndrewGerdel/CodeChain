@@ -31,7 +31,6 @@ var StartService = ((app) => {
             var filename = request.body.filename;
             var signature = request.body.signature;
             var publicKey = request.body.publickey;
-            debugger;
             var repo = request.body.repo;
             var fileContents = request.body.filecontents;
             var salt = request.body.salt;
@@ -100,8 +99,8 @@ var StartService = ((app) => {
     app.get('/file/getRepo', async (request, response) => {
         try {
             //  request.query.repohash
-            var todo = await blockController.GetRepoFromBlock(request.query.repohash);
-            response.send(todo);
+            var repo = await blockController.GetRepoFromBlock(request.query.repohash);
+            response.send(repo);
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }
