@@ -65,19 +65,9 @@ var StartService = ((app, isDebug, callback) => {
         try {
             var startingBlock = req.query.startingBlock;
             var endingBlock = req.query.endingBlock;
-            var blocks = await blockController.GetBlocksByRange(startingBlock, endingBlock);
-            var stringToHash = '';
-            debugger;
-            for (b = 0; b < blocks.length; b++) {
-                stringToHash += await hash.CreateSha256Hash(`${blocks[b].blockNumber}${blocks[b].blockHash}${blocks[b].previousBlockHash}`);
-                for (d = 0; d < blocks[b].data.length; d++) {
-                    if (blocks[b].data[d].type == 1) {
-                        stringToHash += await hash.CreateSha256Hash(`${blocks[b].data[d].fileData.fileName}${blocks[b].data[d].fileData.fileContents}`);
-                    }
-                }
-            }
-            var hashResult = await hash.CreateSha256Hash(stringToHash);
-            res.send(hashResult);
+            var hashResult = await blockController.GetBlockHashByRange(startingBlock, endingBlock);
+            res.send({ Success: true, Hash: hashResult });
+
         } catch (ex) {
             res.send({ Success: false, ErrorMessage: ex.toString() });
         }

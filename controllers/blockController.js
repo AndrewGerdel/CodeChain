@@ -8,6 +8,7 @@ var blockRepository = require('../repositories/blockRepository.js');
 var config = require('../config.json');
 var mempoolFileTypes = require('../enums/mempoolFiletypes');
 var transactionRepository = require('../repositories/transactionRepository');
+var hash = require('../utilities/hash');
 let jsonQuery = require('json-query')
 const targetBlockTimeMs = 60000; //target a one minute block time. 
 
@@ -267,9 +268,22 @@ var GetBlocksFromStartingBlock = (async (startingBlock) => {
     return blocks;
 });
 
-var GetBlocksByRange = (async(startingBlock, endingBlock) => {
+var GetBlockHashByRange = (async (startingBlock, endingBlock) => {
     var blocks = await blockRepository.GetBlocksByRange(startingBlock, endingBlock);
-    return blocks;
+    var stringToHash = '';
+    debugger;
+    for (b = 0; b < blocks.length; b++) {
+        var blockHash = await hash.CreateSha256Hash(`${blocks[b].blockNumber}${blocks[b].blockHash}${blocks[b].previousBlockHash}`);
+        stringToHash += blockHash.toString('hex');
+        for (d = 0; d < blocks[b].data.length; d++) {
+            if (blocks[b].data[d].type == 1) {
+                var dataHash = await hash.CreateSha256Hash(`${blocks[b].data[d].fileData.fileName}${blocks[b].data[d].fileData.fileContents}`);
+                stringToHash += dataHash.toString('hex');
+            }
+        }
+    }
+    var hashResult = await hash.CreateSha256Hash(stringToHash);
+    return hashResult.toString('hex');
 });
 
 var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
@@ -396,5 +410,5 @@ module.exports = {
     GetRepoFromBlock,
     GetFilesByAddress,
     GetReposByAddress,
-    GetBlocksByRange
+    GetBlockHashByRange
 }
