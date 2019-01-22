@@ -1,7 +1,47 @@
+//Simple but functional proof of concept to submit a directory/repository to the CodeChain Network.
 var request = require('request');
-var testAddresses = require('./testAddresses.js');
 var fs = require('fs');
 var path = require('path');
+var yargs = require('yargs');
+
+var baseUrl = "http://127.0.0.1:65340/"
+
+var dir = yargs.argv.dir;
+if (!dir) {
+    console.log("Missing --dir parameter.  Provide path of directory to upload.");
+    return;
+}
+var public = yargs.argv.public;
+if (!public){
+    console.log("Missing --public parameter. Provide path of public key file.");
+    return;
+}
+var private = yargs.argv.private;
+if (!private){
+    console.log("Missing --private parameter.  Provide path of private key file.");
+    return;
+}
+var projectName = yargs.argv.projectName;
+if (!projectName){
+    console.log("Missing --projectName parameter.  Provide a name for your project.");
+    return;
+}
+var node = yargs.argv.node;
+if (node)
+    baseUrl = node;
+
+if (!fs.existsSync(dir))
+    throw new Error(`${dir} does not exist`);
+if (!fs.existsSync(public))
+    throw new Error(`${public} does not exist`);
+if (!fs.existsSync(private))
+    throw new Error(`${private} does not exist`);
+
+// var filename = path.basename(file);
+// var filecontents = fs.readFileSync(file);
+var publickey = fs.readFileSync(public).toString();
+var privatekey = fs.readFileSync(private).toString();
+
 
 var loopPostRepo = (async (nodeEndpoint) => {
 
@@ -46,26 +86,27 @@ var loopPostRepo = (async (nodeEndpoint) => {
 
 
 var CreateRequest = (async (repoHash, file, filecontents) => {
-    var repo = { Name: 'Friendly Project', Hash: repoHash, File: file };
+    debugger;
+    var repo = { Name: projectName, Hash: repoHash, File: file };
     debugger;
     const data = JSON.stringify({
         filecontents: filecontents,
-        privatekey: testAddresses.Timmy().PrivateKey,
+        privatekey: privatekey,
         repo: repo
     });
     const options = {
-        uri: 'http://localhost:65340/file/createRequest',
+        uri: baseUrl+'file/createRequest',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
         body: data
     }
     request(options, (err, res, body) => {
         if (err) {
-            console.log('!!!!!!!!!!!!!!!! FAILURE:', err);
+            console.log('FAILURE:', err);
         } else {
             var bodyObj = JSON.parse(body);
             //console.log('signature is', bodyObj.Signature);
-            SubmitRequest(path.basename(file), filecontents, bodyObj.Signature, bodyObj.Salt, testAddresses.Timmy().PublicKey, repo);
+            SubmitRequest(path.basename(file), filecontents, bodyObj.Signature, bodyObj.Salt, publickey, repo);
         }
     });
 });
@@ -80,7 +121,7 @@ var SubmitRequest = ((filename, filecontents, signature, salt, publickey, repo) 
         salt: salt
     });
     const options = {
-        uri: 'http://localhost:65340/file/submitRequest',
+        uri: baseUrl+'file/submitRequest',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
         body: data
@@ -88,9 +129,11 @@ var SubmitRequest = ((filename, filecontents, signature, salt, publickey, repo) 
 
     request(options, (err, res, body) => {
         if (err) {
-            console.log('!!!!!!!!!!!!!!!! FAILURE:', err);
+            console.log('FAILURE:', err);
         } else {
-            console.log('SubmitResult: ', body);
+            // console.log('SubmitResult: ', body);
+            console.log(`File ${filename} uploaded to repository ${repo.Hash}. `);
+            
         }
     });
 });
@@ -122,20 +165,19 @@ var WalkDir = function (dir, parentDir, done) {
     });
 };
 
-var PostDirToNewRepo = (() => {
-
-    request('http://localhost:65340/file/getNewRepoHash', (res, err, body) => {
-        debugger;
+var PostDirToNewRepo = ((dir) => {
+    request(`${baseUrl}file/getNewRepoHash`, (res, err, body) => {
         var bodyObj = JSON.parse(body);
         var hash = bodyObj.Hash;
-        var rootDir = `C:\\Users\\Andrew\\Documents\\New folder`;
-        WalkDir(rootDir, '', (err, result) => {
+        console.log(`Uploading to repo hash ${hash}`);
+        WalkDir(dir, '', (err, result) => {
             result.forEach((item) => {
-                var fileContents = fs.readFileSync(rootDir + item);
+                var fileContents = fs.readFileSync(dir + item);
                 CreateRequest(hash, item, fileContents);
             });
         })
     });
 });
 
-PostDirToNewRepo();
+
+PostDirToNewRepo(dir);
