@@ -8,6 +8,7 @@ var blockRepository = require('../repositories/blockRepository.js');
 var config = require('../config.json');
 var mempoolFileTypes = require('../enums/mempoolFiletypes');
 var transactionRepository = require('../repositories/transactionRepository');
+let jsonQuery = require('json-query')
 const maxBlockSizeBytes = 1000000;
 const targetBlockTimeMs = 60000; //target a one minute block time. 
 
@@ -241,11 +242,17 @@ var GetFileFromBlock = (async (filehash) => {
 });
 
 var GetRepoFromBlock = (async (repohash) => {
-    var file = await blockRepository.GetRepoFromBlock(repohash);
-
-    //todo: loop thru each block, pulling out the right mempoolitems, keep them unique, return to caller in array. 
-    
-    return file;
+    debugger;
+    var blocks = await blockRepository.GetRepoFromBlock(repohash);
+    var results = [];
+    for (bl = 0; bl < blocks.length; bl++) {
+        var block = blocks[bl];
+        var jsonQueryResult =  jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
+        for(js=0;js<jsonQueryResult.references[0].length;js++){
+            results.push({ FileName:jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
+        }
+    }
+    return results;
 });
 
 var ValidateBlockHash = (async (block) => {
