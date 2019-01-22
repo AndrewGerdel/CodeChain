@@ -9,7 +9,6 @@ var config = require('../config.json');
 var mempoolFileTypes = require('../enums/mempoolFiletypes');
 var transactionRepository = require('../repositories/transactionRepository');
 let jsonQuery = require('json-query')
-const maxBlockSizeBytes = 1000000;
 const targetBlockTimeMs = 60000; //target a one minute block time. 
 
 // Adds memPoolItems to the collection, then fires SolveBlock
@@ -23,7 +22,6 @@ async function MineNextBlock() {
     }
 }
 
-
 var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock) => {
     var sumFileSizeBytes = 0;
     var counter = 0;
@@ -33,6 +31,7 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
     else {
         console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
+        var maxBlockSizeBytes = await CalculateTargetBlockSizeBytes(lastBlock[0].blockNumber + 1);
         var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
         var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
         memPoolItems.push(miningReward);
@@ -51,6 +50,8 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
                 memPoolItems.push(element);
             }
             if (sumFileSizeBytes >= maxBlockSizeBytes) {
+                console.log(`Total block size: ${sumFileSizeBytes} bytes`);
+
                 break;
             }
         }//endfor
@@ -83,6 +84,41 @@ var CreateGenesisBlock = ((lastBlock) => {
     return promise;
 });
 
+var CalculateTargetBlockSizeBytes = (async (blockNumber) => {
+    //Placeholder, in case we want to change the target block size in the future.  For now, hardcoded to 10mb.
+    return 10000000;
+    // //Assumed 525,600 blocks per year
+    // if (blockNumber <= 525600) { //first year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 525600 && blockNumber <= 1051200) { //second year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 1051200 && blockNumber <= 1576800) { //third year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 1576800 && blockNumber <= 2102400) { //fourth year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 2102400 && blockNumber <= 2628000) { //fifth year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 2628000 && blockNumber <= 3153600) { //sixth year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 3153600 && blockNumber <= 3679200) { //seventh year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 3679200 && blockNumber <= 4204800) { //eigth year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 4204800 && blockNumber <= 4730400) { //ninth year
+    //     return 10000000;
+    // }
+    // else if (blockNumber > 4730400) { //tenth year and onward.
+    //     return 10000000;
+    // }
+});
 
 var CalculateBlockReward = (async (blockNumber) => {
     //Assumed 525,600 blocks per year
@@ -231,6 +267,11 @@ var GetBlocksFromStartingBlock = (async (startingBlock) => {
     return blocks;
 });
 
+var GetBlocksByRange = (async(startingBlock, endingBlock) => {
+    var blocks = await blockRepository.GetBlocksByRange(startingBlock, endingBlock);
+    return blocks;
+});
+
 var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
     var blocks = await blockRepository.GetBlockHashesFromStartingBlock(startingBlock);
     return blocks;
@@ -247,9 +288,9 @@ var GetRepoFromBlock = (async (repohash) => {
     var results = [];
     for (bl = 0; bl < blocks.length; bl++) {
         var block = blocks[bl];
-        var jsonQueryResult =  jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
-        for(js=0;js<jsonQueryResult.references[0].length;js++){
-            results.push({ FileName:jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
+        var jsonQueryResult = jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
+        for (js = 0; js < jsonQueryResult.references[0].length; js++) {
+            results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
         }
     }
     return results;
@@ -313,6 +354,29 @@ var OrphanBlocks = (async (blocks) => {
     await blockRepository.MoveBlocksToOrphanCollection(blocks);
 });
 
+var GetFilesByAddress = (async (address) => {
+    var results = [];
+    var blocks = await blockRepository.GetBlocksWithAddress(address);
+    var jsonQueryResult = jsonQuery("data[publicKeyHash='" + address + "']", { data: blocks });
+    for (js = 0; js < jsonQueryResult.references[0].length; js++) {
+        if (jsonQueryResult.references[0][js].fileData)
+            results.push({ FileName: jsonQueryResult.references[0][js].fileData.fileName, Hash: jsonQueryResult.references[0][js].hash, DateAdded: jsonQueryResult.references[0][js].dateAdded });
+    }
+    return results;
+});
+
+var GetReposByAddress = (async (address) => {
+    var results = [];
+    var blocks = await blockRepository.GetBlocksWithAddress(address);
+    var jsonQueryResult = jsonQuery("data[publicKeyHash='" + address + "']", { data: blocks });
+    for (js = 0; js < jsonQueryResult.references[0].length; js++) {
+        if (jsonQueryResult.references[0][js].fileData && jsonQueryResult.references[0][js].fileData.repo)
+            if (results.filter(e => e.RepoHash === jsonQueryResult.references[0][js].fileData.repo.hash).length == 0)
+                results.push({ RepoHash: jsonQueryResult.references[0][js].fileData.repo.hash, DateAdded: jsonQueryResult.references[0][js].dateAdded });
+    }
+    return results;
+});
+
 
 module.exports = {
     SolveBlock,
@@ -329,5 +393,8 @@ module.exports = {
     GetBlockHash,
     OrphanBlocks,
     CalculateBlockReward,
-    GetRepoFromBlock
+    GetRepoFromBlock,
+    GetFilesByAddress,
+    GetReposByAddress,
+    GetBlocksByRange
 }

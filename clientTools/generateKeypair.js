@@ -5,7 +5,7 @@ hash.GenerateKeyPair().then((result) => {
 
     var dirName = result.Address.substr(0, 3) + result.Address.substr(61, 3);
 
-    fs.mkdirSync(`./keys/${dirName}`);
+    fs.mkdirSync(`./keys/${dirName}`, { recursive: true });
     fs.writeFile(`./keys/${dirName}/address.txt`, `${result.Address}`, (err) => {
         if (err) {
             console.log('Error savig address: ', err);

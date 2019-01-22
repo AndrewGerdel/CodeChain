@@ -79,6 +79,20 @@ var GetBlocksFromStartingBlock = (async (startingBlock) => {
     return blocks;
 });
 
+var GetBlocksByRange = (async (startingBlock, endingBlock) => {
+    var db = await mongoose.GetDb();
+    var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock), "$lt": Number(endingBlock) } }).sort({ blockNumber: 1 }).toArray();
+    return blocks;
+});
+//
+
+var GetBlocksWithAddress = (async (address) => {
+    var db = await mongoose.GetDb();
+    var blocks = db.collection('blocks').find({ "data.publicKeyHash": address}).sort({ blockNumber: -1 }).toArray();
+    return blocks;
+});
+
+
 
 var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
     var db = await mongoose.GetDb();
@@ -128,5 +142,7 @@ module.exports = {
     GetBlocks,
     GetBlock,
     GetBlockHashesFromStartingBlock,
-    MoveBlocksToOrphanCollection
+    MoveBlocksToOrphanCollection,
+    GetBlocksWithAddress,
+    GetBlocksByRange
 }

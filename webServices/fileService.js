@@ -106,6 +106,23 @@ var StartService = ((app) => {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }
     });
+
+    app.get('/file/getFileList', async (request, response) => {
+        try {
+            var repo = await blockController.GetFilesByAddress(request.query.address);
+            response.send(repo);
+        } catch (ex) {
+            response.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+    });
+    app.get('/file/getRepoList', async (request, response) => {
+        try {
+            var repo = await blockController.GetReposByAddress(request.query.address);
+            response.send(repo);
+        } catch (ex) {
+            response.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+    });
 });
 
 

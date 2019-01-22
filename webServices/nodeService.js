@@ -16,7 +16,7 @@ var StartService = ((app, isDebug, callback) => {
             })
     });
 
-    app.post('/nodes/register', async(req, res) => {
+    app.post('/nodes/register', async (req, res) => {
         var ip = req.ip;
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.headers.remoteport
@@ -52,13 +52,36 @@ var StartService = ((app, isDebug, callback) => {
             });
     });
 
-    app.get('/nodes/whoami', async(req, res) => {
+    app.get('/nodes/whoami', async (req, res) => {
         var ip = req.ip;
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.headers.remoteport
         var remoteProtocol = req.headers.remoteprotocol;
         var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}`);
         res.send(hash.toString('hex'));
+    });
+
+    app.get('/nodes/calculateBlockchainHash', async (req, res) => {
+        try {
+            var startingBlock = req.query.startingBlock;
+            var endingBlock = req.query.endingBlock;
+            var blocks = await blockController.GetBlocksByRange(startingBlock, endingBlock);
+            var stringToHash = '';
+            debugger;
+            for (b = 0; b < blocks.length; b++) {
+                stringToHash += await hash.CreateSha256Hash(`${blocks[b].blockNumber}${blocks[b].blockHash}${blocks[b].previousBlockHash}`);
+                for (d = 0; d < blocks[b].data.length; d++) {
+                    if (blocks[b].data[d].type == 1) {
+                        stringToHash += await hash.CreateSha256Hash(`${blocks[b].data[d].fileData.fileName}${blocks[b].data[d].fileData.fileContents}`);
+                    }
+                }
+            }
+            var hashResult = await hash.CreateSha256Hash(stringToHash);
+            res.send(hashResult);
+        } catch (ex) {
+            res.send({ Success: false, ErrorMessage: ex.toString() });
+        }
+
     });
 
     if (isDebug) {
