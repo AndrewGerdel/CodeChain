@@ -46,8 +46,6 @@ var GetNodeWithLongestChain = (() => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
             .then((db) => {
-                console.log(123);
-                
                 var nodes = db.collection('nodes').find({ blacklistUntilBlock: null }).sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
                 resolve(nodes);
             }, (err) => {

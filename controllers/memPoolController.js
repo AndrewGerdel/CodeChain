@@ -92,7 +92,7 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem, incomingFromNodeUid
 
 var ValidateMemPoolItemsOnIncomingBlock = (async (memPoolItems) => {
   for (i = 0; i < memPoolItems.length; i++) {
-    if(memPoolItems[i].type == mempoolItemTypes.MiningReward && i != 0){
+    if (memPoolItems[i].type == mempoolItemTypes.MiningReward && i != 0) {
       throw new Error("Failed to validate incoming block. MiningReward only allowed as the first element.");
     }
     var verified = await ValidateMemPoolItemOnIncomingBlock(memPoolItems[i]);
@@ -105,7 +105,10 @@ var ValidateMemPoolItemsOnIncomingBlock = (async (memPoolItems) => {
 
 var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
-    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents);
+    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
+    if (!verified)
+      console.log('Failed to verify message on incoming block. ', memPoolItem.hash);
+
     return verified;
   } else if (memPoolItem.type == mempoolItemTypes.MiningReward) {
     //Mining rewards are verified in blockController, before this function even gets called. 
@@ -122,11 +125,14 @@ var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
       //let's check that the sender has enough funds.  
       var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
       if (balance < memPoolItem.transactionData.amount) {
+        console.log('Failed to verify message on incoming block, insufficient funds. Transaction ', memPoolItem.hash);
         return false;
       } else {
         return true;
       }
     } else {
+      if (!verified)
+        console.log('Failed to verify message on incoming block. Transaction ', memPoolItem.hash);
       return false; //message was invalid
     }
   } else {

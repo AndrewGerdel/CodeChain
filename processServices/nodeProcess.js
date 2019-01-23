@@ -32,6 +32,8 @@ var Timer_LoadAndRegisterNodes = (async () => {
 var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
     try {
         var lastBlock = await blockController.GetLastBlock();
+        if (!lastBlock || lastBlock.length == 0)
+            return;
         var blockHeight = lastBlock[0].blockNumber
         var randomHigh = Math.trunc(Math.random() * ((blockHeight - 3) - (blockHeight / 2)) + (blockHeight / 2));  //Math.random() * (high-low) + low
         var randomLow = Math.trunc(Math.random() * ((((blockHeight) / 2) - 1) - 1) + 1); //Math.random() * (high-low) + low
@@ -52,7 +54,7 @@ var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
                     if (bodyObj.Success == true) {
                         if (bodyObj.Hash == myBlockHash) {
                             nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}`);
-                        }else{
+                        } else {
                             nodeProcessLog.WriteLog(`Failed to validate block ${randomLow} to ${randomHigh} with ${node.uid}. ${myBlockHash} vs. ${bodyObj.Hash}.  Blacklisting.`);
                             nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
                         }

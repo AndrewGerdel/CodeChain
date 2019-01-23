@@ -5,7 +5,9 @@ var StartService = ((app, isDebug) => {
 
   app.post('/block/add', (req, res) => {
     var block = JSON.parse(req.headers.block);
+    console.log('hit1');
     blockController.ValidateAndAddIncomingBlock(block)
+    
       .then((success) => {
         res.send(success);
       }, (err) => {
