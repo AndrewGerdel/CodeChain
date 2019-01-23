@@ -76,9 +76,9 @@ var StartService = ((app) => {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
                     data: block
                 });
-                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName });
+                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signedMessage, DateAdded: jsonQueryResult.value.dateAdded, Salt:  jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo});
             } else {
-                response.send('File not found');
+                response.send({ Success: false, ErrorMessage: "File not found" });
             }
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });

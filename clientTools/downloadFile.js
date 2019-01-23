@@ -3,6 +3,7 @@ var request = require('request');
 var fs = require('fs');
 var path = require('path');
 var yargs = require('yargs');
+var hash = require('../utilities/hash');
 
 var nodeEndpoint = "http://127.0.0.1:65340/file/get";
 var destination = "c:\\FakeRepo\\";
@@ -18,20 +19,34 @@ request(nodeEndpoint + '?filehash=' + yargs.argv.filehash, (err, res, body) => {
     } else {
         //console.log(body);
         var bodyObj = JSON.parse(body);
-        //console.log(bodyObj.FileContents);
-        let buff = new Buffer.from(bodyObj.FileContents, 'base64');
-        // let text = buff.toString('ascii');
-        var saveToFilePath = destination + bodyObj.FileName;
-        if (fs.existsSync(saveToFilePath)) {
-            console.log('File already exists. Will not overwrite ', saveToFilePath);
+        if (!bodyObj.Success) {
+            console.log(bodyObj.ErrorMessage);
             return;
         }
-        fs.writeFile(saveToFilePath, buff, function (err) {
-            if (err) {
-                return console.log(err);
-            }
-            console.log("The file was saved to ", saveToFilePath);
-        });
+        hash.CreateSha256Hash(`${bodyObj.FileName}${bodyObj.FileContents}${bodyObj.Signature}${bodyObj.Salt}`).then((hashResult) => {
+            console.log(`${bodyObj.FileName}${bodyObj.FileContents}${bodyObj.Signature}${bodyObj.Salt} created hash ${hashResult.toString('hex')}`);
+            if (hashResult.toString('hex') == yargs.argv.filehash) {
+                //console.log(bodyObj.FileContents);
+                let buff = new Buffer.from(bodyObj.FileContents, 'base64');
+                // let text = buff.toString('ascii');
+                var saveToFilePath = destination + bodyObj.FileName;
+                if (fs.existsSync(saveToFilePath)) {
+                    console.log('File already exists. Will not overwrite ', saveToFilePath);
+                    return;
+                }
+                fs.writeFile(saveToFilePath, buff, function (err) {
+                    if (err) {
+                        return console.log(err);
+                    }
+                    console.log("The file was saved to ", saveToFilePath);
+                });
+            } else {
+                //safety check 
+                console.log(`The file could not be validated.  File contents have been changed since originally uploaded.  New filehash value is ${hashResult.toString('hex')}`);
 
+            }
+
+        }
+        )
     }
 });

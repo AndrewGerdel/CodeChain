@@ -14,7 +14,7 @@ var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature
     throw new Error("Invalid signature");
   }
   var dateNow = new Date();
-  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + dateNow + salt + repo);
+  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + salt);
   var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signature, publicKey, salt, dateNow, hash.toString("hex"), repo);
   BroadcastMempoolItemToRandomNodes(mempoolItem);
   return mempoolItem;
