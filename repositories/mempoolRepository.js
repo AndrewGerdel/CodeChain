@@ -100,7 +100,7 @@ var GetMemPoolItems = (() => {
   return promise;
 });
 
-//Deletes by _id all memPoolItems in the list
+//Deletes by hash all memPoolItems in the list
 var DeleteMemPoolItems = (async (memPoolItems) => {
   var db = await mongoose.GetDb();
   for (i = 0; i < memPoolItems.length; i++) {

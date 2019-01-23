@@ -1,18 +1,23 @@
 let blockController = require('../controllers/blockController.js');
+var nodeRepository = require('../repositories/nodeRepository');
 var config = require('../config.json');
 
 var StartService = ((app, isDebug) => {
 
   app.post('/block/add', (req, res) => {
     var block = JSON.parse(req.body.block);
-    blockController.ValidateAndAddIncomingBlock(block)
-    
-      .then((success) => {
-        res.send(success);
-      }, (err) => {
-        res.send(err);
-        console.log(`Rejecting block ${block.blockNumber} received from remote node`);
-      })
+    var remoteNodeUid = JSON.parse(req.body.uid);
+    var remoteNode = await nodeRepository.GetNode(remoteNodeUid);
+    if (!remoteNode || remoteNode.length == 0) {
+      console.log(`Refusing block from unknown node: ${remoteNodeUid}`);
+      res.send({Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}`});
+    } else if (remoteNode[0].blacklistUntilBlock && remoteNode[0].blacklistUntilBlock > 0) {
+      console.log(`Refusing block from blacklisted node: ${remoteNodeUid}`);
+      res.send({Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}`});
+    } else {
+      var success = await blockController.ValidateAndAddIncomingBlock(block)
+      res.send({Success: success});
+    }
   });
 
   app.get('/block/getBlocks', (req, res) => {

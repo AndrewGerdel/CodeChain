@@ -110,6 +110,12 @@ var GetRandomNodes = (async (numberToReturn) => {
     return nodes;
 });
 
+var GetBlacklistedNodes = (async () => {
+    var db = await mongoose.GetDb();
+    var nodes = await db.collection('nodes').find({blacklistUntilBlock: {$gt: 0}}).toArray();
+    return nodes;
+});
+
 var BlacklistNode = (async (uid, blockNumber) => {
     var db = await mongoose.GetDb();
     db.collection('nodes').updateOne({ uid: uid },
@@ -144,5 +150,6 @@ module.exports = {
     GetRandomNodes,
     GetAllNodes,
     GetMyNode,
-    BlacklistNode
+    BlacklistNode,
+    GetBlacklistedNodes
 }
