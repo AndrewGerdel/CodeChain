@@ -215,7 +215,45 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     }
 });
 
+var BlacklistNode = (async(node, blockHeight) => {
+    nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
 
+    var nodeEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/blacklistNotify';
+
+    var options = {
+        url: nodeEndPoint,
+        method: 'POST',
+        headers: { uid: config.network.myUid }
+    };
+    request(options, async (err, res, body) => {
+        if (err) {
+            console.log(`Failed to notify node ${node.uid} that we blacklisted them  Error: ${err}`);
+        } else {
+           //nothing to do on success
+        }
+    });
+
+});
+
+
+var UnBlacklistNode = (async(node, blockHeight) => {
+    nodeRepository.UnBlacklistNode(node.uid);
+    var nodeEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/unblacklistNotify';
+
+    var options = {
+        url: nodeEndPoint,
+        method: 'POST',
+        headers: { uid: config.network.myUid }
+    };
+    request(options, async (err, res, body) => {
+        if (err) {
+            console.log(`Failed to notify node ${node.uid} that we un-blacklisted them  Error: ${err}`);
+        } else {
+           //nothing to do on success
+        }
+    });
+
+});
 
 
 module.exports = {
@@ -226,5 +264,7 @@ module.exports = {
     GetNodesFromRemoteNodes,
     BroadcastBlockToNetwork,
     ImportLongestBlockchain,
-    GetAllNodes
+    GetAllNodes,
+    BlacklistNode,
+    UnBlacklistNode
 }

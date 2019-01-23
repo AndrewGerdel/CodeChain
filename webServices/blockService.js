@@ -4,7 +4,7 @@ var config = require('../config.json');
 
 var StartService = ((app, isDebug) => {
 
-  app.post('/block/add', (req, res) => {
+  app.post('/block/add', async(req, res) => {
     var block = JSON.parse(req.body.block);
     var remoteNodeUid = JSON.parse(req.body.uid);
     var remoteNode = await nodeRepository.GetNode(remoteNodeUid);

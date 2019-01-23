@@ -56,7 +56,7 @@ var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
                             nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}`);
                         } else {
                             nodeProcessLog.WriteLog(`Failed to validate block ${randomLow} to ${randomHigh} with ${node.uid}. ${myBlockHash} vs. ${bodyObj.Hash}.  Blacklisting.`);
-                            nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
+                            nodeController.BlacklistNode(node, blockHeight);
                         }
                     } else {
                         nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${body}`);
@@ -78,18 +78,19 @@ var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
 
 var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
     try {
-        var randomNodes = await nodeRepository.GetBlacklistedNodes();
-
-
+        var blacklistedNodes = await nodeRepository.GetBlacklistedNodes();
+        if (!blacklistedNodes || blacklistedNodes.length == 0) {
+            return;
+        }
         var lastBlock = await blockController.GetLastBlock();
         if (!lastBlock || lastBlock.length == 0)
             return;
+        nodeProcessLog.WriteLog(`Attempting to un-blacklist ${blacklistedNodes.length} nodes.`);
         var blockHeight = lastBlock[0].blockNumber
-        var randomHigh = Math.trunc(Math.random() * ((blockHeight - 3) - (blockHeight / 2)) + (blockHeight / 2));  //Math.random() * (high-low) + low
-        var randomLow = Math.trunc(Math.random() * ((((blockHeight) / 2) - 1) - 1) + 1); //Math.random() * (high-low) + low
-        nodeProcessLog.WriteLog(`Random scanning blocks ${randomLow} to ${randomHigh}`);
+        var randomHigh = blockHeight - 5;//before we un-blacklist, re-verify their entire chain... up to 5 blocks ago
+        var randomLow = 1;//before we un-blacklist, re-verify their entire chain..
         var myBlockHash = await blockController.GetBlockHashByRange(randomLow, randomHigh);
-        randomNodes.forEach((node) => {
+        blacklistedNodes.forEach((node) => {
             var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/nodes/calculateBlockchainHash?startingBlock=${randomLow}&endingBlock=${randomHigh}`;
             var options = {
                 url: nodeEndpoint,
@@ -97,18 +98,18 @@ var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
             };
             request(options, (err, res, body) => {
                 if (err) {
-                    nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${err}`);
+                    nodeProcessLog.WriteLog(`Error testing (un-blacklist) random blocks on ${node.uid}: ${err}`);
                 } else {
                     var bodyObj = JSON.parse(body);
                     if (bodyObj.Success == true) {
                         if (bodyObj.Hash == myBlockHash) {
-                            nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}`);
+                            nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}. Un-blacklisting node.`);
+                            nodeController.UnBlacklistNode(node, blockHeight);
                         } else {
-                            nodeProcessLog.WriteLog(`Failed to validate block ${randomLow} to ${randomHigh} with ${node.uid}. ${myBlockHash} vs. ${bodyObj.Hash}.  Blacklisting.`);
-                            nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
+                            nodeProcessLog.WriteLog(`Failed to validate block ${randomLow} to ${randomHigh} with ${node.uid}. ${myBlockHash} vs. ${bodyObj.Hash}.  Will remain blacklisted.`);
                         }
                     } else {
-                        nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${body}`);
+                        nodeProcessLog.WriteLog(`Error (un-blacklisting) testing random blocks on ${node.uid}: ${body}`);
                     }
                 }
             });
@@ -120,7 +121,7 @@ var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
         nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
     } finally {
         setTimeout(() => {
-            Timer_ValidateBlockChainsOfRemoteNodes();
+            Timer_RevalidateBlockChainsOfBlacklistedNodes();
         }, config.timers.secondaryTimerIntervalMs);
     }
 });
@@ -152,3 +153,4 @@ var RetrieveBlockchainFromLongestNode = (async () => {
 console.log('Node process starting...');
 Timer_LoadAndRegisterNodes();
 Timer_ValidateBlockChainsOfRemoteNodes();
+Timer_RevalidateBlockChainsOfBlacklistedNodes();

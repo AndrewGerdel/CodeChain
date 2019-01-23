@@ -74,6 +74,20 @@ var StartService = ((app, isDebug, callback) => {
 
     });
 
+    app.post('/nodes/blacklistNotify', async (req, res) => {
+        var remoteNodeUid = JSON.parse(req.body).uid;
+        console.log('Warning: You have been blacklisted by ', remoteNodeUid);
+        res.send({ Success: success });
+    });
+
+    
+    app.post('/nodes/unblacklistNotify', async (req, res) => {
+        var remoteNodeUid = JSON.parse(req.body).uid;
+        console.log('Notice: You have been un-blacklisted by ', remoteNodeUid);
+        res.send({ Success: success });
+    });
+
+
     if (isDebug) {
         //Run the backend block processes on a child thread with inspect-brk
         //NOTE: In chrome, 'Open dedicated DevTools for Node'.  Add localhost:7778 and localhost:7779

@@ -151,5 +151,6 @@ module.exports = {
     GetAllNodes,
     GetMyNode,
     BlacklistNode,
-    GetBlacklistedNodes
+    GetBlacklistedNodes,
+    UnBlacklistNode
 }
