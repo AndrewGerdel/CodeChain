@@ -104,11 +104,11 @@ var BroadcastBlockToNetwork = (async (block) => {
         };
         request(options, (err, res, body) => {
             if (err) {
-                console.log(`Failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Retrying...`);
+                console.log(`Failed to send block ${block.blockNumber} to node ${postUrl}.  Retrying...`);
                 //Retry after three seconds.  Then delete the node if it fails again
                 setTimeout(() => {
                     request(options, async (err2, res2, body2) => {
-                        console.log(`Second attempt failed to send block ${block.blockNumber} to node ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                        console.log(`Second attempt failed to send block ${block.blockNumber} to node ${postUrl}.  Error: ${err}`);
                         nodeRepository.DeleteNode(node.hash);
                     });
                 }, 3000);
@@ -129,7 +129,7 @@ var ImportLongestBlockchain = (async () => {
     }
     var node = await nodeRepository.GetNodeWithLongestChain();
     if (node && node.length > 0) {
-        
+
         //We are behind at least one node on the network.   But how far behind? And do we have any collisions?
         //1: Compare our most recent block to the other node's same block.  Are we a match?
         var comparisonResult = await CompareOurMostRecentBlock(node[0], lastBlock[0]);
