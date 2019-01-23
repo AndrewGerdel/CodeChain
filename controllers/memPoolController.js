@@ -79,7 +79,7 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem, incomingFromNodeUid
       var options = {
         url: nodeEndpoint,
         method: 'POST',
-        headers: { uid: config.network.myUid, mempoolItem: JSON.stringify(mempoolItem) }
+        json: { uid: config.network.myUid, mempoolItem: JSON.stringify(mempoolItem) }
       };
       request(options, (err, res, body) => {
         //There's really nothing to do here.  Broadcast it and forget it. 
