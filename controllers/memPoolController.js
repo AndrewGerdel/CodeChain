@@ -23,7 +23,7 @@ var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature
 //Adds an "incoming' file to the mempool.  "Incoming transactions" are transactions that were broadcast from other nodes, not submited via an endpoint.
 var AddIncomingCodeFileToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
 
-  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents);
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
   if (!verified) {
     throw new Error("Invalid signed message");
   }
