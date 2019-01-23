@@ -46,7 +46,9 @@ var GetNodeWithLongestChain = (() => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
             .then((db) => {
-                var nodes = db.collection('nodes').find().sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
+                console.log(123);
+                
+                var nodes = db.collection('nodes').find({ blacklistUntilBlock: null }).sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
                 resolve(nodes);
             }, (err) => {
                 reject(err);
@@ -92,7 +94,7 @@ var DeleteNode = ((hash) => {
 });
 
 var UpdateNodeRegistration = (async (node, details) => {
-    var db = mongoose.GetDb();
+    var db = await mongoose.GetDb();
     db.collection('nodes').updateOne({ _id: node._id },
         {
             $set:
@@ -106,7 +108,6 @@ var UpdateNodeRegistration = (async (node, details) => {
 
 var GetRandomNodes = (async (numberToReturn) => {
     var db = await mongoose.GetDb();
-
     var nodes = await db.collection('nodes').aggregate([{ $sample: { size: numberToReturn } }]).toArray();
     return nodes;
 });
@@ -123,7 +124,17 @@ var BlacklistNode = (async (uid, blockNumber) => {
     return true;
 });
 
-
+var UnBlacklistNode = (async (uid) => {
+    var db = await mongoose.GetDb();
+    db.collection('nodes').updateOne({ uid: uid },
+        {
+            $set:
+            {
+                blacklistUntilBlock: undefined
+            }
+        });
+    return true;
+});
 
 module.exports = {
     GetAllNodesExludingMe,
