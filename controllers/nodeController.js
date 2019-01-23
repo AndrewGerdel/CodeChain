@@ -100,7 +100,7 @@ var BroadcastBlockToNetwork = (async (block) => {
         var options = {
             url: postUrl,
             method: 'POST',
-            headers: { block: JSON.stringify(block) }
+            json: { block: JSON.stringify(block) }
         };
         request(options, (err, res, body) => {
             if (err) {
