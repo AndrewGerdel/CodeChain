@@ -271,7 +271,6 @@ var GetBlocksFromStartingBlock = (async (startingBlock) => {
 var GetBlockHashByRange = (async (startingBlock, endingBlock) => {
     var blocks = await blockRepository.GetBlocksByRange(startingBlock, endingBlock);
     var stringToHash = '';
-    debugger;
     for (b = 0; b < blocks.length; b++) {
         var blockHash = await hash.CreateSha256Hash(`${blocks[b].blockNumber}${blocks[b].blockHash}${blocks[b].previousBlockHash}`);
         stringToHash += blockHash.toString('hex');
@@ -297,7 +296,6 @@ var GetFileFromBlock = (async (filehash) => {
 });
 
 var GetRepoFromBlock = (async (repohash) => {
-    debugger;
     var blocks = await blockRepository.GetRepoFromBlock(repohash);
     var results = [];
     for (bl = 0; bl < blocks.length; bl++) {

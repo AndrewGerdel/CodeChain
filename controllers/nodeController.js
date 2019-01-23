@@ -64,6 +64,8 @@ var RegisterWithOtherNodes = (async (nodeList) => {
 
 var GetNodesFromRemoteNodes = (async (nodeList) => {
     nodeList.forEach(node => {
+        if (node.blacklistUntilBlock && node.blacklistUntilBlock > 0)
+            return;
         var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/get';
         request(nodeRegisterEndPoint, {}, (err, res, body) => {
             if (err) {
@@ -88,7 +90,7 @@ var GetNodesFromRemoteNodes = (async (nodeList) => {
             }
         });
     });
-     return 'Requests sent to all nodes.';
+    return 'Requests sent to all nodes.';
 });
 
 var BroadcastBlockToNetwork = (async (block) => {
@@ -127,6 +129,7 @@ var ImportLongestBlockchain = (async () => {
     }
     var node = await nodeRepository.GetNodeWithLongestChain();
     if (node && node.length > 0) {
+        
         //We are behind at least one node on the network.   But how far behind? And do we have any collisions?
         //1: Compare our most recent block to the other node's same block.  Are we a match?
         var comparisonResult = await CompareOurMostRecentBlock(node[0], lastBlock[0]);

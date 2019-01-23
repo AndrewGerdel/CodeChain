@@ -47,7 +47,6 @@ var loopPostRepo = (async (nodeEndpoint) => {
 
 var CreateRequest = (async (repoHash, file, filecontents) => {
     var repo = { Name: 'Friendly Project', Hash: repoHash, File: file };
-    debugger;
     const data = JSON.stringify({
         filecontents: filecontents,
         privatekey: testAddresses.Timmy().PrivateKey,
@@ -125,7 +124,6 @@ var WalkDir = function (dir, parentDir, done) {
 var PostDirToNewRepo = (() => {
 
     request('http://localhost:65340/file/getNewRepoHash', (res, err, body) => {
-        debugger;
         var bodyObj = JSON.parse(body);
         var hash = bodyObj.Hash;
         var rootDir = `C:\\Users\\Andrew\\Documents\\New folder`;

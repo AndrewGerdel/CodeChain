@@ -1,6 +1,9 @@
 var nodeController = require('../controllers/nodeController');
 var config = require('../config.json');
 var nodeProcessLog = require('../loggers/nodeProcessLog');
+var nodeRepository = require('../repositories/nodeRepository');
+var blockController = require('../controllers/blockController');
+var request = require('request');
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
@@ -23,6 +26,51 @@ var Timer_LoadAndRegisterNodes = (async () => {
         setTimeout(() => {
             Timer_LoadAndRegisterNodes();
         }, config.timers.secondaryTimerIntervalMs);
+    }
+});
+
+var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
+    try {
+        var lastBlock = await blockController.GetLastBlock();
+        var blockHeight = lastBlock[0].blockNumber
+        var randomHigh = Math.trunc(Math.random() * ((blockHeight - 3) - (blockHeight / 2)) + (blockHeight / 2));  //Math.random() * (high-low) + low
+        var randomLow = Math.trunc(Math.random() * ((((blockHeight) / 2) - 1) - 1) + 1); //Math.random() * (high-low) + low
+        nodeProcessLog.WriteLog(`Random scanning blocks ${randomLow} to ${randomHigh}`);
+        var myBlockHash = await blockController.GetBlockHashByRange(randomLow, randomHigh);
+        var randomNodes = await nodeRepository.GetRandomNodes(10);
+        randomNodes.forEach((node) => {
+            var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/nodes/calculateBlockchainHash?startingBlock=${randomLow}&endingBlock=${randomHigh}`;
+            var options = {
+                url: nodeEndpoint,
+                method: 'GET',
+            };
+            request(options, (err, res, body) => {
+                if (err) {
+                    nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${err}`);
+                } else {
+                    var bodyObj = JSON.parse(body);
+                    if (bodyObj.Success == true) {
+                        if (bodyObj.Hash == myBlockHash) {
+                            nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}`);
+                        }else{
+                            nodeProcessLog.WriteLog(`Failed to validate block ${randomLow} to ${randomHigh} with ${node.uid}. ${myBlockHash} vs. ${bodyObj.Hash}.  Blacklisting.`);
+                            nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
+                        }
+                    } else {
+                        nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${body}`);
+                    }
+                }
+            });
+
+        })
+    } catch (ex) {
+        console.log(ex);
+
+        nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
+    } finally {
+        setTimeout(() => {
+            Timer_ValidateBlockChainsOfRemoteNodes();
+        }, 5000);
     }
 });
 
@@ -52,3 +100,4 @@ var RetrieveBlockchainFromLongestNode = (async () => {
 
 console.log('Node process starting...');
 Timer_LoadAndRegisterNodes();
+Timer_ValidateBlockChainsOfRemoteNodes();

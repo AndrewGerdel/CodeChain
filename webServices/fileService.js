@@ -71,7 +71,6 @@ var StartService = ((app) => {
 
     app.get('/file/get', async (request, response) => {
         try {
-            debugger;
             var block = await blockController.GetFileFromBlock(request.query.filehash);
             if (block.length > 0) {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {

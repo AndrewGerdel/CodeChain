@@ -35,6 +35,10 @@ var Node = mongoose.model('Node', {
       type: Number,
       require: false
     }
+  },
+  blacklistUntilBlock : {
+    type: Number,
+    require: false
   }
 });
 

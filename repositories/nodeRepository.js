@@ -91,27 +91,17 @@ var DeleteNode = ((hash) => {
     return promise;
 });
 
-var UpdateNodeRegistration = ((node, details) => {
-    var promise = new Promise((resolve, reject) => {
-
-        mongoose.GetDb()
-            .then((db) => {
-                db.collection('nodes').updateOne({ _id: node._id },
-                    {
-                        $set:
-                        {
-                            dateLastRegistered: new Date(),
-                            registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash }
-                        }
-                    });
-
-                resolve(true);
-            }, (err) => {
-                reject(err);
-            });
-
-    });
-    return promise;
+var UpdateNodeRegistration = (async (node, details) => {
+    var db = mongoose.GetDb();
+    db.collection('nodes').updateOne({ _id: node._id },
+        {
+            $set:
+            {
+                dateLastRegistered: new Date(),
+                registrationDetails: { blockHeight: details.myBlockHeight, myHash: details.yourHash }
+            }
+        });
+    return true;
 });
 
 var GetRandomNodes = (async (numberToReturn) => {
@@ -120,6 +110,19 @@ var GetRandomNodes = (async (numberToReturn) => {
     var nodes = await db.collection('nodes').aggregate([{ $sample: { size: numberToReturn } }]).toArray();
     return nodes;
 });
+
+var BlacklistNode = (async (uid, blockNumber) => {
+    var db = await mongoose.GetDb();
+    db.collection('nodes').updateOne({ uid: uid },
+        {
+            $set:
+            {
+                blacklistUntilBlock: blockNumber
+            }
+        });
+    return true;
+});
+
 
 
 module.exports = {
@@ -131,5 +134,6 @@ module.exports = {
     GetNodeWithLongestChain,
     GetRandomNodes,
     GetAllNodes,
-    GetMyNode
+    GetMyNode,
+    BlacklistNode
 }
