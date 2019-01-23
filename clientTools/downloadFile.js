@@ -23,17 +23,23 @@ request(nodeEndpoint + '?filehash=' + yargs.argv.filehash, (err, res, body) => {
             console.log(bodyObj.ErrorMessage);
             return;
         }
+        //Before saving the file, re-hash the filename, contents, signature and salt.  If that doesn't produce the same hash that we requested, 
+        //then the node must have tried changing the file contents (or name or signature or salt.)  The file is no longer safe.  This will result
+        //in the node that we downloaded this from being blacklisted from the network until they restore the original contents of the file. 
         hash.CreateSha256Hash(`${bodyObj.FileName}${bodyObj.FileContents}${bodyObj.Signature}${bodyObj.Salt}`).then((hashResult) => {
-            console.log(`${bodyObj.FileName}${bodyObj.FileContents}${bodyObj.Signature}${bodyObj.Salt} created hash ${hashResult.toString('hex')}`);
+            // console.log(`${bodyObj.FileName}${bodyObj.FileContents}${bodyObj.Signature}${bodyObj.Salt} created hash ${hashResult.toString('hex')}`);
             if (hashResult.toString('hex') == yargs.argv.filehash) {
                 //console.log(bodyObj.FileContents);
                 let buff = new Buffer.from(bodyObj.FileContents, 'base64');
                 // let text = buff.toString('ascii');
                 var saveToFilePath = destination + bodyObj.FileName;
+
+                //up to each developer.  If you want to automatically overwrite the file comment out these lines.  Or add a parameter.
                 if (fs.existsSync(saveToFilePath)) {
                     console.log('File already exists. Will not overwrite ', saveToFilePath);
                     return;
                 }
+                
                 fs.writeFile(saveToFilePath, buff, function (err) {
                     if (err) {
                         return console.log(err);
