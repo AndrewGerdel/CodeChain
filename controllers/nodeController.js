@@ -223,7 +223,7 @@ var BlacklistNode = (async(node, blockHeight) => {
     var options = {
         url: nodeEndPoint,
         method: 'POST',
-        headers: { uid: config.network.myUid }
+        json: { uid: config.network.myUid }
     };
     request(options, async (err, res, body) => {
         if (err) {
@@ -243,7 +243,7 @@ var UnBlacklistNode = (async(node, blockHeight) => {
     var options = {
         url: nodeEndPoint,
         method: 'POST',
-        headers: { uid: config.network.myUid }
+        json: { uid: config.network.myUid }
     };
     request(options, async (err, res, body) => {
         if (err) {

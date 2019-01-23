@@ -4,19 +4,23 @@ var config = require('../config.json');
 
 var StartService = ((app, isDebug) => {
 
-  app.post('/block/add', async(req, res) => {
-    var block = JSON.parse(req.body.block);
-    var remoteNodeUid = JSON.parse(req.body.uid);
-    var remoteNode = await nodeRepository.GetNode(remoteNodeUid);
-    if (!remoteNode || remoteNode.length == 0) {
-      console.log(`Refusing block from unknown node: ${remoteNodeUid}`);
-      res.send({Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}`});
-    } else if (remoteNode[0].blacklistUntilBlock && remoteNode[0].blacklistUntilBlock > 0) {
-      console.log(`Refusing block from blacklisted node: ${remoteNodeUid}`);
-      res.send({Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}`});
-    } else {
-      var success = await blockController.ValidateAndAddIncomingBlock(block)
-      res.send({Success: success});
+  app.post('/block/add', async (req, res) => {
+    try {
+      var block = JSON.parse(req.body.block);
+      var remoteNodeUid = req.body.uid;
+      var remoteNode = await nodeRepository.GetNode(remoteNodeUid);
+      if (!remoteNode || remoteNode.length == 0) {
+        console.log(`Refusing block from unknown node: ${remoteNodeUid}`);
+        res.send({ Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}` });
+      } else if (remoteNode[0].blacklistUntilBlock && remoteNode[0].blacklistUntilBlock > 0) {
+        console.log(`Refusing block from blacklisted node: ${remoteNodeUid}`);
+        res.send({ Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}` });
+      } else {
+        var success = await blockController.ValidateAndAddIncomingBlock(block)
+        res.send({ Success: success });
+      }
+    } catch (ex) {
+      res.send({ Success: false, Exception: ex });
     }
   });
 

@@ -75,16 +75,16 @@ var StartService = ((app, isDebug, callback) => {
     });
 
     app.post('/nodes/blacklistNotify', async (req, res) => {
-        var remoteNodeUid = JSON.parse(req.body).uid;
+        var remoteNodeUid = req.body;
         console.log('Warning: You have been blacklisted by ', remoteNodeUid);
-        res.send({ Success: success });
+        res.send({ Success: true });
     });
 
     
     app.post('/nodes/unblacklistNotify', async (req, res) => {
-        var remoteNodeUid = JSON.parse(req.body).uid;
+        var remoteNodeUid = req.body.uid;
         console.log('Notice: You have been un-blacklisted by ', remoteNodeUid);
-        res.send({ Success: success });
+        res.send({ Success: true });
     });
 
 
