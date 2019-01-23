@@ -4,7 +4,7 @@ if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
 }
 
-var writeToConsole = false;
+var writeToConsole = true;
 var writeToFile = true;
 
 var WriteLog = (async (input) => {

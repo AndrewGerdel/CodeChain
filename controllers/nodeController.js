@@ -1,9 +1,24 @@
 //controls interactions with other network nodes
 var nodeRepository = require('../repositories/nodeRepository');
 var request = require('request');
-var requestPromise = require('request-promise');
 var config = require('../config.json');
 var blockController = require('./blockController.js');
+var requestPromise = require('request-promise');
+
+
+
+
+var LoadNodesFromPastebin = (async () => {
+    var options = {
+        uri: 'https://pastebin.com/raw/7Bvxz47q',
+        headers: {
+            'User-Agent': 'Request-Promise'
+        },
+        json: true // Automatically parses the JSON string in the response
+    };
+    var result = await requestPromise(options);
+    return result;
+});
 
 var GetAllNodes = (async () => {
     var nodes = await nodeRepository.GetAllNodes();
@@ -11,8 +26,11 @@ var GetAllNodes = (async () => {
     if (nodes.length > 0) {
         return (nodes);
     } else {
-        // console.log('Adding default master node from config:', config.network.defaultMasterNode);
-        var newNode = await nodeRepository.AddNode(config.network.defaultMasterNodeProtocol, config.network.defaultMasterNode, config.network.defaultMasterNodePort, config.network.defaultMasterNodeUid);
+        var nodesFromPasteBin = await LoadNodesFromPastebin();
+        for (n = 0; n < nodesFromPasteBin.nodes.length; n++) {
+            console.log('Adding ' + nodesFromPasteBin.nodes[n].uri, ":", nodesFromPasteBin.nodes[n].port);
+            await nodeRepository.AddNode(nodesFromPasteBin.nodes[n].protocol, nodesFromPasteBin.nodes[n].uri, nodesFromPasteBin.nodes[n].port, nodesFromPasteBin.nodes[n].uid);
+        }
         var newNodeList = await nodeRepository.GetAllNodesExludingMe();
         return (newNodeList);
     }
@@ -215,7 +233,7 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     }
 });
 
-var BlacklistNode = (async(node, blockHeight) => {
+var BlacklistNode = (async (node, blockHeight) => {
     nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
 
     var nodeEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/blacklistNotify';
@@ -229,14 +247,14 @@ var BlacklistNode = (async(node, blockHeight) => {
         if (err) {
             console.log(`Failed to notify node ${node.uid} that we blacklisted them  Error: ${err}`);
         } else {
-           //nothing to do on success
+            //nothing to do on success
         }
     });
 
 });
 
 
-var UnBlacklistNode = (async(node, blockHeight) => {
+var UnBlacklistNode = (async (node, blockHeight) => {
     nodeRepository.UnBlacklistNode(node.uid);
     var nodeEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/unblacklistNotify';
 
@@ -249,7 +267,7 @@ var UnBlacklistNode = (async(node, blockHeight) => {
         if (err) {
             console.log(`Failed to notify node ${node.uid} that we un-blacklisted them  Error: ${err}`);
         } else {
-           //nothing to do on success
+            //nothing to do on success
         }
     });
 
