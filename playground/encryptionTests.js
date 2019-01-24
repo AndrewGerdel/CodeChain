@@ -73,8 +73,7 @@ var testit = (async () => {
 
     console.log('Original Length:', mySecretMessage.length);
 
-    var deflater = zlib.createDeflate();
-    await zlib.deflate(mySecretMessage, (err, buffer) => {
+    zlib.deflate(mySecretMessage, (err, buffer) => {
         console.log('Compressed Length:', buffer.toString('base64').length);
         var bufferForUnzip = new Buffer.from(buffer.toString('base64'), 'base64');
         zlib.unzip(bufferForUnzip, (err, buffer2) => {

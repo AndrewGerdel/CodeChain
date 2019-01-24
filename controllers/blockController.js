@@ -308,6 +308,20 @@ var GetRepoFromBlock = (async (repohash) => {
     return results;
 });
 
+var GetEncryptedRepoFromBlock = (async (repohash, privateKey) => {
+    var blocks = await blockRepository.GetRepoFromBlock(repohash);
+    var results = [];
+    for (bl = 0; bl < blocks.length; bl++) {
+        var block = blocks[bl];
+        var jsonQueryResult = jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
+        for (js = 0; js < jsonQueryResult.references[0].length; js++) {
+            var decrypted = await crypto2.decrypt.rsa(jsonQueryResult.references[0][js].fileContents, privateKey);
+            results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: decrypted, Path: jsonQueryResult.references[0][js].repo.file });
+        }
+    }
+    return results;
+});
+
 var ValidateBlockHash = (async (block) => {
     var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data) + block.difficulty + block.previousBlockHash;
     var hash = crypto.createHmac('sha256', hashInput).digest('hex');
@@ -408,5 +422,6 @@ module.exports = {
     GetRepoFromBlock,
     GetFilesByAddress,
     GetReposByAddress,
-    GetBlockHashByRange
+    GetBlockHashByRange, 
+    GetEncryptedRepoFromBlock
 }

@@ -21,6 +21,7 @@ var Timer_LoadAndRegisterNodes = (async () => {
         counter++;
         process.send({ iterationCount: counter });
     } catch (ex) {
+        Timer_LoadAndRegisterNodes(); //try right away on failure. 
         nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
     } finally {
         setTimeout(() => {
