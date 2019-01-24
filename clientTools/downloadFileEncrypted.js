@@ -3,16 +3,38 @@ var request = require('request');
 var fs = require('fs');
 var path = require('path');
 var yargs = require('yargs');
+var hash = require('../utilities/hash');
 
-var nodeEndpoint = "http://127.0.0.1:65340/file/get";
+var nodeEndpoint = "http://127.0.0.1:65340/file/getEncrypted";
 var destination = "c:\\FakeRepo\\";
 
 if (!yargs.argv.filehash) {
     console.log('Missing parameter --filehash.');
     return;
 }
+var private = yargs.argv.private;
+if (!private){
+    console.log("Missing --private parameter.  Provide path of private key file.");
+    return;
+}
+var privatekey = fs.readFileSync(private).toString();
 
-request(nodeEndpoint + '?filehash=' + yargs.argv.filehash, (err, res, body) => {
+const data = JSON.stringify({
+    filehash: yargs.argv.filehash,
+    privatekey: privatekey
+});
+
+const options = {
+    uri: nodeEndpoint,
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+    },
+    body: data
+}
+
+request(options, (err, res, body) => {
     if (err) {
         console.log('ERROR :', err);
     } else {
@@ -35,3 +57,4 @@ request(nodeEndpoint + '?filehash=' + yargs.argv.filehash, (err, res, body) => {
 
     }
 });
+
