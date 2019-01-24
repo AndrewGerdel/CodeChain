@@ -138,7 +138,12 @@ var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
     if (!verified)
       console.log('Failed to verify message on incoming block. ', memPoolItem.hash);
-
+    return verified;
+  } else if (memPoolItem.type == mempoolItemTypes.Message) {
+    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
+    if (!verified) {
+      throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
+    }
     return verified;
   } else if (memPoolItem.type == mempoolItemTypes.MiningReward) {
     //Mining rewards are verified in blockController, before this function even gets called. 
