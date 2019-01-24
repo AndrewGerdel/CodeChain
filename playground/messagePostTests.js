@@ -32,7 +32,6 @@ var CreateRequest = (async (message, recipientPublicKey, senderPrivateKey) => {
 });
 
 var SubmitRequest = ((senderPublicKey, recipientPublicKey, signature, encryptedMessage, salt) => {
-    debugger;
     const data = JSON.stringify({
         senderpublickey: senderPublicKey,
         recipientpublickey: recipientPublicKey,

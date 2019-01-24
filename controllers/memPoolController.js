@@ -77,7 +77,6 @@ var AddMessageToMemPool = (async (senderPublicKey, recipientPublicKey, encrypted
     throw new Error("Invalid transaction " + from.toString('hex') + " to " + to.toString('hex'));
   }
   var dateNow = new Date();
-  debugger;
   var hash = await hashUtil.CreateSha256Hash(`${salt}${encryptedMessage}`);
   var mempoolItem = await memPoolRepository.AddMessageMemPoolItem(from.toString('hex'), to.toString('hex'), encryptedMessage, signature, senderPublicKey, salt, dateNow, hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem, '');

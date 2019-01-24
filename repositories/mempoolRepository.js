@@ -89,7 +89,6 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicK
 
 
 var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, publicKey, salt, dateAdded, hash) => {
-  debugger;
   
   var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
   if (publicKeyHash.toString('hex') != from) {

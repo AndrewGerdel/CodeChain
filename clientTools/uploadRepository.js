@@ -86,9 +86,7 @@ var loopPostRepo = (async (nodeEndpoint) => {
 
 
 var CreateRequest = (async (repoHash, file, filecontents) => {
-    debugger;
     var repo = { Name: projectName, Hash: repoHash, File: file };
-    debugger;
     const data = JSON.stringify({
         filecontents: filecontents,
         privatekey: privatekey,

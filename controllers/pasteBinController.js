@@ -10,7 +10,6 @@ var Testit = (async () => {
         json: true // Automatically parses the JSON string in the response
     };
     var result = await requestPromise(options);
-    debugger;
     var parsedResult = result;//JSON.parse(result);
     console.log(parsedResult);
 
