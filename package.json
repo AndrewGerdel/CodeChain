@@ -21,6 +21,7 @@
   "dependencies": {
     "binstring": "^0.2.1",
     "body-parser": "^1.18.3",
+    "crypto2": "^2.0.0",
     "dec-to-hex": "^2.0.0",
     "express": "^4.16.4",
     "hex-to-dec": "^1.0.1",
