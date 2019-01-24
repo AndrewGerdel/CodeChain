@@ -87,6 +87,37 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicK
   return memPool;
 });
 
+
+var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, publicKey, salt, dateAdded, hash) => {
+  debugger;
+  
+  var publicKeyHash = await hashUtil.CreateSha256Hash(publicKey);
+  if (publicKeyHash.toString('hex') != from) {
+    //safety check
+    throw new Error(`Supplied data mismatch:: From: ${from}, CalculatedHash: ${publicKeyHash.toString('hex')}`);
+  }
+  var signatureHash = await hashUtil.CreateSha256Hash(signature);
+
+  var memPool = new MemPool({
+    type: filetypes.Message,
+    messageData: {
+      from: from,
+      to: to,
+      messageText: encryptedMessageText
+    },
+    signedMessage: signature,
+    signedMessageHash: signatureHash.toString('hex'),
+    dateAdded: dateAdded,
+    publicKey: publicKey,
+    publicKeyHash: from,
+    hash: hash,
+    deleted: false,
+    salt: salt
+  });
+  memPool.save();
+  return memPool;
+});
+
 //Gets all mempool items.
 var GetMemPoolItems = (() => {
   var promise = new Promise((resolve, reject) => {
@@ -146,5 +177,6 @@ module.exports = {
   GetMemPoolItem,
   CreateMiningRewardMemPoolItem,
   AddTransactionMemPoolItem,
-  DeleteMemPoolItem
+  DeleteMemPoolItem,
+  AddMessageMemPoolItem
 }

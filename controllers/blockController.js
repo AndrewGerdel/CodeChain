@@ -287,7 +287,6 @@ var GetBlockHashByRange = (async (startingBlock, endingBlock) => {
 
 var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
     var blocks = await blockRepository.GetBlockHashesFromStartingBlock(startingBlock);
-    return blocks;
 });
 
 var GetFileFromBlock = (async (filehash) => {

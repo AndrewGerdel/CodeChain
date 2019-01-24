@@ -13,7 +13,6 @@ var StartService = ((app) => {
             var fileContents = request.body.filecontents;
             var privateKey = request.body.privatekey;
             var repo = request.body.repo;
-            var encrypt = request.body.repo;
 
             // var repoName = request.body.repoName;
             // var repoHash = request.body.repoHash;
@@ -34,7 +33,6 @@ var StartService = ((app) => {
             var privateKey = request.body.privatekey;
             var publicKey = request.body.publicKey;
             var repo = request.body.repo;
-            var encrypt = request.body.repo;
 
             // var repoName = request.body.repoName;
             // var repoHash = request.body.repoHash;
@@ -159,7 +157,6 @@ var StartService = ((app) => {
     });
 
     app.post('/file/getEncrypted', async (request, response) => {
-        debugger;
         try {
             var block = await blockController.GetFileFromBlock(request.body.filehash);
             var privateKey = request.body.privatekey;

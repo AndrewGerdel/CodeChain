@@ -63,6 +63,9 @@ nodeService.StartService(app, isDebug, (() => {
   var transactService = require('./webServices/transactService');
   transactService.StartService(app);
 
+  var messageService = require('./webServices/messageService');
+  messageService.StartService(app);
+
   //start listening for communications from users via a browser, or from other nodes on the network. 
   app.listen(port, () => {
     console.log('Server is up and running on port', port);

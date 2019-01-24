@@ -18,6 +18,8 @@ var StartService = (async (app, isDebug) => {
                     await mempoolController.AddIncomingCodeFileToMemPool(mempoolItem, remoteNodeUid);
                 } else if (mempoolItem.type == mempoolItemTypes.Transaction) {
                     await mempoolController.AddIncomingTransactionToMemPool(mempoolItem, remoteNodeUid);
+                } else if (mempoolItem.type == mempoolItemTypes.Message) {
+                    await mempoolController.AddIncomingMessageToMemPool(mempoolItem, remoteNodeUid);
                 }
                 response.send("ok");
             } catch (ex) {

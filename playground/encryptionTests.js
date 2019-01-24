@@ -1,6 +1,7 @@
 const crypto2 = require('crypto2');
 var testAddress = require('./testAddresses');
 var zlib = require('zlib');
+var hash = require('../utilities/hash');
 
 var testit = (async () => {
     var timmy = testAddress.Timmy();

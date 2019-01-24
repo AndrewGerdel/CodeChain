@@ -67,6 +67,36 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem, incomingFromNodeUid) 
   return mempoolItem;
 });
 
+
+//Adds a message to the mempool, from the messageService
+var AddMessageToMemPool = (async (senderPublicKey, recipientPublicKey, encryptedMessage, salt, signature) => {
+  var from = await hashUtil.CreateSha256Hash(senderPublicKey);
+  var to = await hashUtil.CreateSha256Hash(recipientPublicKey);
+  var verified = await hashUtil.VerifyMessage(senderPublicKey, signature, `${salt}${encryptedMessage}`);
+  if (!verified) {
+    throw new Error("Invalid transaction " + from.toString('hex') + " to " + to.toString('hex'));
+  }
+  var dateNow = new Date();
+  debugger;
+  var hash = await hashUtil.CreateSha256Hash(`${salt}${encryptedMessage}`);
+  var mempoolItem = await memPoolRepository.AddMessageMemPoolItem(from.toString('hex'), to.toString('hex'), encryptedMessage, signature, senderPublicKey, salt, dateNow, hash.toString("hex"));
+  BroadcastMempoolItemToRandomNodes(mempoolItem, '');
+  return mempoolItem;
+});
+
+//Adds a message to the mempool, from the messageService
+var AddIncomingMessageToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
+
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
+  if (!verified) {
+    throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
+  }
+  var mempoolItem = await memPoolRepository.AddMessageMemPoolItem(memPoolItem.messageData.from, memPoolItem.messageData.to, memPoolItem.messageData.messageText,
+    memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
+  BroadcastMempoolItemToRandomNodes(mempoolItem, incomingFromNodeUid);
+  return mempoolItem;
+});
+
 var BroadcastMempoolItemToRandomNodes = (async (mempoolItem, incomingFromNodeUid) => {
   //hardcoded to broadcast to 10 nodes.  Consider calculating this value as the network grows.
   var randomNodes = await nodeRepository.GetRandomNodes(10);
@@ -151,5 +181,7 @@ module.exports = {
   GetMemPoolItem,
   AddIncomingCodeFileToMemPool,
   AddTransactionToMemPool,
-  AddIncomingTransactionToMemPool
+  AddIncomingTransactionToMemPool,
+  AddMessageToMemPool,
+  AddIncomingMessageToMemPool
 }

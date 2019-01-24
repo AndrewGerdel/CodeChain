@@ -50,6 +50,23 @@ var MemPool = mongoose.model('MemPool', {
       required: false,
     }
   },
+  messageData: {
+    from: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    to: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    messageText: {
+      type: String,
+      required: false,
+      trim: true
+    }
+  },
   publicKey: {
     type: String,
     required: true,
