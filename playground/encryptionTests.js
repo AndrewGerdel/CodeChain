@@ -1,10 +1,10 @@
 const crypto2 = require('crypto2');
 var testAddress = require('./testAddresses');
+var zlib = require('zlib');
 
-var testit = (async() => {
+var testit = (async () => {
     var timmy = testAddress.Timmy();
-    var tommy = testAddress.Tommy();
-    
+
     var mySecretMessage = `
     BEGIN SECRET MESSAGE
     Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  
@@ -68,17 +68,26 @@ var testit = (async() => {
     Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  
     Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  
     Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  Many secrets.  
-    END SECRET MESSAGE
+    END SECRET MESSAGE.
     `;
 
-    const encrypted = await crypto2.encrypt.rsa(mySecretMessage,  timmy.PublicKey);
-    // => [...]
-     
-    console.log(encrypted.length);
-    
+    console.log('Original Length:', mySecretMessage.length);
+
+    var deflater = zlib.createDeflate();
+    await zlib.deflate(mySecretMessage, (err, buffer) => {
+        console.log('Compressed Length:', buffer.toString('base64').length);
+        var bufferForUnzip = new Buffer.from(buffer.toString('base64'), 'base64');
+        zlib.unzip(bufferForUnzip, (err, buffer2) => {
+            console.log('Decompressed Length:', buffer2.toString().length);
+        });
+    });
+
+    const encrypted = await crypto2.encrypt.rsa(mySecretMessage, timmy.PublicKey);
+    console.log('Encrypted Length:', encrypted.length);
+
     const decrypted = await crypto2.decrypt.rsa(encrypted, timmy.PrivateKey);
-    console.log(decrypted.length);
-    
+    console.log('Decrypted Length:', decrypted.length);
+
 });
 
 testit();
