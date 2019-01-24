@@ -1,7 +1,29 @@
 var request = require('request');
-var testAddresses = require('./testAddresses.js');
 var requestPromise = require('request-promise');
+var yargs = require('yargs');
+var fs = require('fs');
 
+var nodeEndpoint = "http://127.0.0.1:65340";
+
+if (!yargs.argv.message) {
+    console.log('Missing parameter --message.');
+    return;
+}
+
+if (!yargs.argv.toPublicKey) {
+    console.log('Missing parameter --toPublicKey.  Full or relative path to .pem file.');
+    return;
+}
+
+if (!yargs.argv.fromPublicKey) {
+    console.log('Missing parameter --fromPublicKey.  Full or relative path to .pem file.');
+    return;
+}
+
+if (!yargs.argv.fromPrivateKey) {
+    console.log('Missing parameter --fromPrivateKey.  Full or relative path to .pem file.');
+    return;
+}
 
 var CreateRequest = (async (message, recipientPublicKey, senderPrivateKey) => {
     const data = JSON.stringify({
@@ -10,7 +32,7 @@ var CreateRequest = (async (message, recipientPublicKey, senderPrivateKey) => {
         senderprivatekey: senderPrivateKey
     });
     const options = {
-        uri: 'http://localhost:65340/message/createRequest',
+        uri: nodeEndpoint + '/message/createRequest',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
         body: data
@@ -21,6 +43,7 @@ var CreateRequest = (async (message, recipientPublicKey, senderPrivateKey) => {
 });
 
 var SubmitRequest = ((senderPublicKey, recipientPublicKey, signature, encryptedMessage, salt) => {
+    debugger;
     const data = JSON.stringify({
         senderpublickey: senderPublicKey,
         recipientpublickey: recipientPublicKey,
@@ -29,7 +52,7 @@ var SubmitRequest = ((senderPublicKey, recipientPublicKey, signature, encryptedM
         salt: salt
     });
     const options = {
-        uri: 'http://localhost:65340/message/submitRequest',
+        uri: nodeEndpoint + '/message/submitRequest',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
         body: data
@@ -44,9 +67,10 @@ var SubmitRequest = ((senderPublicKey, recipientPublicKey, signature, encryptedM
     });
 });
 
+var toPublicKey = fs.readFileSync(yargs.argv.toPublicKey).toString();
+var fromPublicKey = fs.readFileSync(yargs.argv.fromPublicKey).toString();
+var fromPrivateKey = fs.readFileSync(yargs.argv.fromPrivateKey).toString();
 
-
-CreateRequest('Have a good day', testAddresses.Timmy().PublicKey, testAddresses.Tommy().PrivateKey).then(async (createResult) => {
-    // console.log('Here is the result: ' + createResult.Signature);
-    await SubmitRequest(testAddresses.Tommy().PublicKey, testAddresses.Timmy().PublicKey, createResult.Signature, createResult.EncryptedMessage, createResult.Salt);
+CreateRequest(yargs.argv.message, toPublicKey, fromPrivateKey).then(async (createResult) => {
+    await SubmitRequest(fromPublicKey, toPublicKey, createResult.Signature, createResult.EncryptedMessage, createResult.Salt);
 });
