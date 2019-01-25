@@ -152,9 +152,7 @@ var ImportLongestBlockchain = (async () => {
         if (comparisonResult) {
             GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
         } else {
-            //We are behind AND out of sync.  We have a collision.  If the other node's chain is SIX BLOCKS OR MORE ahead of ours, then 
-            //accept his "rightness".  Orphan ours and merge his. 
-            //Six blocks might be too long.  Reducing to 1.  Let's see how that plays out. 
+            //We are behind AND out of sync.  We have a collision.  If the other node's chain is ahead of ours, then accept his "rightness".  Orphan ours and merge his. 
             if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 1) {
                 var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
                 nodeProcessLog.WriteLog(`Orphaning all blocks after ${lastMatchingBlockNumber}`, true);
@@ -231,7 +229,7 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
 });
 
 var BlacklistNode = (async (node, blockHeight) => {
-    nodeRepository.BlacklistNode(node.uid, blockHeight + 100);
+    nodeRepository.BlacklistNode(node.uid, blockHeight + 5);
 
     var nodeEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/blacklistNotify';
 

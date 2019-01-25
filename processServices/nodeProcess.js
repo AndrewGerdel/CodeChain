@@ -5,6 +5,7 @@ var nodeRepository = require('../repositories/nodeRepository');
 var blockController = require('../controllers/blockController');
 var request = require('request');
 const timerIntervalMs = 30000;
+const remoteValidationTimerIntervalMs = 600000;
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
@@ -120,7 +121,7 @@ var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
     } finally {
         setTimeout(() => {
             Timer_RevalidateBlockChainsOfBlacklistedNodes();
-        }, timerIntervalMs);
+        }, remoteValidationTimerIntervalMs);
     }
 });
 
