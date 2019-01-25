@@ -14,7 +14,7 @@ var StartService = ((app) => {
             var amount = request.body.amount;
             var privateKey = request.body.privatekey;
             var salt = crypto.randomBytes(16).toString('hex');
-            console.log(`Generating signed transaction for: ${from} sending ${amount} to ${to}.`);
+            // console.log(`Generating signed transaction for: ${from} sending ${amount} to ${to}.`);
 
             //let's check that the sender has enough funds, as a courtesy
             var balance = await transactionRepository.GetBalance(from);
@@ -23,8 +23,8 @@ var StartService = ((app) => {
             } else {
                 let buff = new Buffer.from(`${from}${amount}${to}${salt}`);
                 let base64data = buff.toString('base64');
-                var signedMessage = await hash.SignMessage(privateKey, base64data);
-                response.send({ Success: true, Signature: signedMessage, Salt: salt });
+                var signature = await hash.SignMessage(privateKey, base64data);
+                response.send({ Success: true, Signature: signature, Salt: salt });
             }
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -38,7 +38,7 @@ var StartService = ((app) => {
             var to = request.body.to;
             var amount = request.body.amount;
             var publicKey = request.body.publickey;
-            var signedMessage = request.body.signedmessage;
+            var signature = request.body.signedmessage;
             var salt = request.body.salt;
 
             //let's check that the sender has enough funds, as a courtesy. 
@@ -46,7 +46,7 @@ var StartService = ((app) => {
             if (balance < amount) {
                 response.send({ Success: false, ErrorMessage: "Insufficient balance" });
             } else {
-                var result = await memPoolController.AddTransactionToMemPool(from, to, amount, salt, signedMessage, publicKey);
+                var result = await memPoolController.AddTransactionToMemPool(from, to, amount, salt, signature, publicKey);
                 response.send({ Success: true, Hash: result.hash });
             }
         } catch (ex) {

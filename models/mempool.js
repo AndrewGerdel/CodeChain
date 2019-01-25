@@ -85,12 +85,12 @@ var MemPool = mongoose.model('MemPool', {
     type: Date,
     required: true
   },
-  signedMessage: {
+  signature: {
     type: String,
     required: true,
     trim: true
   },
-  signedMessageHash: {
+  signatureHash: {
     type: String,
     required: true,
     trim: true

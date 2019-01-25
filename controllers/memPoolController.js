@@ -23,26 +23,26 @@ var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature
 //Adds an "incoming' file to the mempool.  "Incoming transactions" are transactions that were broadcast from other nodes, not submited via an endpoint.
 var AddIncomingCodeFileToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
 
-  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
   if (!verified) {
     throw new Error("Invalid signed message");
   }
-  var saveResult = await memPoolRepository.AddCodeFileMemPoolItem(memPoolItem.fileData.fileName, memPoolItem.fileData.fileContents, memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash);
+  var saveResult = await memPoolRepository.AddCodeFileMemPoolItem(memPoolItem.fileData.fileName, memPoolItem.fileData.fileContents, memPoolItem.signature, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash);
   BroadcastMempoolItemToRandomNodes(memPoolItem, incomingFromNodeUid);
   return saveResult;
 });
 
 //Adds a transaction to the mempool, from the transactService
-var AddTransactionToMemPool = (async (from, to, amount, salt, signedMessage, publicKey) => {
+var AddTransactionToMemPool = (async (from, to, amount, salt, signature, publicKey) => {
   let buff = new Buffer.from(`${from}${amount}${to}${salt}`);
   let base64data = buff.toString('base64');
-  var verified = await hashUtil.VerifyMessage(publicKey, signedMessage, base64data);
+  var verified = await hashUtil.VerifyMessage(publicKey, signature, base64data);
   if (!verified) {
     throw new Error("Invalid transaction " + from + " to " + to);
   }
   var dateNow = new Date();
-  var hash = await hashUtil.CreateSha256Hash(from + to + amount + signedMessage + dateNow + salt);
-  var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(from, to, amount, signedMessage, publicKey, salt, dateNow, hash.toString("hex"));
+  var hash = await hashUtil.CreateSha256Hash(from + to + amount + signature + dateNow + salt);
+  var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(from, to, amount, signature, publicKey, salt, dateNow, hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem, '');
   return mempoolItem;
 });
@@ -51,7 +51,7 @@ var AddTransactionToMemPool = (async (from, to, amount, salt, signedMessage, pub
 var AddIncomingTransactionToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
   let buff = new Buffer.from(`${memPoolItem.transactionData.from}${memPoolItem.transactionData.amount}${memPoolItem.transactionData.to}${memPoolItem.salt}`);
   let base64data = buff.toString('base64');
-  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, base64data);
   if (!verified) {
     throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
   }
@@ -62,7 +62,7 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem, incomingFromNodeUid) 
   //   throw new Error("Insufficient balance.");
   // }
   var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(memPoolItem.transactionData.from, memPoolItem.transactionData.to, memPoolItem.transactionData.amount,
-    memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
+    memPoolItem.signature, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem, incomingFromNodeUid);
   return mempoolItem;
 });
@@ -86,12 +86,12 @@ var AddMessageToMemPool = (async (senderPublicKey, recipientPublicKey, encrypted
 //Adds a message to the mempool, from the messageService
 var AddIncomingMessageToMemPool = (async (memPoolItem, incomingFromNodeUid) => {
 
-  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
+  var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
   if (!verified) {
     throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
   }
   var mempoolItem = await memPoolRepository.AddMessageMemPoolItem(memPoolItem.messageData.from, memPoolItem.messageData.to, memPoolItem.messageData.messageText,
-    memPoolItem.signedMessage, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
+    memPoolItem.signature, memPoolItem.publicKey, memPoolItem.salt, memPoolItem.dateAdded, memPoolItem.hash.toString("hex"));
   BroadcastMempoolItemToRandomNodes(mempoolItem, incomingFromNodeUid);
   return mempoolItem;
 });
@@ -134,12 +134,12 @@ var ValidateMemPoolItemsOnIncomingBlock = (async (memPoolItems) => {
 
 var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
-    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
+    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
     if (!verified)
       console.log('Failed to verify message on incoming block. ', memPoolItem.hash);
     return verified;
   } else if (memPoolItem.type == mempoolItemTypes.Message) {
-    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
+    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
     if (!verified) {
       throw new Error("Invalid signed message on incoming memPoolItem " + memPoolItem.hash);
     }
@@ -154,7 +154,7 @@ var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
   } else if (memPoolItem.type == mempoolItemTypes.Transaction) {
     let buff = new Buffer.from(`${memPoolItem.transactionData.from}${memPoolItem.transactionData.amount}${memPoolItem.transactionData.to}${memPoolItem.salt}`);
     let base64data = buff.toString('base64');
-    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
+    var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, base64data);
     if (verified == true) {
       //let's check that the sender has enough funds.  
       var balance = await transactionRepository.GetBalance(memPoolItem.address);

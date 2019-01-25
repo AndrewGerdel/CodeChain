@@ -50,7 +50,7 @@ var StartService = ((app) => {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.messagehash + ']', {
                     data: block
                 });
-                response.send({ Success: true, PublicKey: jsonQueryResult.value.publicKey, EncryptedMessage: jsonQueryResult.value.messageData.messageText, Signature: jsonQueryResult.value.signedMessage, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, From: jsonQueryResult.value.messageData.from, To: jsonQueryResult.value.messageData.to });
+                response.send({ Success: true, PublicKey: jsonQueryResult.value.publicKey, EncryptedMessage: jsonQueryResult.value.messageData.messageText, Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, From: jsonQueryResult.value.messageData.from, To: jsonQueryResult.value.messageData.to });
             } else {
                 response.send({ Success: false, ErrorMessage: "Message not found" });
             }

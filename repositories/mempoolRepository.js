@@ -7,12 +7,12 @@ var crypto = require('crypto');
 mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "hash": 1 }, { unique: true });
   db.collection("mempools").createIndex({ "deleted": 1 }, { unique: false });
-  db.collection("mempools").createIndex({ "signedMessageHash": 1 }, { unique: true });
+  db.collection("mempools").createIndex({ "signatureHash": 1 }, { unique: true });
 });
 
-var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage, publicKey, salt, dateAdded, hash, repo) => {
+var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, publicKey, salt, dateAdded, hash, repo) => {
   var address = await hashUtil.CreateSha256Hash(publicKey);
-  var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
+  var signatureHash = await hashUtil.CreateSha256Hash(signature);
 
   if(repo){
     var memPool = new MemPool({
@@ -26,8 +26,8 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage
           file: repo.File
         } 
       },
-      signedMessage: signedMessage,
-      signedMessageHash: signatureHash.toString('hex'),
+      signature: signature,
+      signatureHash: signatureHash.toString('hex'),
       dateAdded: dateAdded,
       publicKey: publicKey,
       address: address.toString('hex'),
@@ -44,8 +44,8 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage
         fileName: fileName,
         fileContents: base64FileContents
       },
-      signedMessage: signedMessage,
-      signedMessageHash: signatureHash.toString('hex'),
+      signature: signature,
+      signatureHash: signatureHash.toString('hex'),
       dateAdded: dateAdded,
       publicKey: publicKey,
       address: address.toString('hex'),
@@ -59,13 +59,13 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signedMessage
   
 });
 
-var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicKey, salt, dateAdded, hash) => {
+var AddTransactionMemPoolItem = (async (from, to, amount, signature, publicKey, salt, dateAdded, hash) => {
   var address = await hashUtil.CreateSha256Hash(publicKey);
   if (address.toString('hex') != from) {
     //safety check
     throw new Error(`Supplied data mismatch: From: ${from}, CalculatedHash: ${address.toString('hex')}`);
   }
-  var signatureHash = await hashUtil.CreateSha256Hash(signedMessage);
+  var signatureHash = await hashUtil.CreateSha256Hash(signature);
 
   var memPool = new MemPool({
     type: filetypes.Transaction,
@@ -74,8 +74,8 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signedMessage, publicK
       to: to,
       amount: amount
     },
-    signedMessage: signedMessage,
-    signedMessageHash: signatureHash.toString('hex'),
+    signature: signature,
+    signatureHash: signatureHash.toString('hex'),
     dateAdded: dateAdded,
     publicKey: publicKey,
     address: from,
@@ -104,8 +104,8 @@ var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, p
       to: to,
       messageText: encryptedMessageText
     },
-    signedMessage: signature,
-    signedMessageHash: signatureHash.toString('hex'),
+    signature: signature,
+    signatureHash: signatureHash.toString('hex'),
     dateAdded: dateAdded,
     publicKey: publicKey,
     address: from,
@@ -155,14 +155,14 @@ var GetMemPoolItem = (async (hash) => {
 var CreateMiningRewardMemPoolItem = (async (dateAdded, address, blockReward) => {
   var salt = crypto.randomBytes(16);
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${address}${dateAdded}${salt.toString('hex')}`);
-  var signedMessageHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
-  // console.log('signedMessageHash is ', signedMessageHash.toString('hex'));
+  var signatureHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
+  // console.log('signatureHash is ', signatureHash.toString('hex'));
 
   var memPool = new MemPool({
     type: filetypes.MiningReward,
     dateAdded: dateAdded,
     address: address,
-    signedMessageHash: signedMessageHash.toString('hex'), //meaningless, but required for the unique index
+    signatureHash: signatureHash.toString('hex'), //meaningless, but required for the unique index
     hash: memPoolItemHash.toString('hex'),
     blockReward: blockReward
   });

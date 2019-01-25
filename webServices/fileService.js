@@ -147,7 +147,7 @@ var StartService = ((app) => {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
                     data: block
                 });
-                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signedMessage, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo });
+                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo });
             } else {
                 response.send({ Success: false, ErrorMessage: "File not found" });
             }
@@ -167,7 +167,7 @@ var StartService = ((app) => {
 
                 const decrypted = await crypto2.decrypt.rsa(jsonQueryResult.value.fileData.fileContents, privateKey);
 
-                response.send({ Success: true, FileContents: decrypted, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signedMessage, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo });
+                response.send({ Success: true, FileContents: decrypted, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo });
             } else {
                 response.send({ Success: false, ErrorMessage: "File not found" });
             }

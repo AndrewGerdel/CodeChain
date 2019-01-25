@@ -6,7 +6,7 @@ mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "blockNumber": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "blockHash": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "previousBlockHash": 1 }, { unique: true });
-    db.collection("blocks").createIndex({ "data.signedMessageHash": 1 }, { unique: true });
+    db.collection("blocks").createIndex({ "data.signatureHash": 1 }, { unique: true });
     db.collection("blocks").createIndex({ "data.fileData.repo.hash": 1 }, { unique: false });
 });
 
