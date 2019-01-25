@@ -72,7 +72,7 @@ var MemPool = mongoose.model('MemPool', {
     required: true,
     trim: true
   },
-  publicKeyHash: {
+  address: {
     type: String,
     required: true,
     trim: true

@@ -41,7 +41,7 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
             var mempoolItemSizeBytes = (JSON.stringify(element).length * 0.75) - 2;
             sumFileSizeBytes += mempoolItemSizeBytes;
             if (element.type == mempoolFileTypes.Transaction) {
-                var balance = await transactionRepository.GetBalance(element.publicKeyHash);
+                var balance = await transactionRepository.GetBalance(element.address);
                 if (balance >= element.transactionData.amount) {
                     memPoolItems.push(element);
                 } else {
@@ -382,7 +382,7 @@ var OrphanBlocks = (async (blocks) => {
 var GetFilesByAddress = (async (address) => {
     var results = [];
     var blocks = await blockRepository.GetBlocksWithAddress(address);
-    var jsonQueryResult = jsonQuery("data[publicKeyHash='" + address + "']", { data: blocks });
+    var jsonQueryResult = jsonQuery("data[address='" + address + "']", { data: blocks });
     for (js = 0; js < jsonQueryResult.references[0].length; js++) {
         if (jsonQueryResult.references[0][js].fileData)
             results.push({ FileName: jsonQueryResult.references[0][js].fileData.fileName, Hash: jsonQueryResult.references[0][js].hash, DateAdded: jsonQueryResult.references[0][js].dateAdded });
@@ -393,7 +393,7 @@ var GetFilesByAddress = (async (address) => {
 var GetReposByAddress = (async (address) => {
     var results = [];
     var blocks = await blockRepository.GetBlocksWithAddress(address);
-    var jsonQueryResult = jsonQuery("data[publicKeyHash='" + address + "']", { data: blocks });
+    var jsonQueryResult = jsonQuery("data[address='" + address + "']", { data: blocks });
     for (js = 0; js < jsonQueryResult.references[0].length; js++) {
         if (jsonQueryResult.references[0][js].fileData && jsonQueryResult.references[0][js].fileData.repo)
             if (results.filter(e => e.RepoHash === jsonQueryResult.references[0][js].fileData.repo.hash).length == 0)

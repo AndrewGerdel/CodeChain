@@ -88,7 +88,7 @@ var GetBlocksByRange = (async (startingBlock, endingBlock) => {
 
 var GetBlocksWithAddress = (async (address) => {
     var db = await mongoose.GetDb();
-    var blocks = db.collection('blocks').find({ "data.publicKeyHash": address}).sort({ blockNumber: -1 }).toArray();
+    var blocks = db.collection('blocks').find({ "data.address": address}).sort({ blockNumber: -1 }).toArray();
     return blocks;
 });
 

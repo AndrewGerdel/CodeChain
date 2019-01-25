@@ -5,7 +5,7 @@ let jsonQuery = require('json-query')
 mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "data.type": 1, "data.transactionData.to": 1 }, { unique: false });
     db.collection("blocks").createIndex({ "data.type": 1, "data.transactionData.from": 1 }, { unique: false });
-    db.collection("blocks").createIndex({ "data.type": 1, "data.publicKeyHash": 1 }, { unique: false });
+    db.collection("blocks").createIndex({ "data.type": 1, "data.address": 1 }, { unique: false });
 });
 
 //Queries the entire chain for FROM and TO transactions, as wll as mining rewards.  Sums and returns.  I suspect we will need a faster
@@ -79,16 +79,16 @@ var GetSumTo = (async (publicKey) => {
     return sum;
 });
 
-var GetSumMiningRewards = (async (publicKey) => {
+var GetSumMiningRewards = (async (address) => {
     //Get all blocks that contain mining rewards for this address. 
     var db = await mongoose.GetDb();
     var sum = 0;
-    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.MiningReward }, { "data.publicKeyHash": publicKey }] }).toArray();
+    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.MiningReward }, { "data.address": address }] }).toArray();
     for (doc = 0; doc < blocks.length; doc++) {
         var block = JSON.parse(JSON.stringify(blocks[doc]));
         for (dataCount = 0; dataCount < block.data.length; dataCount++) {
             var data = JSON.parse(JSON.stringify(block.data[dataCount]));
-            if (data.type == mempoolItemTypes.MiningReward && data.publicKeyHash && data.publicKeyHash == publicKey) {
+            if (data.type == mempoolItemTypes.MiningReward && data.address && data.address == address) {
                 sum += data.blockReward;
             }
         }
@@ -167,16 +167,16 @@ var GetTransactionsTo = (async (publicKey) => {
     return results;
 });
 
-var GetTransactionsMiningRewards = (async (publicKey) => {
+var GetTransactionsMiningRewards = (async (address) => {
     //Get all blocks that contain mining rewards for this address. 
     var db = await mongoose.GetDb();
     var results = [];
-    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.MiningReward }, { "data.publicKeyHash": publicKey }] }).toArray();
+    var blocks = await db.collection('blocks').find({ $and: [{ "data.type": mempoolItemTypes.MiningReward }, { "data.address": address }] }).toArray();
     for (doc = 0; doc < blocks.length; doc++) {
         var block = JSON.parse(JSON.stringify(blocks[doc]));
         for (dataCount = 0; dataCount < block.data.length; dataCount++) {
             var data = JSON.parse(JSON.stringify(block.data[dataCount]));
-            if (data.type == mempoolItemTypes.MiningReward && data.publicKeyHash && data.publicKeyHash == publicKey) {
+            if (data.type == mempoolItemTypes.MiningReward && data.address && data.address == address) {
                 results.push(data);
             }
         }

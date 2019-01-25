@@ -57,7 +57,7 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem, incomingFromNodeUid) 
   }
   //NOTE: Don't validate funds on mempool-adds.  They will get validated when they are added to a block. 
   // //let's check that the sender has enough funds.  
-  // var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
+  // var balance = await transactionRepository.GetBalance(memPoolItem.address);
   // if (balance < memPoolItem.transactionData.amount) {
   //   throw new Error("Insufficient balance.");
   // }
@@ -157,7 +157,7 @@ var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signedMessage, base64data);
     if (verified == true) {
       //let's check that the sender has enough funds.  
-      var balance = await transactionRepository.GetBalance(memPoolItem.publicKeyHash);
+      var balance = await transactionRepository.GetBalance(memPoolItem.address);
       if (balance < memPoolItem.transactionData.amount) {
         console.log('Failed to verify message on incoming block, insufficient funds. Transaction ', memPoolItem.hash);
         return false;
