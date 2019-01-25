@@ -8,7 +8,7 @@ const timerIntervalMs = 300000;
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
-    console.log('Error (unhandled rejection) in nodeProcess: ', reason);
+    nodeProcessLog.WriteLog('Error (unhandled rejection) in nodeProcess: ' +reason);
 });
 
 var Timer_LoadAndRegisterNodes = (async () => {
@@ -68,8 +68,6 @@ var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
 
         })
     } catch (ex) {
-        console.log(ex);
-
         nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
     } finally {
         setTimeout(() => {
@@ -118,8 +116,6 @@ var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
 
         })
     } catch (ex) {
-        console.log(ex);
-
         nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
     } finally {
         setTimeout(() => {
@@ -152,7 +148,7 @@ var RetrieveBlockchainFromLongestNode = (async () => {
     }
 });
 
-console.log('Node process starting...');
+nodeProcessLog.WriteLog('Node process starting...', true);
 Timer_LoadAndRegisterNodes();
 Timer_ValidateBlockChainsOfRemoteNodes();
 Timer_RevalidateBlockChainsOfBlacklistedNodes();

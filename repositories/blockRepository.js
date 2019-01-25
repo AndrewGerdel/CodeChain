@@ -1,6 +1,7 @@
 var { Block } = require('../models/block.js');
 var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
+var blockLogger = require('../loggers/blockProcessLog');
 
 mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "blockNumber": 1 }, { unique: true });
@@ -25,9 +26,8 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
 
     memPoolRepository.DeleteMemPoolItems(memPoolItems)
         .then((result) => {
-            // console.log(`Cleared ${memPoolItems.length} mempool items`); 
         })
-        .catch((error) => { console.log('Error clearing mempool', error); })
+        .catch((error) => { blockLogger.WriteLog('Error clearing mempool' + error); })
 
     return newBlock;
 });
@@ -46,8 +46,8 @@ var AddBlock = (async (block) => {
     newBlock.save();
 
     memPoolRepository.DeleteMemPoolItems(block.data)
-        .then((result) => { console.log(`Cleared ${block.data.length} mempool items`); })
-        .catch((error) => { console.log('Error clearing mempool', error); })
+        .then((result) => { blockLogger.WriteLog(`Cleared ${block.data.length} mempool items`); })
+        .catch((error) => { blockLogger.WriteLog('Error clearing mempool' + error); })
 
     return newBlock;
 });
@@ -88,7 +88,7 @@ var GetBlocksByRange = (async (startingBlock, endingBlock) => {
 
 var GetBlocksWithAddress = (async (address) => {
     var db = await mongoose.GetDb();
-    var blocks = db.collection('blocks').find({ "data.address": address}).sort({ blockNumber: -1 }).toArray();
+    var blocks = db.collection('blocks').find({ "data.address": address }).sort({ blockNumber: -1 }).toArray();
     return blocks;
 });
 
@@ -116,12 +116,12 @@ var MoveBlocksToOrphanCollection = (async (blocks) => {
     if (blocks.length > 0) {
         var db = await mongoose.GetDb();
         await db.collection('orphanedBlocks').insertMany(blocks).catch((ex) => {
-            console.log('Failed to add blocks to orphanedBlocks. Error: ' + ex); //shouldn't the error be caught/logged without this?
+            blockLogger.WriteLog('Failed to add blocks to orphanedBlocks. Error: ' + ex); //shouldn't the error be caught/logged without this?
             throw new Error('Failed to add blocks to orphanedBlocks: ' + ex);
         });
         for (i = 0; i < blocks.length; i++) {
             db.collection('blocks').deleteOne({ _id: blocks[i]._id }).catch((ex) => {
-                console.log('Failed to remove orphaned block.  Error: ' + ex);
+                blockLogger.WriteLog('Failed to remove orphaned block.  Error: ' + ex);
                 throw new Error('Failed to remove orphaned block: ' + ex);
             })
         }

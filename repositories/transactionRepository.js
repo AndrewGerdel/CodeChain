@@ -1,6 +1,7 @@
 var mongoose = require('../db/mongoose.js');
 var mempoolItemTypes = require('../enums/mempoolFiletypes');
 let jsonQuery = require('json-query')
+var dbLog = require('../loggers/databaseLog');
 
 mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "data.type": 1, "data.transactionData.to": 1 }, { unique: false });
@@ -23,9 +24,8 @@ var GetBalance = (async (publicKey, includeMemPoolItems) => {
     var finalResult = [await sumFrom, await sumTo, await sumMining, await sumFromMempool];
     var end = new Date();
 
-    console.log(`Total time:: ${end - start}ms`);
+    dbLog.WriteLog(`Total GetBalance time: ${end - start}ms`);
 
-    // console.log('finalSum ', finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3]);
     return finalResult[1] + finalResult[2] - finalResult[0] - finalResult[3];
 });
 
@@ -114,7 +114,7 @@ var GetTransactions = (async (publicKey) => {
     //NOTE: transactions in the mempool are not returned. 
     var transactions = [await from, await to, await miningRewards];
     var end = new Date();
-    console.log(`Total time: ${end - start}ms`);
+    dbLog.WriteLog(`Total GetTransactions time: ${end - start}ms`);
 
     var allTransactions = [];
     for (t = 0; t < transactions[0].length; t++) {

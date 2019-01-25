@@ -4,6 +4,7 @@ let blockController = require('../controllers/blockController.js');
 let jsonQuery = require('json-query')
 let crypto = require('crypto');
 let crypto2 = require('crypto2');
+let blockLogger = require('../loggers/blockProcessLog');
 
 var StartService = ((app) => {
 
@@ -61,7 +62,7 @@ var StartService = ((app) => {
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
 
-            console.log(`Received file ${filename}`);
+            blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
@@ -83,7 +84,7 @@ var StartService = ((app) => {
 
             const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
 
-            console.log(`Received file ${filename}`);
+            blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
@@ -105,7 +106,7 @@ var StartService = ((app) => {
             let base64data = buff.toString('base64');
             var signature = await hash.SignMessage(privateKey, `${salt}${base64data}${repo}`);
 
-            console.log(`Received file ${filename}`);
+            blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo);
             response.send({ Success: true, Hash: result.hash });
 
@@ -130,7 +131,7 @@ var StartService = ((app) => {
             const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
             var signature = await hash.SignMessage(privateKey, `${salt}${encrypted}${repo}`);
             
-            console.log(`Received file ${filename}`);
+            blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo);
             response.send({ Success: true, Hash: result.hash });
 

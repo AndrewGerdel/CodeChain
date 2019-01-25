@@ -1,6 +1,7 @@
 var nodeController = require('../controllers/nodeController');
 var hashUtil = require('../utilities/hash.js');
 var blockController = require('../controllers/blockController');
+var nodeLogger = require('../loggers/nodeProcessLog');
 
 var StartService = ((app, isDebug, callback) => {
 
@@ -12,7 +13,7 @@ var StartService = ((app, isDebug, callback) => {
                 res.send(error);
             })
             .catch((ex) => {
-                console.log(ex);
+                nodeLogger.WriteLog(ex);
             })
     });
 
@@ -22,15 +23,14 @@ var StartService = ((app, isDebug, callback) => {
         var remotePort = req.headers.remoteport
         var remoteProtocol = req.headers.remoteprotocol;
         var remoteUid = req.headers.remoteuid;
-        // console.log(`Received registration request from ${remoteProtocol}://${ip}:${remotePort}`);
         var hash = await hashUtil.CreateSha256Hash(`${remoteProtocol}${ip}${remotePort}${remoteUid}`);
         nodeController.GetNode(remoteUid)
             .then((result) => {
                 if (result.length == 0) {
                     nodeController.AddNode(remoteProtocol, ip, remotePort, remoteUid);
-                    console.log(`Added remote node ${remoteProtocol}://${ip}:${remotePort}`)
+                    nodeLogger.WriteLog(`Added remote node ${remoteProtocol}://${ip}:${remotePort}`)
                 } else {
-                    // console.log('I didnt add the registration because that node already exists');
+                    
                 }
                 blockController.GetLastBlock().then((result) => {
                     if (result.length > 0) {
@@ -40,7 +40,7 @@ var StartService = ((app, isDebug, callback) => {
                         res.send('No blocks found');
                     }
                 }, (err) => {
-                    console.log(`Error getting last block. ${err}`);
+                    nodeLogger.WriteLog(`Error getting last block. ${err}`);
                     res.send(`Unknown error getting blockchain on remote host.`);
                 });
 
@@ -76,14 +76,14 @@ var StartService = ((app, isDebug, callback) => {
 
     app.post('/nodes/blacklistNotify', async (req, res) => {
         var remoteNodeUid = req.body;
-        console.log('Warning: You have been blacklisted by ', remoteNodeUid);
+        nodeLogger.WriteLog('Warning: You have been blacklisted by ' + remoteNodeUid, true);
         res.send({ Success: true });
     });
 
     
     app.post('/nodes/unblacklistNotify', async (req, res) => {
         var remoteNodeUid = req.body.uid;
-        console.log('Notice: You have been un-blacklisted by ', remoteNodeUid);
+        nodeLogger.WriteLog('Notice: You have been un-blacklisted by ' + remoteNodeUid, true);
         res.send({ Success: true });
     });
 

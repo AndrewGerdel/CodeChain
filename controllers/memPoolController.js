@@ -6,6 +6,7 @@ var mempoolItemTypes = require('../enums/mempoolFiletypes.js');
 var request = require('request');
 var config = require('../config.json');
 var transactionRepository = require('../repositories/transactionRepository');
+var blockLogger = require('../loggers/blockProcessLog');
 
 //Adds a file to the mempool, from the fileService
 var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature, publicKey, repo) => {
@@ -102,7 +103,7 @@ var BroadcastMempoolItemToRandomNodes = (async (mempoolItem, incomingFromNodeUid
 
   randomNodes.forEach((node) => {
     if (node.uid != config.network.myUid && node.uid != incomingFromNodeUid) { //Don't broadcast a mempool to ourselves OR to the node that broadcast it to us. 
-      console.log(`Sending memPoolItem ${mempoolItem.hash} to ${node.uid}`);
+      blockLogger.WriteLog(`Sending memPoolItem ${mempoolItem.hash} to ${node.uid}`);
       var nodeEndpoint = `${node.protocol}://${node.uri}:${node.port}/mempool/add`;
 
       var options = {
@@ -136,7 +137,7 @@ var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
   if (memPoolItem.type == mempoolItemTypes.File) {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, memPoolItem.salt + memPoolItem.fileData.fileContents + memPoolItem.fileData.repo);
     if (!verified)
-      console.log('Failed to verify message on incoming block. ', memPoolItem.hash);
+      blockLogger.WriteLog(`Failed to verify message on incoming block. ${memPoolItem.hash}`);
     return verified;
   } else if (memPoolItem.type == mempoolItemTypes.Message) {
     var verified = await hashUtil.VerifyMessage(memPoolItem.publicKey, memPoolItem.signature, `${memPoolItem.salt}${memPoolItem.messageData.messageText}`);
@@ -159,14 +160,14 @@ var ValidateMemPoolItemOnIncomingBlock = (async (memPoolItem) => {
       //let's check that the sender has enough funds.  
       var balance = await transactionRepository.GetBalance(memPoolItem.address);
       if (balance < memPoolItem.transactionData.amount) {
-        console.log('Failed to verify message on incoming block, insufficient funds. Transaction ', memPoolItem.hash);
+        blockLogger.WriteLog(`Failed to verify message on incoming block, insufficient funds. Transaction  ${memPoolItem.hash}`);
         return false;
       } else {
         return true;
       }
     } else {
       if (!verified)
-        console.log('Failed to verify message on incoming block. Transaction ', memPoolItem.hash);
+        blockLogger.WriteLog(`Failed to verify message on incoming block. Transaction  ${memPoolItem.hash}`);
       return false; //message was invalid
     }
   } else {

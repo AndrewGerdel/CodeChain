@@ -7,15 +7,14 @@ if (!fs.existsSync(dir)) {
 var writeToConsole = false;
 var writeToFile = true;
 
-var WriteLog = (async (input,  writeToConsoleOverride) => {
-    var output = `NodeProcessLog: ${new Date()}: ${input}`;
+var WriteLog = (async (input, writeToConsoleOverride) => {
+    var output = `BlockProcessLog: ${new Date()}: ${input}`;
     if (writeToConsole || writeToConsoleOverride) {
         console.log(input);
     }
     if (writeToFile) {
         var now = new Date();
-        var fileName = "NodeProcessLog_" + now.getFullYear() + "_" + (now.getMonth()+1) + "_" + now.getDate() + ".txt";
-        // var fileName = `NodeProcessLog_${now.getFullYear()}_${now.getMonth}_${now.getDate}.txt`;
+        var fileName = "BlockProcessLog_" + now.getFullYear() + "_" + (now.getMonth()+1) + "_" + now.getDate() + ".txt";
         var stream = fs.createWriteStream(`${dir}/${fileName}`, { flags: 'a' });
         stream.write(output + "\n");
         stream.end();

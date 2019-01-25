@@ -10,6 +10,8 @@ var mempoolFileTypes = require('../enums/mempoolFiletypes');
 var transactionRepository = require('../repositories/transactionRepository');
 var hash = require('../utilities/hash');
 let jsonQuery = require('json-query')
+let blockLogger = require('../loggers/blockProcessLog');
+
 const targetBlockTimeMs = 60000; //target a one minute block time. 
 
 // Adds memPoolItems to the collection, then fires SolveBlock
@@ -31,7 +33,8 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
         return "";
     }
     else {
-        console.log('MempoolItems found:', memPoolItemsFromDb.length, 'Working on them now...');
+        blockLogger.WriteLog(`MempoolItems found: ${memPoolItemsFromDb.length}. Working on them now...`, true);
+        
         var maxBlockSizeBytes = await CalculateTargetBlockSizeBytes(lastBlock[0].blockNumber + 1);
         var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
         var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
@@ -51,8 +54,7 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
                 memPoolItems.push(element);
             }
             if (sumFileSizeBytes >= maxBlockSizeBytes) {
-                console.log(`Total block size: ${sumFileSizeBytes} bytes`);
-
+                blockLogger.WriteLog(`Total block size: ${sumFileSizeBytes} bytes`);
                 break;
             }
         }//endfor
@@ -184,14 +186,13 @@ var CalculateDifficulty = (async (lastBlock) => {
 
 function DifficultyAsHumanReadable(difficulty) {
     var difficultyAsHexString = decToHex(difficulty).toString("hex");
-    // console.log(`as hex string ${difficultyAsHexString}`);
     return 80 - difficultyAsHexString.length;
 }
 
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
     let targetBlockNumber = previousBlock.blockNumber + 1;
-    console.log(`Difficulty calculated at ${DifficultyAsHumanReadable(difficulty)}LZ. Working on block ${targetBlockNumber}.`);
+    blockLogger.WriteLog(`Difficulty calculated at ${DifficultyAsHumanReadable(difficulty)}LZ. Working on block ${targetBlockNumber}.`, true);
 
     var startingDateTime = new Date();
     var effectiveDate = new Date();
@@ -205,13 +206,13 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
             counter = 0;
             var block = await blockRepository.GetBlock(targetBlockNumber);
             if (block.length > 0) {
-                console.log(`Abandoning work on block ${targetBlockNumber}. Block solved by another node.`);
+                blockLogger.WriteLog(`Abandoning work on block ${targetBlockNumber}. Block solved by another node.`, true);
                 return;
             }
             for (m = 0; m < mempoolItems.length; m++) {
                 var memPoolResult = memPoolRepository.GetMemPoolItem(mempoolItems[m].hash);
                 if (memPoolResult.length == 0) {
-                    console.log(`Abandoning work on block ${targetBlockNumber}. MemPoolItem was included in a previous block.`);
+                    blockLogger.WriteLog(`Abandoning work on block ${targetBlockNumber}. MemPoolItem was included in a previous block.`, true);
                     return;
                 }
             }
@@ -228,7 +229,7 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
         }
         nonce++;
         if (nonce >= Number.MAX_SAFE_INTEGER) {
-            console.log(`Nonce max value. Resetting nonce.`);
+            blockLogger.WriteLog(`Nonce max value. Resetting nonce.`);
             nonce = 0;
             effectiveDate = new Date();
         }
@@ -344,7 +345,7 @@ var AppendBlockchain = (async (blockchain) => {
 //Validates an incoming block (received from another node) and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
-    // console.log(`Successfully validated incoming block hash ${block.blockNumber}`);
+    //blockLogger.WriteLog(`Successfully validated incoming block hash ${block.blockNumber}`);
     var blockReward = await CalculateBlockReward(block.blockNumber);
     if (block.data[0].type != mempoolFileTypes.MiningReward) {
         throw new Error("The first mempool item should be the block reward.");
@@ -353,22 +354,22 @@ var ValidateAndAddIncomingBlock = (async (block) => {
         throw new Error("Invalid block reward.");
     }
     var mempoolValidationResults = await MemPoolController.ValidateMemPoolItemsOnIncomingBlock(block.data); //validate each memPoolItem (filecontents, signedmessage, publickey)
-    // console.log(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
+    // blockLogger.WriteLog(`Successfully validated memPoolItems on incoming block ${block.blockNumber}`);
     var lastBlock = await GetLastBlock();
     var calculatedDifficulty = await CalculateDifficulty(lastBlock);
     if (calculatedDifficulty != hexToDec(block.difficulty)) {
         throw new Error(`Invalid difficulty on incoming block ${block.blockNumber}. Incoming block difficulty was ${hexToDec(block.difficulty)}, but we calculated ${calculatedDifficulty}`);
     } else {
-        // console.log(`Successfully validated difficulty on incoming block`);
+        // blockLogger.WriteLog(`Successfully validated difficulty on incoming block`);
     }
     if (block.blockNumber != lastBlock[0].blockNumber + 1) { //Make sure the last blocknumber is one less than the blocknumber being added
         throw new Error(`Invalid block number. Expecting ${lastBlock[0].blockNumber + 1} but instead got ${block.blockNumber}`);
     } else {
         if (block.previousBlockHash != lastBlock[0].blockHash) { //Make sure the block of the previous hash matches the previousBlockHash of the block being added.
-            console.log("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
+            blockLogger.WriteLog("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
             throw new Error("Invalid previous block hash");
         } else {
-            console.log(`Adding block ${block.blockNumber}`);
+            blockLogger.WriteLog(`Adding block ${block.blockNumber}`, true);
             var addBlockResult = await AddBlock(block) //Finally... all validations passed.  Add the block to the end of the chain. 
             return ({ blockNumber: block.blockNumber, message: `Successfully imported block ${block.blockNumber}` });
         }

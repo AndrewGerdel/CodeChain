@@ -4,9 +4,7 @@ var request = require('request');
 var config = require('../config.json');
 var blockController = require('./blockController.js');
 var requestPromise = require('request-promise');
-
-
-
+var nodeProcessLog = require('../loggers/nodeProcessLog');
 
 var LoadNodesFromPastebin = (async () => {
     var options = {
@@ -28,7 +26,7 @@ var GetAllNodes = (async () => {
     } else {
         var nodesFromPasteBin = await LoadNodesFromPastebin();
         for (n = 0; n < nodesFromPasteBin.nodes.length; n++) {
-            console.log('Adding ' + nodesFromPasteBin.nodes[n].uri, ":", nodesFromPasteBin.nodes[n].port);
+            nodeProcessLog.WriteLog(`Adding ${nodesFromPasteBin.nodes[n].uri}: ${nodesFromPasteBin.nodes[n].port}`);
             await nodeRepository.AddNode(nodesFromPasteBin.nodes[n].protocol, nodesFromPasteBin.nodes[n].uri, nodesFromPasteBin.nodes[n].port, nodesFromPasteBin.nodes[n].uid);
         }
         var newNodeList = await nodeRepository.GetAllNodesExludingMe();
@@ -62,15 +60,15 @@ var RegisterWithOtherNodes = (async (nodeList) => {
         var counter = 0;
         request(options, async (err, res, body) => {
             if (err) {
-                // console.log(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
+                nodeProcessLog.WriteLog(`Failed to register with ${node.protocol}://${node.uri}:${node.port}.  Error: ${err}`);
                 nodeRepository.DeleteNode(node.hash);
             } else {
                 try {
-                    // console.log('Registered with', node.uri);
+                    nodeProcessLog.WriteLog('Registered with ' + node.uri);
                     var returnData = JSON.parse(body);
                     var result = await nodeRepository.UpdateNodeRegistration(node, returnData);
                 } catch (ex) {
-                    console.log(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
+                    nodeProcessLog.WriteLog(`Failed registration process with ${node.protocol}://${node.uri}:${node.port}. Deleting.  Exception: ${ex}`);
                     nodeRepository.DeleteNode(node.hash);
                 }
             }
@@ -87,12 +85,12 @@ var GetNodesFromRemoteNodes = (async (nodeList) => {
         var nodeRegisterEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/get';
         request(nodeRegisterEndPoint, {}, (err, res, body) => {
             if (err) {
-                // console.log(`Failed to get nodes from ${node.uri}:${node.port}, deleting`);
+                nodeProcessLog.WriteLog(`Failed to get nodes from ${node.uri}:${node.port}, deleting`);
                 nodeRepository.DeleteNode(node.hash);
             } else {
                 try {
                     var nodesReceived = JSON.parse(body);
-                    // console.log(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
+                    nodeProcessLog.WriteLog(`Received ${nodesReceived.length} nodes from ${node.uri}:${node.port}`);
                     nodesReceived.forEach(async (node) => {
                         nodeRepository.GetNode(node.uid)
                             .then((nodesFromDb) => {
@@ -102,7 +100,7 @@ var GetNodesFromRemoteNodes = (async (nodeList) => {
                             })
                     });
                 } catch (error) {
-                    console.log('Deleting node ', node.hash);
+                    nodeProcessLog.WriteLog('Deleting node '+ node.hash);
                     nodeRepository.DeleteNode(node.hash);
                 }
             }
@@ -122,11 +120,11 @@ var BroadcastBlockToNetwork = (async (block) => {
         };
         request(options, (err, res, body) => {
             if (err) {
-                console.log(`Failed to send block ${block.blockNumber} to node ${postUrl}.  Retrying...`);
+                nodeProcessLog.WriteLog(`Failed to send block ${block.blockNumber} to node ${postUrl}.  Retrying...`);
                 //Retry after three seconds.  Then delete the node if it fails again
                 setTimeout(() => {
                     request(options, async (err2, res2, body2) => {
-                        console.log(`Second attempt failed to send block ${block.blockNumber} to node ${postUrl}.  Error: ${err}`);
+                        nodeProcessLog.WriteLog(`Second attempt failed to send block ${block.blockNumber} to node ${postUrl}.  Error: ${err}`);
                         nodeRepository.DeleteNode(node.hash);
                     });
                 }, 3000);
@@ -159,7 +157,7 @@ var ImportLongestBlockchain = (async () => {
             //Six blocks might be too long.  Reducing to 1.  Let's see how that plays out. 
             if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 1) {
                 var lastMatchingBlockNumber = await FindWhereBlockchainsDiffer(node[0], lastBlock[0]);
-                console.log(`Orphaning all blocks after ${lastMatchingBlockNumber}`);
+                nodeProcessLog.WriteLog(`Orphaning all blocks after ${lastMatchingBlockNumber}`, true);
                 await OrphanLocalBlocks(lastMatchingBlockNumber);
                 //Now that the bad blocks have been removed, immediately get blocks from the longest node and append them, so we can become current again. 
                 GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
@@ -189,7 +187,7 @@ var FindWhereBlockchainsDiffer = (async (node, lastBlock) => {
 var GetBlocksFromRemoteNodeAndAppendToChain = (async (node, lastBlock) => {
     var blocks = await GetBlocksFromRemoteNode(node, lastBlock.blockNumber);
     if (blocks && blocks.length > 0) {
-        console.log(`I received ${blocks.length} blocks from ${node.uri}:${node.port}`);
+        nodeProcessLog.WriteLog(`Received ${blocks.length} blocks from ${node.uri}:${node.port}`, true);
         for (blockCount = 0; blockCount < blocks.length; blockCount++) {
 
             var addblockResult = await blockController.ValidateAndAddIncomingBlock(blocks[blockCount]);
@@ -228,7 +226,6 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     if (blockHash == lastBlock.blockHash) {
         return true;
     } else {
-        // console.log(`Our hash for block ${lastBlock.blockNumber} is ${lastBlock.blockHash}. Theirs is ${blockHash}`);
         return false;
     }
 });
@@ -245,7 +242,7 @@ var BlacklistNode = (async (node, blockHeight) => {
     };
     request(options, async (err, res, body) => {
         if (err) {
-            console.log(`Failed to notify node ${node.uid} that we blacklisted them  Error: ${err}`);
+            nodeProcessLog.WriteLog(`Failed to notify node ${node.uid} that we blacklisted them  Error: ${err}`);
         } else {
             //nothing to do on success
         }
@@ -265,7 +262,7 @@ var UnBlacklistNode = (async (node, blockHeight) => {
     };
     request(options, async (err, res, body) => {
         if (err) {
-            console.log(`Failed to notify node ${node.uid} that we un-blacklisted them  Error: ${err}`);
+            nodeProcessLog.WriteLog(`Failed to notify node ${node.uid} that we un-blacklisted them  Error: ${err}`);
         } else {
             //nothing to do on success
         }

@@ -156,7 +156,6 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, address, blockReward) => 
   var salt = crypto.randomBytes(16);
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${address}${dateAdded}${salt.toString('hex')}`);
   var signatureHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
-  // console.log('signatureHash is ', signatureHash.toString('hex'));
 
   var memPool = new MemPool({
     type: filetypes.MiningReward,

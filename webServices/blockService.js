@@ -1,6 +1,7 @@
 let blockController = require('../controllers/blockController.js');
 var nodeRepository = require('../repositories/nodeRepository');
 var config = require('../config.json');
+var blockLogger = require('../loggers/blockProcessLog');
 
 var StartService = ((app, isDebug) => {
 
@@ -10,10 +11,10 @@ var StartService = ((app, isDebug) => {
       var remoteNodeUid = req.body.uid;
       var remoteNode = await nodeRepository.GetNode(remoteNodeUid);
       if (!remoteNode || remoteNode.length == 0) {
-        console.log(`Refusing block from unknown node: ${remoteNodeUid}`);
+        blockLogger.WriteLog(`Refusing block from unknown node: ${remoteNodeUid}`);
         res.send({ Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}` });
       } else if (remoteNode[0].blacklistUntilBlock && remoteNode[0].blacklistUntilBlock > 0) {
-        console.log(`Refusing block from blacklisted node: ${remoteNodeUid}`);
+        blockLogger.WriteLog(`Refusing block from blacklisted node: ${remoteNodeUid}`);
         res.send({ Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}` });
       } else {
         var success = await blockController.ValidateAndAddIncomingBlock(block)
@@ -31,7 +32,7 @@ var StartService = ((app, isDebug) => {
         res.send(blocks);
       }, (err) => {
         res.send('Error sending blocks');
-        console.log('Error sending blocks. ', err);
+        blockLogger.WriteLog('Error sending blocks. ', err);
       })
   });
 
@@ -42,7 +43,7 @@ var StartService = ((app, isDebug) => {
         res.send(block);
       }, (err) => {
         res.send('Error sending block');
-        console.log('Error sending block ', err);
+        blockLogger.WriteLog('Error sending block ', err);
       })
   });
 
@@ -53,7 +54,7 @@ var StartService = ((app, isDebug) => {
         res.send(blockHash);
       }, (err) => {
         res.send('Error sending block hash');
-        console.log('Error sending block hash', err);
+        blockLogger.WriteLog('Error sending block hash', err);
       })
   });
 
@@ -64,7 +65,7 @@ var StartService = ((app, isDebug) => {
         res.send(blocks);
       }, (err) => {
         res.send('Error sending blocks');
-        console.log('Error sending blocks. ', err);
+        blockLogger.WriteLog('Error sending blocks. ', err);
       })
   });
 
@@ -88,7 +89,7 @@ var StartService = ((app, isDebug) => {
 
 function StartOrForkProcess(isDebug) {
   if (!config.mining.publicKey || config.mining.publicKey == '') {
-    console.log('Public key not set in config. Mining will not start.');
+    blockLogger.WriteLog('Public key not set in config. Mining will not start.', true);
   } else {
     if (isDebug) {
       //Run the backend block processes on a child thread with inspect-brk.
