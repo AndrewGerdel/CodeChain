@@ -149,8 +149,8 @@ var ImportLongestBlockchain = (async () => {
         //We are behind at least one node on the network.   But how far behind? And do we have any collisions?
         //1: Compare our most recent block to the other node's same block.  Are we a match?
         var comparisonResult = await CompareOurMostRecentBlock(node[0], lastBlock[0]);
-        if (comparisonResult) {
-            GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
+        if (comparisonResult == true) {
+            await GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
         } else {
             //We are behind AND out of sync.  We have a collision.  If the other node's chain is ahead of ours, then accept his "rightness".  Orphan ours and merge his. 
             if (node[0].registrationDetails.blockHeight >= lastBlock[0].blockNumber + 1) {
@@ -158,7 +158,7 @@ var ImportLongestBlockchain = (async () => {
                 nodeProcessLog.WriteLog(`Orphaning all blocks after ${lastMatchingBlockNumber}`, true);
                 await OrphanLocalBlocks(lastMatchingBlockNumber);
                 //Now that the bad blocks have been removed, immediately get blocks from the longest node and append them, so we can become current again. 
-                GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
+                await GetBlocksFromRemoteNodeAndAppendToChain(node[0], lastBlock[0]);
             }
         }
     }
