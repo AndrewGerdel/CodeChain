@@ -72,6 +72,11 @@ var CreateGenesisBlock = (async (lastBlock) => {
         var nonce = 0;
         var effectiveDate = new Date('1/1/2000');
         var mempoolItems = [];
+        //The genesis block contains a one-time 10,000 block reward to a single address.  This wallet will be used strictly for bounty payments, to help find
+        //and fix bugs and report security vulnerabilities.  Any leftover funds will be publically donated to charity once the product reaches maturity. Monitor
+        //the account below to keep us honest. 
+        var genesisMemPoolItem = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date('1/1/2000'), '958a555c810345cb39a82955f8a01720c775f72d1a96c5b77bc86b80d35e9066', 10000, 'These funds are strictly to be used for the bounty program.');
+        mempoolItems.push(genesisMemPoolItem);
         var hashInput = 'The Genesis Block';
         var hash = crypto.createHmac('sha256', hashInput).digest('hex');
         var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target

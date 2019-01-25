@@ -146,7 +146,7 @@ var GetMemPoolItem = (async (hash) => {
 
 //Note: This DOES NOT SAVE the item to the database.  MiningRewards are not ever saved to the mempools collection. They
 //are only included in the block data.
-var CreateMiningRewardMemPoolItem = (async (dateAdded, address, blockReward) => {
+var CreateMiningRewardMemPoolItem = (async (dateAdded, address, blockReward, memo) => {
   var salt = crypto.randomBytes(16);
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${address}${dateAdded}${salt.toString('hex')}`);
   var signatureHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
@@ -157,7 +157,8 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, address, blockReward) => 
     address: address,
     signatureHash: signatureHash.toString('hex'), //meaningless, but required for the unique index
     hash: memPoolItemHash.toString('hex'),
-    blockReward: blockReward
+    blockReward: blockReward,
+    memo: memo
   });
   return memPool;
 });
