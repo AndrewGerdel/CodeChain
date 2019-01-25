@@ -1,6 +1,6 @@
 let blockController = require('../controllers/blockController.js');
 let nodeController = require('../controllers/nodeController.js');
-var config = require('../config.json');
+const timerIntervalMs = 500;
 
 process.on('unhandledRejection', (reason, promise) => {
   console.log('Error (unhandled rejection) in nodeProcess: ', reason);
@@ -15,7 +15,7 @@ async function MempoolLoop() {
   } catch (ex) {
     console.log('Error in blockProcess:', ex);
   } finally {
-    setTimeout(MempoolLoop, config.timers.primaryTimerIntervalMs); //recursively call yourself. 
+    setTimeout(MempoolLoop, timerIntervalMs); //recursively call yourself. 
   }
 }
 

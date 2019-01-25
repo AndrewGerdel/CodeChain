@@ -4,6 +4,7 @@ var nodeProcessLog = require('../loggers/nodeProcessLog');
 var nodeRepository = require('../repositories/nodeRepository');
 var blockController = require('../controllers/blockController');
 var request = require('request');
+const timerIntervalMs = 300000;
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
@@ -26,7 +27,7 @@ var Timer_LoadAndRegisterNodes = (async () => {
     } finally {
         setTimeout(() => {
             Timer_LoadAndRegisterNodes();
-        }, config.timers.secondaryTimerIntervalMs);
+        }, timerIntervalMs);
     }
 });
 
@@ -73,7 +74,7 @@ var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
     } finally {
         setTimeout(() => {
             Timer_ValidateBlockChainsOfRemoteNodes();
-        }, config.timers.secondaryTimerIntervalMs);
+        }, timerIntervalMs);
     }
 });
 
@@ -123,7 +124,7 @@ var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
     } finally {
         setTimeout(() => {
             Timer_RevalidateBlockChainsOfBlacklistedNodes();
-        }, config.timers.secondaryTimerIntervalMs);
+        }, timerIntervalMs);
     }
 });
 

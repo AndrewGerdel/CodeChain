@@ -1,10 +1,17 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-var config = require('./config.json');
 const argv = require('yargs').argv
 const fs = require('fs');
 const crypto = require('crypto');
 
+if(!fs.existsSync('./config.json')){
+  console.log('The file config.json was not found.  Creating...');
+  var configWizard = require('./setup/configWizard');
+  configWizard.CreateConfigFile();
+  return;
+}
+
+var config = require('./config.json');
 let port = config.network.myPort;
 
 //get more details on unhandled rejection errors, because they can be cryptic
