@@ -61,9 +61,10 @@ var StartService = ((app) => {
             var salt = request.body.salt;
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
+            let memo = request.body.memo;
 
             blockLogger.WriteLog(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -71,7 +72,7 @@ var StartService = ((app) => {
     });
 
     //Submits the signed request.  Should be sent to an online computer.
-    app.post('/file/submitRequest/encrypted', async (request, response) => {
+    app.post('/file/submitRequestencrypted', async (request, response) => {
         try {
             var filename = request.body.filename;
             var signature = request.body.signature;
@@ -81,11 +82,12 @@ var StartService = ((app) => {
             var salt = request.body.salt;
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
+            let memo = request.body.memo;
 
             const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
 
             blockLogger.WriteLog(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -100,6 +102,9 @@ var StartService = ((app) => {
             var publicKey = request.body.publickey;
             var privateKey = request.body.privatekey;
             var repo = request.body.repo;
+            let memo = request.body.memo;
+
+            
 
             var salt = crypto.randomBytes(16).toString('hex');
             let buff = new Buffer.from(fileContents);
@@ -107,7 +112,7 @@ var StartService = ((app) => {
             var signature = await hash.SignMessage(privateKey, `${salt}${base64data}${repo}`);
 
             blockLogger.WriteLog(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
 
         } catch (ex) {
@@ -127,12 +132,13 @@ var StartService = ((app) => {
             var salt = crypto.randomBytes(16).toString('hex');
             let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
+            let memo = request.body.memo;
 
             const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
             var signature = await hash.SignMessage(privateKey, `${salt}${encrypted}${repo}`);
-            
+
             blockLogger.WriteLog(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
 
         } catch (ex) {
@@ -148,7 +154,9 @@ var StartService = ((app) => {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
                     data: block
                 });
-                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo });
+                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName, 
+                    Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, 
+                    Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo });
             } else {
                 response.send({ Success: false, ErrorMessage: "File not found" });
             }
@@ -168,7 +176,9 @@ var StartService = ((app) => {
 
                 const decrypted = await crypto2.decrypt.rsa(jsonQueryResult.value.fileData.fileContents, privateKey);
 
-                response.send({ Success: true, FileContents: decrypted, FileName: jsonQueryResult.value.fileData.fileName, Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, Repo: jsonQueryResult.value.fileData.repo });
+                response.send({ Success: true, FileContents: decrypted, FileName: jsonQueryResult.value.fileData.fileName, 
+                    Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, 
+                    Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo  });
             } else {
                 response.send({ Success: false, ErrorMessage: "File not found" });
             }

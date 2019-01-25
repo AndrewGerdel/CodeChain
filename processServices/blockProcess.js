@@ -8,7 +8,7 @@ process.on('unhandledRejection', (reason, promise) => {
   blockLogger.WriteLog('Error (unhandled rejection) in nodeProcess: ' + reason);
 });
 
-blockLogger.WriteLog('Block process starting...', true);
+blockLogger.WriteLog('Block process started.', true);
 MempoolLoop();
 
 async function MempoolLoop() {

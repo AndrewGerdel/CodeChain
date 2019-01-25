@@ -9,14 +9,14 @@ var transactionRepository = require('../repositories/transactionRepository');
 var blockLogger = require('../loggers/blockProcessLog');
 
 //Adds a file to the mempool, from the fileService
-var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature, publicKey, repo) => {
+var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature, publicKey, repo, memo) => {
   var verified = await hashUtil.VerifyMessage(publicKey, signature, salt + base64FileContents + repo);
   if (!verified) {
     throw new Error("Invalid signature");
   }
   var dateNow = new Date();
-  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + salt);
-  var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signature, publicKey, salt, dateNow, hash.toString("hex"), repo);
+  var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + salt + memo);
+  var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signature, publicKey, salt, dateNow, hash.toString("hex"), repo, memo);
   BroadcastMempoolItemToRandomNodes(mempoolItem);
   return mempoolItem;
 });
@@ -34,7 +34,7 @@ var AddIncomingCodeFileToMemPool = (async (memPoolItem, incomingFromNodeUid) => 
 });
 
 //Adds a transaction to the mempool, from the transactService
-var AddTransactionToMemPool = (async (from, to, amount, salt, signature, publicKey) => {
+var AddTransactionToMemPool = (async (from, to, amount, salt, signature, publicKey, memo) => {
   let buff = new Buffer.from(`${from}${amount}${to}${salt}`);
   let base64data = buff.toString('base64');
   var verified = await hashUtil.VerifyMessage(publicKey, signature, base64data);
@@ -42,8 +42,8 @@ var AddTransactionToMemPool = (async (from, to, amount, salt, signature, publicK
     throw new Error("Invalid transaction " + from + " to " + to);
   }
   var dateNow = new Date();
-  var hash = await hashUtil.CreateSha256Hash(from + to + amount + signature + dateNow + salt);
-  var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(from, to, amount, signature, publicKey, salt, dateNow, hash.toString("hex"));
+  var hash = await hashUtil.CreateSha256Hash(from + to + amount + signature + dateNow + salt + memo);
+  var mempoolItem = await memPoolRepository.AddTransactionMemPoolItem(from, to, amount, signature, publicKey, salt, dateNow, hash.toString("hex"), memo);
   BroadcastMempoolItemToRandomNodes(mempoolItem, '');
   return mempoolItem;
 });
@@ -70,7 +70,7 @@ var AddIncomingTransactionToMemPool = (async (memPoolItem, incomingFromNodeUid) 
 
 
 //Adds a message to the mempool, from the messageService
-var AddMessageToMemPool = (async (senderPublicKey, recipientPublicKey, encryptedMessage, salt, signature) => {
+var AddMessageToMemPool = (async (senderPublicKey, recipientPublicKey, encryptedMessage, salt, signature, memo) => {
   var from = await hashUtil.CreateSha256Hash(senderPublicKey);
   var to = await hashUtil.CreateSha256Hash(recipientPublicKey);
   var verified = await hashUtil.VerifyMessage(senderPublicKey, signature, `${salt}${encryptedMessage}`);
@@ -79,7 +79,7 @@ var AddMessageToMemPool = (async (senderPublicKey, recipientPublicKey, encrypted
   }
   var dateNow = new Date();
   var hash = await hashUtil.CreateSha256Hash(`${salt}${encryptedMessage}`);
-  var mempoolItem = await memPoolRepository.AddMessageMemPoolItem(from.toString('hex'), to.toString('hex'), encryptedMessage, signature, senderPublicKey, salt, dateNow, hash.toString("hex"));
+  var mempoolItem = await memPoolRepository.AddMessageMemPoolItem(from.toString('hex'), to.toString('hex'), encryptedMessage, signature, senderPublicKey, salt, dateNow, hash.toString("hex"), memo);
   BroadcastMempoolItemToRandomNodes(mempoolItem, '');
   return mempoolItem;
 });

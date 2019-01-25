@@ -9,21 +9,26 @@ const remoteValidationTimerIntervalMs = 600000;
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
-    nodeProcessLog.WriteLog('Error (unhandled rejection) in nodeProcess: ' +reason);
+    nodeProcessLog.WriteLog('Error (unhandled rejection) in nodeProcess: ' + reason);
 });
 
 var Timer_LoadAndRegisterNodes = (async () => {
     try {
-        nodeProcessLog.WriteLog("Registering with remote nodes.");
-        var res1 = await RegisterWithRemoteNodes();
-        nodeProcessLog.WriteLog("Updating node list from remote nodes.");
-        var res2 = await UpdateNodeListFromRemoteNodes();
-        nodeProcessLog.WriteLog("Pulling blockchain from the longest node.");
-        var res3 = await RetrieveBlockchainFromLongestNode();
-        counter++;
-        process.send({ iterationCount: counter });
+        if (config.development.bypassNodeSync == true) {
+            //In development, in a single-node situation, bypass all the network sync logic.  It really creates problems.
+            counter++;
+            process.send({ iterationCount: counter });
+        } else {
+            nodeProcessLog.WriteLog("Registering with remote nodes.");
+            var res1 = await RegisterWithRemoteNodes();
+            nodeProcessLog.WriteLog("Updating node list from remote nodes.");
+            var res2 = await UpdateNodeListFromRemoteNodes();
+            nodeProcessLog.WriteLog("Pulling blockchain from the longest node.");
+            var res3 = await RetrieveBlockchainFromLongestNode();
+            counter++;
+            process.send({ iterationCount: counter });
+        }
     } catch (ex) {
-        Timer_LoadAndRegisterNodes(); //try right away on failure. 
         nodeProcessLog.WriteLog(`Error in nodeProcess: ${ex}`);
     } finally {
         setTimeout(() => {

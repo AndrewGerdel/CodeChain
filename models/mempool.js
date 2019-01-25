@@ -105,8 +105,10 @@ var MemPool = mongoose.model('MemPool', {
     required: false,
     trim: true
   },
-  deleted: {
-    type: Boolean
+  memo: {
+    type: String,
+    required: false,
+    trim: true
   }
 });
 

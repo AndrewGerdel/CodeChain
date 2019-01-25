@@ -34,7 +34,7 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
     else {
         blockLogger.WriteLog(`MempoolItems found: ${memPoolItemsFromDb.length}. Working on them now...`, true);
-        
+
         var maxBlockSizeBytes = await CalculateTargetBlockSizeBytes(lastBlock[0].blockNumber + 1);
         var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
         var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
@@ -66,25 +66,22 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
 });
 
-var CreateGenesisBlock = ((lastBlock) => {
-    var promise = new Promise((resolve, reject) => {
-        if (!lastBlock || lastBlock.length == 0) {
-            lastBlock = [];
-            var nonce = 0;
-            var effectiveDate = new Date('1/1/2000');
-            var mempoolItems = [];
-            var hashInput = 'The Genesis Block';
-            var hash = crypto.createHmac('sha256', hashInput).digest('hex');
-            var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target
-            var genesisDifficulty = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-            var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), genesisDifficulty);
-            lastBlock.push(newBlock);
-            resolve(lastBlock);
-        } else {
-            resolve(lastBlock);
-        }
-    });
-    return promise;
+var CreateGenesisBlock = (async (lastBlock) => {
+    if (!lastBlock || lastBlock.length == 0) {
+        lastBlock = [];
+        var nonce = 0;
+        var effectiveDate = new Date('1/1/2000');
+        var mempoolItems = [];
+        var hashInput = 'The Genesis Block';
+        var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+        var millisecondsBlockTime = targetBlockTimeMs - 1000; //one second slower than target
+        var genesisDifficulty = "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        var newBlock = blockRepository.CreateNewBlock(hash, 0, 'None', mempoolItems, millisecondsBlockTime, nonce, effectiveDate.toISOString(), genesisDifficulty);
+        lastBlock.push(newBlock);
+        return lastBlock;
+    } else {
+        return lastBlock;
+    }
 });
 
 var CalculateTargetBlockSizeBytes = (async (blockNumber) => {
@@ -422,6 +419,6 @@ module.exports = {
     GetRepoFromBlock,
     GetFilesByAddress,
     GetReposByAddress,
-    GetBlockHashByRange, 
+    GetBlockHashByRange,
     GetEncryptedRepoFromBlock
 }

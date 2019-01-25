@@ -25,6 +25,7 @@ var GetAllNodes = (async () => {
         return (nodes);
     } else {
         var nodesFromPasteBin = await LoadNodesFromPastebin();
+        nodeProcessLog.WriteLog(`Retrieved ${nodesFromPasteBin.nodes.length} nodes from pastebin...`);
         for (n = 0; n < nodesFromPasteBin.nodes.length; n++) {
             nodeProcessLog.WriteLog(`Adding ${nodesFromPasteBin.nodes[n].uri}: ${nodesFromPasteBin.nodes[n].port}`);
             await nodeRepository.AddNode(nodesFromPasteBin.nodes[n].protocol, nodesFromPasteBin.nodes[n].uri, nodesFromPasteBin.nodes[n].port, nodesFromPasteBin.nodes[n].uid);
@@ -218,7 +219,8 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
 
     var getNodesUrl = `${node.protocol}://${node.uri}:${node.port}/block/getBlockHash?blockNumber=${lastBlock.blockNumber}`;
     var blockHash = await requestPromise(getNodesUrl).catch((ex) => {
-        throw new Error(`Error pulling block from node ${node.uri}. ${ex}`);
+        nodeProcessLog.WriteLog(`Error pulling block from node ${node.uri}.  Deleting.  ${ex}`);
+        nodeRepository.DeleteNode(node.hash);
     });
 
     if (blockHash == lastBlock.blockHash) {

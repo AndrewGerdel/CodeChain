@@ -6,15 +6,15 @@ var crypto = require('crypto');
 
 mongoose.GetDb().then((db) => {
   db.collection("mempools").createIndex({ "hash": 1 }, { unique: true });
-  db.collection("mempools").createIndex({ "deleted": 1 }, { unique: false });
   db.collection("mempools").createIndex({ "signatureHash": 1 }, { unique: true });
 });
 
-var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, publicKey, salt, dateAdded, hash, repo) => {
+var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, publicKey, salt, dateAdded, hash, repo, memo) => {
+  
   var address = await hashUtil.CreateSha256Hash(publicKey);
   var signatureHash = await hashUtil.CreateSha256Hash(signature);
 
-  if(repo){
+  if (repo) {
     var memPool = new MemPool({
       type: filetypes.File,
       fileData: {
@@ -24,7 +24,7 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, pu
           name: repo.Name,
           hash: repo.Hash,
           file: repo.File
-        } 
+        }
       },
       signature: signature,
       signatureHash: signatureHash.toString('hex'),
@@ -32,12 +32,12 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, pu
       publicKey: publicKey,
       address: address.toString('hex'),
       hash: hash,
-      deleted: false,
       salt: salt,
+      memo: memo
     });
     memPool.save();
     return memPool;
-  }else{
+  } else {
     var memPool = new MemPool({
       type: filetypes.File,
       fileData: {
@@ -50,16 +50,16 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, pu
       publicKey: publicKey,
       address: address.toString('hex'),
       hash: hash,
-      deleted: false,
       salt: salt,
+      memo: memo
     });
     memPool.save();
     return memPool;
   }
-  
+
 });
 
-var AddTransactionMemPoolItem = (async (from, to, amount, signature, publicKey, salt, dateAdded, hash) => {
+var AddTransactionMemPoolItem = (async (from, to, amount, signature, publicKey, salt, dateAdded, hash, memo) => {
   var address = await hashUtil.CreateSha256Hash(publicKey);
   if (address.toString('hex') != from) {
     //safety check
@@ -80,15 +80,16 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signature, publicKey, 
     publicKey: publicKey,
     address: from,
     hash: hash,
-    deleted: false,
-    salt: salt
+    salt: salt,
+    memo: memo
   });
   memPool.save();
   return memPool;
 });
 
 
-var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, publicKey, salt, dateAdded, hash) => {
+var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, publicKey, salt, dateAdded, hash, memo) => {
+
   
   var address = await hashUtil.CreateSha256Hash(publicKey);
   if (address.toString('hex') != from) {
@@ -110,24 +111,17 @@ var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, p
     publicKey: publicKey,
     address: from,
     hash: hash,
-    deleted: false,
-    salt: salt
+    salt: salt, 
+    memo: memo
   });
   memPool.save();
   return memPool;
 });
 
 //Gets all mempool items.
-var GetMemPoolItems = (() => {
-  var promise = new Promise((resolve, reject) => {
-    mongoose.GetDb()
-      .then((db) => {
-        resolve(db.collection('mempools').find({ deleted: false }).sort({ dateAdded: 1 }).toArray());
-      }, (err) => {
-        reject(err);
-      });
-  });
-  return promise;
+var GetMemPoolItems = (async() => {
+  var db = await mongoose.GetDb();
+  return db.collection('mempools').find({  }).sort({ dateAdded: 1 }).toArray();
 });
 
 //Deletes by hash all memPoolItems in the list

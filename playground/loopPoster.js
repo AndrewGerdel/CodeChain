@@ -7,6 +7,7 @@ var loopPost = (async (nodeEndpoint) => {
     const data = JSON.stringify({
         filename: 'postedFile.txt',
         filecontents: 'The current time is ' + new Date(),
+        memo: 'From loopPoster.js',
         publickey: `-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxg7ikluLtaMUE0CwRXEG
 XMv+FxT0zRG1LecfnE1wnGzlkecL15ss271DOJOYyY/F7QDW3LDx4BaYwU0jOwZn
