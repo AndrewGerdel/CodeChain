@@ -4,7 +4,7 @@ var nodeProcessLog = require('../loggers/nodeProcessLog');
 var nodeRepository = require('../repositories/nodeRepository');
 var blockController = require('../controllers/blockController');
 var request = require('request');
-const timerIntervalMs = 300000;
+const timerIntervalMs = 30000;
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {

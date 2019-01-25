@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const argv = require('yargs').argv
 const fs = require('fs');
 const crypto = require('crypto');
+var blockLogger = require('./loggers/blockProcessLog');
 
 if(!fs.existsSync('./config.json')){
   console.log('The file config.json was not found.  Creating...');
@@ -16,7 +17,7 @@ let port = config.network.myPort;
 
 //get more details on unhandled rejection errors, because they can be cryptic
 process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at: Promise', p, reason);
+  blockLogger.WriteLog('Unhandled Rejection at: Promise' + p + reason);
 });
 
 var app = express();

@@ -75,7 +75,7 @@ var StartService = ((app, isDebug, callback) => {
     });
 
     app.post('/nodes/blacklistNotify', async (req, res) => {
-        var remoteNodeUid = req.body;
+        var remoteNodeUid = req.body.uid;
         nodeLogger.WriteLog('Warning: You have been blacklisted by ' + remoteNodeUid, true);
         res.send({ Success: true });
     });
