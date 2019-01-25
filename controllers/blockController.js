@@ -12,7 +12,7 @@ var hash = require('../utilities/hash');
 let jsonQuery = require('json-query')
 let blockLogger = require('../loggers/blockProcessLog');
 
-const targetBlockTimeMs = 60000; //target a one minute block time. 
+const targetBlockTimeMs = 30000; //target a 30-second block time. 
 
 // Adds memPoolItems to the collection, then fires SolveBlock
 async function MineNextBlock() {
@@ -121,35 +121,29 @@ var CalculateTargetBlockSizeBytes = (async (blockNumber) => {
 });
 
 var CalculateBlockReward = (async (blockNumber) => {
-    //Assumed 525,600 blocks per year
-    if (blockNumber <= 525600) { //first year
+    //Assumed 1,051,200 blocks per year
+    if (blockNumber <= 1051200) { //first year
         return 50;
     }
-    else if (blockNumber > 525600 && blockNumber <= 1051200) { //second year
+    else if (blockNumber > 1051200 && blockNumber <= 2102400) { //second year
         return 25;
     }
-    else if (blockNumber > 1051200 && blockNumber <= 1576800) { //third year
+    else if (blockNumber > 2102400 && blockNumber <= 3153600) { //third year
         return 12.5;
     }
-    else if (blockNumber > 1576800 && blockNumber <= 2102400) { //fourth year
+    else if (blockNumber > 3153600 && blockNumber <= 4204800) { //fourth year
         return 6.25;
     }
-    else if (blockNumber > 2102400 && blockNumber <= 2628000) { //fifth year
-        return 6.25;
-    }
-    else if (blockNumber > 2628000 && blockNumber <= 3153600) { //sixth year
+    else if (blockNumber > 4204800 && blockNumber <= 5256000) { //fifth year
         return 3.125;
     }
-    else if (blockNumber > 3153600 && blockNumber <= 3679200) { //seventh year
+    else if (blockNumber > 5256000 && blockNumber <= 6307200) { //sixth year
         return 1.5625;
     }
-    else if (blockNumber > 3679200 && blockNumber <= 4204800) { //eigth year
-        return 1.5625;
-    }
-    else if (blockNumber > 4204800 && blockNumber <= 4730400) { //ninth year
+    else if (blockNumber > 6307200 && blockNumber <= 7358400) { //seventh year
         return 0.78125;
     }
-    else if (blockNumber > 4730400) { //tenth year and onward.
+    else if (blockNumber > 7358400  ){ //eighth year and onward
         return 0.3906;
     }
 });
