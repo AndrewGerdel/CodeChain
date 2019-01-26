@@ -41,12 +41,13 @@ var GetNode = ((uid) => {
     return promise;
 });
 
-
+//Note: Intentionally removing blacklistUntilBlock: null from the find{} below.  Even if we blacklisted a node due to a chain difference,
+//at some point we need to accept their rightness and sync up, if they're ahead of us in blocks.
 var GetNodeWithLongestChain = (() => {
     var promise = new Promise((resolve, reject) => {
         mongoose.GetDb()
             .then((db) => {
-                var nodes = db.collection('nodes').find({ blacklistUntilBlock: null }).sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
+                var nodes = db.collection('nodes').find({ }).sort({ "registrationDetails.blockHeight": -1 }).limit(1).toArray();
                 resolve(nodes);
             }, (err) => {
                 reject(err);

@@ -97,12 +97,12 @@ zEKS3/ZNonEKaNsBXhxUDAxZ31IE
 
         setTimeout((evenOdd) => {
             if (nodeEndpoint == "http://127.0.0.1:65340/file/createSubmitRequest") {
-                nodeEndpoint = "http://127.0.0.1:65340/file/createSubmitRequest";  //put your alternating url here. 
+                nodeEndpoint = "http://52.165.30.161/file/createSubmitRequest";  //put your alternating url here. 
             } else {
                 nodeEndpoint = "http://127.0.0.1:65340/file/createSubmitRequest";
             }
             loopPost(nodeEndpoint);
-        }, 50000);
+        }, 30000);
     });
 
 });
