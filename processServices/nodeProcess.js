@@ -14,7 +14,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 var Timer_LoadAndRegisterNodes = (async () => {
     try {
-        if (config.development.bypassNodeSync == true) {
+        if (config.development && config.development.bypassNodeSync == true) {
             //In development, in a single-node situation, bypass all the network sync logic.  It really creates problems.
             counter++;
             process.send({ iterationCount: counter });
