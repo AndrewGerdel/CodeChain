@@ -1,5 +1,5 @@
 config.json
-keys/*/*
+keys
 # Logs
 logs
 *.log

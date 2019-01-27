@@ -68,8 +68,11 @@ var SubmitRequest = ((senderPublicKey, recipientPublicKey, signature, encryptedM
 
 var toPublicKey = fs.readFileSync(yargs.argv.toPublicKey).toString();
 var fromPublicKey = fs.readFileSync(yargs.argv.fromPublicKey).toString();
-var fromPrivateKey = fs.readFileSync(yargs.argv.fromPrivateKey).toString();
-
-CreateRequest(yargs.argv.message, toPublicKey, fromPrivateKey).then(async (createResult) => {
-    await SubmitRequest(fromPublicKey, toPublicKey, createResult.Signature, createResult.EncryptedMessage, createResult.Salt);
+var decryptFile = require('./decryptFile');
+var fromPrivateKey = decryptFile.DecryptFile(yargs.argv.fromPrivateKey, (result) => {
+    CreateRequest(yargs.argv.message, toPublicKey, fromPrivateKey).then(async (createResult) => {
+        await SubmitRequest(fromPublicKey, toPublicKey, createResult.Signature, createResult.EncryptedMessage, createResult.Salt);
+    });
 });
+
+
