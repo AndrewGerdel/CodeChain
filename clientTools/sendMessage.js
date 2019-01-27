@@ -21,7 +21,7 @@ if (!yargs.argv.fromPublicKey) {
 }
 
 if (!yargs.argv.fromPrivateKey) {
-    console.log('Missing parameter --fromPrivateKey.  Full or relative path to .pem file.');
+    console.log('Missing parameter --fromPrivateKey.  Full or relative path to .aes file.');
     return;
 }
 
@@ -43,7 +43,6 @@ var CreateRequest = (async (message, recipientPublicKey, senderPrivateKey) => {
 });
 
 var SubmitRequest = ((senderPublicKey, recipientPublicKey, signature, encryptedMessage, salt) => {
-    debugger;
     const data = JSON.stringify({
         senderpublickey: senderPublicKey,
         recipientpublickey: recipientPublicKey,

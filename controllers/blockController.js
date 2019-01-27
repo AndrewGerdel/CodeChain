@@ -2,7 +2,6 @@ var MemPoolController = require('./memPoolController.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
 var decToHex = require('dec-to-hex');
-var nonce = 0;
 var memPoolRepository = require('../repositories/mempoolRepository.js');
 var blockRepository = require('../repositories/blockRepository.js');
 var config = require('../config.json');
@@ -34,7 +33,6 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
     }
     else {
         blockLogger.WriteLog(`MempoolItems found: ${memPoolItemsFromDb.length}. Working on them now...`, true);
-
         var maxBlockSizeBytes = await CalculateTargetBlockSizeBytes(lastBlock[0].blockNumber + 1);
         var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
         var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
@@ -58,7 +56,6 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
                 break;
             }
         }//endfor
-
         if (memPoolItems.length > 1) { //If it only has the block reward, then don't do anything. 
             var newBlock = await SolveBlock(difficulty, lastBlock[0], memPoolItems);
             return newBlock;
@@ -148,29 +145,32 @@ var CalculateBlockReward = (async (blockNumber) => {
     else if (blockNumber > 6307200 && blockNumber <= 7358400) { //seventh year
         return 0.78125;
     }
-    else if (blockNumber > 7358400  ){ //eighth year and onward
+    else if (blockNumber > 7358400) { //eighth year and onward
         return 0.3906;
     }
 });
 
 var CalculateDifficulty = (async (lastBlock) => {
+    debugger;
     var result = await blockRepository.GetBlocks(100);
     var totalMilliseconds = 0;
     for (i = 0; i < result.length; i++) {
         totalMilliseconds += result[i].millisecondsBlockTime;
     }
+    var currentDifficulty = hexToDec(lastBlock[0].difficulty);
+
+
+    
     var averageBlockTimeMs = totalMilliseconds / result.length;
     if (averageBlockTimeMs < targetBlockTimeMs) {
         var diff = targetBlockTimeMs - averageBlockTimeMs;
         var percentage = (diff / targetBlockTimeMs);
-        var currentDifficulty = hexToDec(lastBlock[0].difficulty);
         var newDifficulty = currentDifficulty - (currentDifficulty * percentage);
         return (newDifficulty);
     }
     else if (averageBlockTimeMs > targetBlockTimeMs) {
         var diff = averageBlockTimeMs - targetBlockTimeMs;
         var percentage = (diff / targetBlockTimeMs);
-        var currentDifficulty = hexToDec(lastBlock[0].difficulty);
         var newDifficulty = currentDifficulty + (currentDifficulty * percentage);
         return (newDifficulty);
     }
@@ -187,9 +187,10 @@ function DifficultyAsHumanReadable(difficulty) {
 
 //Hashes the current mempool items along with a nonce and datetime until below supplied difficulty.
 var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
+    var nonce = 0;
+
     let targetBlockNumber = previousBlock.blockNumber + 1;
     blockLogger.WriteLog(`Difficulty calculated at ${DifficultyAsHumanReadable(difficulty)}LZ. Working on block ${targetBlockNumber}.`, true);
-
     var startingDateTime = new Date();
     var effectiveDate = new Date();
     var counter = 0;
@@ -213,6 +214,7 @@ var SolveBlock = (async (difficulty, previousBlock, mempoolItems) => {
                 }
             }
         }
+
         var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty) + previousBlock.blockHash;
         var hash = crypto.createHmac('sha256', hashInput).digest('hex');
 

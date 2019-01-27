@@ -22,12 +22,10 @@ request(nodeEndpoint + '?messagehash=' + yargs.argv.messagehash, async (err, res
     if (err) {
         console.log('ERROR :', err);
     } else {
-        debugger;
         //console.log(body);
         var bodyObj = JSON.parse(body);
         var privateKey = fs.readFileSync(yargs.argv.privatekey);
         if (bodyObj.Success == true) {
-debugger;
             var verified = await hash.VerifyMessage(bodyObj.PublicKey, bodyObj.Signature, `${bodyObj.Salt}${bodyObj.EncryptedMessage}`);
             if (verified == true) {
                 console.log('Message verified successfully.  Message contents:');

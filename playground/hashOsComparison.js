@@ -1,13 +1,45 @@
 //seem to be getting different hashes between linux/windows
 
 var crypto = require('crypto');
+var hexToDec = require('hex-to-dec');
 
-var nonce = 0;
-var effectiveDate = new Date('1/1/2000');
-var mempoolItems = [];
-var hashInput = 'The Genesis Block';
-var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+var abc = (async () => {
 
-console.log('effectivedate string is', effectiveDate.toISOString() );
+debugger;
+    var averageBlockTimeMs = 40000;
+    var targetBlockTimeMs = 30000;
+    var currentDifficulty = 10000000;
 
-console.log('The hash is', hash);
+    if (averageBlockTimeMs < targetBlockTimeMs) {
+        var diff = targetBlockTimeMs - averageBlockTimeMs;
+        var percentage = (diff / targetBlockTimeMs);
+        var newDifficulty = currentDifficulty - (currentDifficulty * percentage);
+        return (newDifficulty);
+    }
+    else if (averageBlockTimeMs > targetBlockTimeMs) {
+        var diff = averageBlockTimeMs - targetBlockTimeMs;
+        var percentage = (diff / targetBlockTimeMs);
+        var newDifficulty = currentDifficulty + (currentDifficulty * percentage);
+        return (newDifficulty);
+    }
+    else if (averageBlockTimeMs == targetBlockTimeMs) {
+        return (hexToDec(lastBlock[0].difficulty));
+    }
+
+
+});
+
+abc();
+
+// var hashInput = nonce + effectiveDate.toISOString() + MemPoolItemsAsJson(mempoolItems) + decToHex(difficulty) + previousBlock.blockHash;
+
+
+// var nonce = 0;
+// var effectiveDate = new Date('2019-01-26T18:41:59.412Z');
+// var mempoolItems = [];
+// var hashInput = 'The Genesis Block';
+// var hash = crypto.createHmac('sha256', hashInput).digest('hex');
+
+// console.log('effectivedate string is', effectiveDate.toISOString() );
+
+// console.log('The hash is', hash);

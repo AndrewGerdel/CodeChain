@@ -24,7 +24,6 @@ var CreateConfigFile = (async () => {
                 if (!port || port.length == 0) {
                     port = '65340';
                 }
-                debugger;
                 var keypair = await generateKey.GenerateAndSaveKeyPair();
                 rl.question(`To what address should your mining block rewards be paid? (${keypair.Address})`, (address) => {
                     if (!address || address.length == 0) {

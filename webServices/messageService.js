@@ -35,7 +35,6 @@ var StartService = ((app) => {
             var signature = request.body.signature;
             var encryptedMessage = request.body.encryptedmessage;
             var salt = request.body.salt;
-            debugger;
             var result = await memPoolController.AddMessageToMemPool(senderPublicKey, recipientPublicKey, encryptedMessage, salt, signature);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
