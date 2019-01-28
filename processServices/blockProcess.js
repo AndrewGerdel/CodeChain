@@ -13,7 +13,6 @@ MempoolLoop();
 
 async function MempoolLoop() {
   try {
-    blockLogger.WriteLog('In MempoolLoop');
     var result = await MineNextBlock();
   } catch (ex) {
     blockLogger.WriteLog('Error in blockProcess:' + ex);
@@ -23,7 +22,6 @@ async function MempoolLoop() {
 }
 
 async function MineNextBlock() {
-  blockLogger.WriteLog('In MineNextBlock');
 
   var block = await blockController.MineNextBlock();
   if (block) {

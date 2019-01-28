@@ -5,7 +5,7 @@ var nodeRepository = require('../repositories/nodeRepository');
 var blockController = require('../controllers/blockController');
 var request = require('request');
 const timerIntervalMs = 30000;
-const remoteValidationTimerIntervalMs = 600000;
+const remoteValidationTimerIntervalMs = 60000;
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
