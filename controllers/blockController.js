@@ -1,3 +1,4 @@
+
 var MemPoolController = require('./memPoolController.js');
 var crypto = require('crypto');
 var hexToDec = require('hex-to-dec');
@@ -153,7 +154,7 @@ var CalculateBlockReward = (async (blockNumber) => {
 var CalculateDifficulty = (async (lastBlock) => {
     var result = await blockRepository.GetBlocks(100);
     var totalMilliseconds = 0;
-    for (i = 0; i < result.length; i++) {
+    for (var i = 0; i < result.length; i++) {
         totalMilliseconds += result[i].millisecondsBlockTime;
     }
     var currentDifficulty = hexToDec(lastBlock[0].difficulty);
@@ -323,24 +324,31 @@ var ValidateBlockHash = (async (block) => {
     var hashInput = block.nonce + block.solvedDateTime + MemPoolItemsAsJson(block.data) + block.difficulty + block.previousBlockHash;
     var hash = crypto.createHmac('sha256', hashInput).digest('hex');
     if (hash == block.blockHash) {
-        return (hash);
+        return true;
     } else {
-        throw new Error("Invalid hash. Validation failed, block " + block.blockNumber);
+        return false;
     }
 });
 
 var ValidateLocalBlockchain = (async (lowBlockNumber, highBlockNumber) => {
     var blocks = await blockRepository.GetBlocksByRange(lowBlockNumber - 1, highBlockNumber);
     //validate all the blocks, starting at element 1 (because we fetched by low-1)
-    for (blockNum = 1; blockNum < highBlockNumber; blockNum++) {
-        debugger;
+    debugger;
+    var invalidBlockNumber = 0;
+    for (var blockNum = 1; blockNum < highBlockNumber - lowBlockNumber; blockNum++) {
         var validated = await ValidateBlockHash(blocks[blockNum]);
-        if(validated == false){
+        if (validated == false) {
             debugger;
-            console.log('FOUND INVALID BLOCK ', blockNum);
+            blockLogger.WriteLog(`Found invalid block, block number ${blocks[blockNum].blockNumber}. Orphaning and pulling all blocks after that point.`, true);
+            invalidBlockNumber = blocks[blockNum].blockNumber;
+            break;
         }
     }
-
+    if (invalidBlockNumber > 0) {
+        var blocksToOrphan = await blockRepository.GetBlocksFromStartingBlock(invalidBlockNumber - 1);
+        OrphanBlocks(blocksToOrphan);
+        debugger;
+    }
 });
 
 var AddBlock = (async (block) => {
@@ -356,6 +364,9 @@ var AppendBlockchain = (async (blockchain) => {
 //Validates an incoming block (received from another node) and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
     var hashValidationResult = await ValidateBlockHash(block);
+    if (hashValidationResult == false) {
+        throw new Error("Could not validate hash of block.");
+    }
     //blockLogger.WriteLog(`Successfully validated incoming block hash ${block.blockNumber}`);
     var blockReward = await CalculateBlockReward(block.blockNumber);
     if (block.data[0].type != mempoolFileTypes.MiningReward) {
