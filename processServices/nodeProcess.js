@@ -6,6 +6,7 @@ var blockController = require('../controllers/blockController');
 var request = require('request');
 const timerIntervalMs = 30000;
 const remoteValidationTimerIntervalMs = 60000;
+var hash = require('../utilities/hash');
 
 var counter = 0;
 process.on('unhandledRejection', (reason, promise) => {
@@ -54,17 +55,19 @@ var Timer_ValidateBlockChainsOfRemoteNodes = (async () => {
                 url: nodeEndpoint,
                 method: 'GET',
             };
-            request(options, (err, res, body) => {
+            request(options, async(err, res, body) => {
                 if (err) {
                     nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${err}`);
                 } else {
                     var bodyObj = JSON.parse(body);
                     if (bodyObj.Success == true) {
-                        if (bodyObj.Hash == myBlockHash) {
+                        //Prepend the hash we generated from our blockchain with the nodes uid.  Hash that.  It should match what the remote node sent us.
+                        var compareHash = await hash.CreateSha256Hash(`${node.uid}${myBlockHash}`);
+                        if (bodyObj.Hash == compareHash.toString('hex')) {
                             nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}`);
                         } else {
                             nodeProcessLog.WriteLog(`Failed to validate block ${randomLow} to ${randomHigh} with ${node.uid}. ${myBlockHash} vs. ${bodyObj.Hash}.  Blacklisting.`);
-                            nodeController.BlacklistNode(node, blockHeight);
+                            nodeController.BlacklistNode(node, blockHeight, randomLow, randomHigh);
                         }
                     } else {
                         nodeProcessLog.WriteLog(`Error testing random blocks on ${node.uid}: ${body}`);
@@ -108,7 +111,9 @@ var Timer_RevalidateBlockChainsOfBlacklistedNodes = (async () => {
                 } else {
                     var bodyObj = JSON.parse(body);
                     if (bodyObj.Success == true) {
-                        if (bodyObj.Hash == myBlockHash) {
+                        //Prepend the hash we generated from our blockchain with the nodes uid.  Hash that.  It should match what the remote node sent us.
+                        var compareHash = hash.CreateSha256Hash(`${node.uid}${myBlockHash}`);
+                        if (bodyObj.Hash == compareHash) {
                             nodeProcessLog.WriteLog(`Validated block ${randomLow} to ${randomHigh} with ${node.uid}. Un-blacklisting node.`);
                             nodeController.UnBlacklistNode(node, blockHeight);
                         } else {

@@ -151,7 +151,6 @@ var CalculateBlockReward = (async (blockNumber) => {
 });
 
 var CalculateDifficulty = (async (lastBlock) => {
-    debugger;
     var result = await blockRepository.GetBlocks(100);
     var totalMilliseconds = 0;
     for (i = 0; i < result.length; i++) {
@@ -160,7 +159,7 @@ var CalculateDifficulty = (async (lastBlock) => {
     var currentDifficulty = hexToDec(lastBlock[0].difficulty);
 
 
-    
+
     var averageBlockTimeMs = totalMilliseconds / result.length;
     if (averageBlockTimeMs < targetBlockTimeMs) {
         var diff = targetBlockTimeMs - averageBlockTimeMs;
@@ -330,6 +329,20 @@ var ValidateBlockHash = (async (block) => {
     }
 });
 
+var ValidateLocalBlockchain = (async (lowBlockNumber, highBlockNumber) => {
+    var blocks = await blockRepository.GetBlocksByRange(lowBlockNumber - 1, highBlockNumber);
+    //validate all the blocks, starting at element 1 (because we fetched by low-1)
+    for (blockNum = 1; blockNum < highBlockNumber; blockNum++) {
+        debugger;
+        var validated = await ValidateBlockHash(blocks[blockNum]);
+        if(validated == false){
+            debugger;
+            console.log('FOUND INVALID BLOCK ', blockNum);
+        }
+    }
+
+});
+
 var AddBlock = (async (block) => {
     var result = await blockRepository.AddBlock(block);
     return result;
@@ -421,5 +434,6 @@ module.exports = {
     GetFilesByAddress,
     GetReposByAddress,
     GetBlockHashByRange,
-    GetEncryptedRepoFromBlock
+    GetEncryptedRepoFromBlock,
+    ValidateLocalBlockchain
 }

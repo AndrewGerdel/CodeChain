@@ -230,15 +230,14 @@ var CompareOurMostRecentBlock = (async (node, lastBlock) => {
     }
 });
 
-var BlacklistNode = (async (node, blockHeight) => {
+var BlacklistNode = (async (node, blockHeight, lowBlock, highBlock) => {
     nodeRepository.BlacklistNode(node.uid, blockHeight + 5);
-
     var nodeEndPoint = node.protocol + '://' + node.uri + ':' + node.port + '/nodes/blacklistNotify';
 
     var options = {
         url: nodeEndPoint,
         method: 'POST',
-        json: { uid: config.network.myUid }
+        json: { uid: config.network.myUid, lowBlock: lowBlock, highBlock: highBlock }
     };
     request(options, async (err, res, body) => {
         if (err) {

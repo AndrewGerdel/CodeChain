@@ -2,6 +2,7 @@ var nodeController = require('../controllers/nodeController');
 var hashUtil = require('../utilities/hash.js');
 var blockController = require('../controllers/blockController');
 var nodeLogger = require('../loggers/nodeProcessLog');
+var config = require('../config.json');
 
 var StartService = ((app, isDebug, callback) => {
 
@@ -30,7 +31,7 @@ var StartService = ((app, isDebug, callback) => {
                     nodeController.AddNode(remoteProtocol, ip, remotePort, remoteUid);
                     nodeLogger.WriteLog(`Added remote node ${remoteProtocol}://${ip}:${remotePort}`)
                 } else {
-                    
+
                 }
                 blockController.GetLastBlock().then((result) => {
                     if (result.length > 0) {
@@ -66,7 +67,9 @@ var StartService = ((app, isDebug, callback) => {
             var startingBlock = req.query.startingBlock;
             var endingBlock = req.query.endingBlock;
             var hashResult = await blockController.GetBlockHashByRange(startingBlock, endingBlock);
-            res.send({ Success: true, Hash: hashResult });
+            //Now prepend the hashResult with MY node UID.  To prevent bad actors from simply bouncing this call off another node and echoing the response.
+            var finalResult = await hashUtil.CreateSha256Hash(`${config.network.myUid}${hashResult.toString('hex')}`);
+            res.send({ Success: true, Hash: finalResult.toString('hex') });
 
         } catch (ex) {
             res.send({ Success: false, ErrorMessage: ex.toString() });
@@ -76,11 +79,16 @@ var StartService = ((app, isDebug, callback) => {
 
     app.post('/nodes/blacklistNotify', async (req, res) => {
         var remoteNodeUid = req.body.uid;
+        var lowBlock = req.body.lowBlock;
+        var highBlock = req.body.highBlock;
+
+        blockController.ValidateLocalBlockchain(lowBlock, highBlock);
+
         nodeLogger.WriteLog('Warning: You have been blacklisted by ' + remoteNodeUid, true);
         res.send({ Success: true });
     });
 
-    
+
     app.post('/nodes/unblacklistNotify', async (req, res) => {
         var remoteNodeUid = req.body.uid;
         nodeLogger.WriteLog('Notice: You have been un-blacklisted by ' + remoteNodeUid, true);

@@ -5,7 +5,6 @@ var hexToDec = require('hex-to-dec');
 
 var abc = (async () => {
 
-debugger;
     var averageBlockTimeMs = 40000;
     var targetBlockTimeMs = 30000;
     var currentDifficulty = 10000000;

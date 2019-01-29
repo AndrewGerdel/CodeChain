@@ -25,7 +25,6 @@ var CreateConfigFile = (async () => {
                 if (!port || port.length == 0) {
                     port = '65340';
                 }
-                debugger;
                 //This code stolen from generateKeypair.js.  Because I don't see how to setup another readline...
                 var result = await hash.GenerateKeyPair();
                 var dirName = result.Address.substr(0, 3) + result.Address.substr(61, 3);

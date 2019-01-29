@@ -15,7 +15,7 @@ var StartService = ((app, isDebug) => {
         res.send({ Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}` });
       } else if (remoteNode[0].blacklistUntilBlock && remoteNode[0].blacklistUntilBlock > 0) {
         blockLogger.WriteLog(`Refusing block from blacklisted node: ${remoteNodeUid}`);
-        res.send({ Success: false, Error: `Refusing block from unknown node: ${remoteNodeUid}` });
+        res.send({ Success: false, Error: `Refusing block from blacklisted node: ${remoteNodeUid}` });
       } else {
         var success = await blockController.ValidateAndAddIncomingBlock(block)
         res.send({ Success: success });
