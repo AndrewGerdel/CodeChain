@@ -338,12 +338,10 @@ var ValidateBlockHash = (async (block) => {
 var ValidateLocalBlockchain = (async (lowBlockNumber, highBlockNumber) => {
     var blocks = await blockRepository.GetBlocksByRange(lowBlockNumber - 1, highBlockNumber);
     //validate all the blocks, starting at element 1 (because we fetched by low-1)
-    debugger;
     var invalidBlockNumber = 0;
     for (var blockNum = 1; blockNum < highBlockNumber - lowBlockNumber; blockNum++) {
         var validated = await ValidateBlockHash(blocks[blockNum]);
         if (validated == false) {
-            debugger;
             blockLogger.WriteLog(`Found invalid block, block number ${blocks[blockNum].blockNumber}. Orphaning and pulling all blocks after that point.`, true);
             invalidBlockNumber = blocks[blockNum].blockNumber;
             break;
@@ -352,7 +350,6 @@ var ValidateLocalBlockchain = (async (lowBlockNumber, highBlockNumber) => {
     if (invalidBlockNumber > 0) {
         var blocksToOrphan = await blockRepository.GetBlocksFromStartingBlock(invalidBlockNumber - 1);
         OrphanBlocks(blocksToOrphan);
-        debugger;
     }
 });
 
@@ -368,7 +365,6 @@ var AppendBlockchain = (async (blockchain) => {
 
 //Validates an incoming block (received from another node) and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
-    debugger;
     var hashValidationResult = await ValidateBlockHash(block);
     if (hashValidationResult == false) {
         throw new Error("Could not validate hash of block.");
