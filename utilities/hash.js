@@ -29,27 +29,10 @@ var VerifyMessage = (async (publicKey, signatureHex, message) => {
   return verified;
 });
 
-var GenerateKeyPair = (async () => {
-  var keyPair = crypto.generateKeyPairSync('rsa', {
-    modulusLength: 4096,
-    publicKeyEncoding: {
-      type: 'spki',
-      format: 'pem'
-    },
-    privateKeyEncoding: {
-      type: 'pkcs8',
-      format: 'pem'
-    }
-  });
-  var address = await CreateSha256Hash(keyPair.publicKey.toString('hex'));
-  return { Address: address.toString('hex'), PublicKey: keyPair.publicKey, PrivateKey: keyPair.privateKey };
-
-});
 
 
 module.exports = {
   CreateSha256Hash,
   SignMessage,
   VerifyMessage,
-  GenerateKeyPair
 }
