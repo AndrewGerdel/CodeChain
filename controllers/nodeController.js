@@ -56,7 +56,7 @@ var RegisterWithOtherNodes = (async (nodeList) => {
         var options = {
             url: nodeRegisterEndPoint,
             method: 'POST',
-            headers: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
+            json: { remotePort: config.network.myPort, remoteProtocol: config.network.myProtocol, remoteUid: config.network.myUid }
         };
         var counter = 0;
         request(options, async (err, res, body) => {
