@@ -355,6 +355,7 @@ var AppendBlockchain = (async (blockchain) => {
 
 //Validates an incoming block (received from another node) and makes sure it fits on the end of the chain. 
 var ValidateAndAddIncomingBlock = (async (block) => {
+    debugger;
     var hashValidationResult = await ValidateBlockHash(block);
     //blockLogger.WriteLog(`Successfully validated incoming block hash ${block.blockNumber}`);
     var blockReward = await CalculateBlockReward(block.blockNumber);
@@ -377,6 +378,7 @@ var ValidateAndAddIncomingBlock = (async (block) => {
         throw new Error(`Invalid block number. Expecting ${lastBlock[0].blockNumber + 1} but instead got ${block.blockNumber}`);
     } else {
         if (block.previousBlockHash != lastBlock[0].blockHash) { //Make sure the block of the previous hash matches the previousBlockHash of the block being added.
+            
             blockLogger.WriteLog("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
             throw new Error("Invalid previous block hash");
         } else {
