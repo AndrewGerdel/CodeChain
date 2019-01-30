@@ -165,12 +165,17 @@ var CalculateDifficulty = (async (lastBlock) => {
     if (averageBlockTimeMs < targetBlockTimeMs) {
         var diff = targetBlockTimeMs - averageBlockTimeMs;
         var percentage = (diff / targetBlockTimeMs);
+        if(percentage > 0.1){
+            percentage = 0.1; //trying to smooth out our difficulty line a bit. Don't increase by more than 10%
+        }
+        blockLogger.WriteLog(`Decreasing difficulty by ${percentage} to make it harder to mine the next block...`, false);
         var newDifficulty = currentDifficulty - (currentDifficulty * percentage);
         return (newDifficulty);
     }
     else if (averageBlockTimeMs > targetBlockTimeMs) {
         var diff = averageBlockTimeMs - targetBlockTimeMs;
         var percentage = (diff / targetBlockTimeMs);
+        blockLogger.WriteLog(`Increasing difficulty by ${percentage} to make it easier to mine the next block...`, false);
         var newDifficulty = currentDifficulty + (currentDifficulty * percentage);
         return (newDifficulty);
     }
