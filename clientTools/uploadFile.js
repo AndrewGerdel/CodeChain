@@ -12,12 +12,12 @@ if (!file) {
     return;
 }
 var public = yargs.argv.public;
-if (!public){
+if (!public) {
     console.log("Missing --public parameter. Provide path of public key file.");
     return;
 }
 var private = yargs.argv.private;
-if (!private){
+if (!private) {
     console.log("Missing --private parameter.  Provide path of private key file.");
     return;
 }
@@ -37,29 +37,10 @@ var filecontents = fs.readFileSync(file);
 var publickey = fs.readFileSync(public).toString();
 var privatekey = fs.readFileSync(private).toString();
 
-const data = JSON.stringify({
-    filename: filename,
-    filecontents: filecontents,
-    publickey: publickey,
-    privatekey: privatekey
+var uploadFile = require('../utilities/uploadFile');
+uploadFile.UploadFile(nodeEndpoint, filename, filecontents, publickey, privatekey).then((result) => {
+    console.log(result);
+}).catch((ex) => {
+    console.log('Error: ', ex);
 });
-
-const options = {
-    uri: nodeEndpoint,
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': data.length
-    },
-    body: data
-}
-
-request(options, (err, res, body) => {
-    if (err) {
-        console.log(':', err);
-    } else {
-        console.log(body);
-    }
-});
-
 

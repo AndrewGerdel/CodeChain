@@ -13,7 +13,7 @@ if(!fs.existsSync('./config.json')){
 }
 
 var config = require('./config.json');
-let port = config.network.myPort;
+let port = (process.env.PORT || config.network.myPort);
 
 //get more details on unhandled rejection errors, because they can be cryptic
 process.on('unhandledRejection', (reason, p) => {

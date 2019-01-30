@@ -4,8 +4,10 @@ var connectionString = require('../config.json').database;
 var logger = require('../loggers/databaseLog');
 
 mongoose.Promise = global.Promise;
-
-mongoose.connect(connectionString.host + connectionString.database, { useNewUrlParser: true }, (error, client) => {
+if(process.env.DATABASE){
+  console.log(`Overriding database name to ${process.env.DATABASE}`);
+}
+mongoose.connect(connectionString.host + (process.env.DATABASE || connectionString.database), { useNewUrlParser: true }, (error, client) => {
   if (error) {
     logger.WriteLog('Unable to connect to Mongo', true);
     return;
@@ -25,7 +27,7 @@ var GetDb = (() => {
           logger.WriteLog('Unable to connect to Mongo', true);
           return;
         }
-        DB = client.db(connectionString.database);
+        DB = client.db((process.env.DATABASE || connectionString.database));
         var end = new Date();
         resolve(DB);
       });
