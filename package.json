@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/AndrewGerdel/CodeChain#readme",
   "dependencies": {
+    "assert": "^1.4.1",
     "binstring": "^0.2.1",
     "body-parser": "^1.18.3",
     "crypto2": "^2.0.0",

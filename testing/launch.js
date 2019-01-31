@@ -1,6 +1,7 @@
 var genKeyPair = require('../utilities/generateKeypair');
 var uploadFile = require('../utilities/uploadFile');
 var downloadFile = require('../utilities/downloadFile');
+var assert = require('assert');
 var fs = require('fs');
 
 //Create a new, empty database.
@@ -34,9 +35,10 @@ var Test1 = (async () => {
         console.log('setting timeout');
         setTimeout(function (uploadResultObj) {
             var url = `${baseUri}/file/get`;
-            console.log('the url is ', url);
             downloadFile.DownloadFile(url, uploadResultObj.Hash).then((r1) => {
-                console.log(r1);
+                var r2 = JSON.parse(r1);
+                assert.strictEqual(r2.Success, true, `Failed to download file that we just uploaded. ${r1}`);
+                console.log('Test Success.');
             }).catch((ex) => {
                 console.log('ERROR', ex);
             })
