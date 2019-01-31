@@ -3,7 +3,7 @@ var nodeRepository = require('../repositories/nodeRepository');
 var config = require('../config.json');
 var blockLogger = require('../loggers/blockProcessLog');
 
-var StartService = ((app, isDebug) => {
+var StartService = ((app, isDebug, callback) => {
 
   app.post('/block/add', async (req, res) => {
     try {
@@ -76,18 +76,18 @@ var StartService = ((app, isDebug) => {
       if (lastBlock.length == 0) {
         blockController.CreateGenesisBlock(lastBlock)
           .then((newBlock) => {
-            StartOrForkProcess(isDebug);
+            StartOrForkProcess(isDebug, callback);
             // blockController.AddBlock(newBlock[0]) //don't add the block again. It's already been added by CreateGenesisBlock()
           }, (err) => {
             throw new Error('Failed to create genesis block: ' + err);
           })
       } else {
-        StartOrForkProcess(isDebug);
+        StartOrForkProcess(isDebug, callback);
       }
     });
 });
 
-function StartOrForkProcess(isDebug) {
+function StartOrForkProcess(isDebug, callback) {
   if (!config.mining.publicKey || config.mining.publicKey == '') {
     blockLogger.WriteLog('Public key not set in config. Mining will not start.', true);
   } else {
@@ -103,7 +103,9 @@ function StartOrForkProcess(isDebug) {
       const forked = fork('processServices/blockProcess.js');
     }
   }
-
+  if (callback) {
+    callback();
+  }
 }
 
 module.exports = {
