@@ -32,21 +32,40 @@ var Test1 = (async () => {
     var uploadResult = await uploadFile.UploadFile(`${baseUri}/file/createSubmitRequest`, 'TestFile1.txt', TestFileContents.TestFile1, keypair1.PublicKey, keypair1.PrivateKey);
     var uploadResultObj = JSON.parse(uploadResult);
     if (uploadResultObj.Success) {
-        console.log('setting timeout');
         setTimeout(function (uploadResultObj) {
             var url = `${baseUri}/file/get`;
             downloadFile.DownloadFile(url, uploadResultObj.Hash).then((r1) => {
+                debugger;
                 var r2 = JSON.parse(r1);
-                assert.strictEqual(r2.Success, true, `Failed to download file that we just uploaded. ${r1}`);
-                console.log('Test Success.');
+                //assert.fail('this s a test');
+                debugger;
+                if (!r2.Success) {
+                    FailConsoleLog('Failed to download file. ' + r2.ErrorMessage);
+                    return;
+                }
+                else if (r2.FileContents != TestFileContents.TestFile1) {
+                    FailConsoleLog('Invalid file contents');
+                    return;
+                }else{
+                    SuccessConsoleLog('Test Success.');
+                }
             }).catch((ex) => {
-                console.log('ERROR', ex);
+                assert.fail('Error:' + ex);
             })
-        }, 3000, uploadResultObj);
+        }, 10000, uploadResultObj);
     } else {
-        console.log('fail', uploadResult);
+        FailConsoleLog('Failure uploading file.');
     }
 });
+
+var SuccessConsoleLog = ((text) => {
+    console.log(`\x1b[32m${text}\x1b[0m`);
+});
+
+var FailConsoleLog = ((text) => {
+    console.log(`\x1b[31m${text}\x1b[0m`);
+});
+
 
 var server = require('../server')
 setTimeout(() => {

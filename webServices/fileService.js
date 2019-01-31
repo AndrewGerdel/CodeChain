@@ -5,6 +5,7 @@ let jsonQuery = require('json-query')
 let crypto = require('crypto');
 let crypto2 = require('crypto2');
 let blockLogger = require('../loggers/blockProcessLog');
+var zlib = require('zlib');
 
 var StartService = ((app) => {
 
@@ -59,9 +60,11 @@ var StartService = ((app) => {
             var repo = request.body.repo;
             var fileContents = request.body.filecontents;
             var salt = request.body.salt;
-            let buff = new Buffer.from(fileContents);
-            let base64data = buff.toString('base64');
+            // let buff = new Buffer.from(fileContents);
             let memo = request.body.memo;
+
+            var buff = zlib.deflateSync(fileContents);
+            let base64data = buff.toString('base64');
 
             blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo, memo);
@@ -149,7 +152,6 @@ var StartService = ((app) => {
 
     app.get('/file/get', async (request, response) => {
         try {
-            debugger;
             var block = await blockController.GetFileFromBlock(request.query.filehash);
             if (block.length > 0) {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
