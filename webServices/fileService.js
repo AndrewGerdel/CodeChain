@@ -149,6 +149,7 @@ var StartService = ((app) => {
 
     app.get('/file/get', async (request, response) => {
         try {
+            debugger;
             var block = await blockController.GetFileFromBlock(request.query.filehash);
             if (block.length > 0) {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
@@ -158,7 +159,7 @@ var StartService = ((app) => {
                     Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, 
                     Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo });
             } else {
-                response.send({ Success: false, ErrorMessage: "File not found" });
+                response.send({ Success: false, ErrorMessage: `File not found. Hash ${request.query.filehash}` });
             }
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });

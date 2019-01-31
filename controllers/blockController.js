@@ -152,6 +152,11 @@ var CalculateBlockReward = (async (blockNumber) => {
 });
 
 var CalculateDifficulty = (async (lastBlock) => {
+    if (process.env.FIXEDDIFFICULTY) {
+        blockLogger.WriteLog("Using fixed difficulty for test mode");
+        return (hexToDec(process.env.FIXEDDIFFICULTY));
+    }
+
     var result = await blockRepository.GetBlocks(100);
     var totalMilliseconds = 0;
     for (var i = 0; i < result.length; i++) {
@@ -159,13 +164,11 @@ var CalculateDifficulty = (async (lastBlock) => {
     }
     var currentDifficulty = hexToDec(lastBlock[0].difficulty);
 
-
-
     var averageBlockTimeMs = totalMilliseconds / result.length;
     if (averageBlockTimeMs < targetBlockTimeMs) {
         var diff = targetBlockTimeMs - averageBlockTimeMs;
         var percentage = (diff / targetBlockTimeMs);
-        if(percentage > 0.1){
+        if (percentage > 0.1) {
             percentage = 0.1; //trying to smooth out our difficulty line a bit. Don't increase by more than 10%
         }
         blockLogger.WriteLog(`Decreasing difficulty by ${percentage} to make it harder to mine the next block...`, false);
@@ -390,7 +393,7 @@ var ValidateAndAddIncomingBlock = (async (block) => {
         throw new Error(`Invalid block number. Expecting ${lastBlock[0].blockNumber + 1} but instead got ${block.blockNumber}`);
     } else {
         if (block.previousBlockHash != lastBlock[0].blockHash) { //Make sure the block of the previous hash matches the previousBlockHash of the block being added.
-            
+
             blockLogger.WriteLog("Invalid previous block hash.", block.previousBlockHash, lastBlock[0].blockHash);
             throw new Error("Invalid previous block hash");
         } else {
