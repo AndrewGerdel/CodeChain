@@ -97,15 +97,19 @@ function StartOrForkProcess(isDebug, callback) {
       console.log(`Launching block process attached to debugger on port 7779.`);
       const { fork } = require('child_process');
       const forked = fork('processServices/blockProcess.js', [], { execArgv: ['--inspect-brk=7779'] });
+      if (callback) {
+        callback(forked.pid);
+      }
     } else {
       //Run the backend block processes on a child thread
       const { fork } = require('child_process');
       const forked = fork('processServices/blockProcess.js');
+      if (callback) {
+        callback(forked.pid);
+      }
     }
   }
-  if (callback) {
-    callback();
-  }
+  
 }
 
 module.exports = {

@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const crypto = require('crypto');
 var blockLogger = require('./loggers/blockProcessLog');
+var pid1 = 0;
+var pid2 = 0;
 
 var StartServer = ((callback) => {
   if (!fs.existsSync('./config.json')) {
@@ -50,12 +52,17 @@ var StartServer = ((callback) => {
   }
 
 
-  nodeService.StartService(app, isDebug, (() => {
+  nodeService.StartService(app, isDebug, ((pid) => {
+    pid1 = pid;
     //We don't want to start any of the other services until the nodeService has done its work (updating the blockchain).
 
     //start the blockService, which pings the mempool at a defined interval and checks for work. 
     var blockService = require('./webServices/blockService.js');
-    blockService.StartService(app, isDebug, callback);
+    blockService.StartService(app, isDebug, (pid) => {
+      
+      pid2 = pid;
+      console.log('OMG PID IS ', pid2);
+    });
 
     //start listening for file requests
     var fileService = require('./webServices/fileService.js');
@@ -84,7 +91,22 @@ var StartServer = ((callback) => {
 
 });
 
+var StopServer = (async (callback) => {
+  // process.on('exit', (code) => {
+  //   if (callback) {
+  //     console.log('calling back');
+
+  //     callback();
+  //   }
+  // });
+  console.log('pids are', pid1, pid2);
+  
+  console.log('Stopping server...');
+  process.exit(0)
+});
+
 module.exports = {
-  StartServer
+  StartServer,
+  StopServer
 }
 

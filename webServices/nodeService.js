@@ -105,7 +105,7 @@ var StartService = ((app, isDebug, callback) => {
         const forked = fork('processServices/nodeProcess.js', [], { execArgv: ['--inspect-brk=7778'] });
 
         //if we're debugging, just fire up all services right out of the gate.  Don't wait for the network to sync.
-        callback();
+        callback(forked.pid);
 
         // forked.on('message', (msg) => {
         //     if (msg && msg.iterationCount == 1) {
@@ -119,7 +119,7 @@ var StartService = ((app, isDebug, callback) => {
         forked.on('message', (msg) => {
             if (msg && msg.iterationCount == 1) {
                 //only callback on the first iteration.  This will fire up all the webservice endpoints.
-                callback();
+                callback(forked.pid);
             }
         });
     }
