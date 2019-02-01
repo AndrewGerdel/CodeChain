@@ -59,9 +59,8 @@ var StartServer = ((callback) => {
     //start the blockService, which pings the mempool at a defined interval and checks for work. 
     var blockService = require('./webServices/blockService.js');
     blockService.StartService(app, isDebug, (pid) => {
-      
       pid2 = pid;
-      console.log('OMG PID IS ', pid2);
+      if(callback) callback();
     });
 
     //start listening for file requests
@@ -99,8 +98,6 @@ var StopServer = (async (callback) => {
   //     callback();
   //   }
   // });
-  console.log('pids are', pid1, pid2);
-  
   console.log('Stopping server...');
   process.exit(0)
 });

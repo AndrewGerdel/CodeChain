@@ -109,7 +109,7 @@ function StartOrForkProcess(isDebug, callback) {
       }
     }
   }
-  
+
 }
 
 module.exports = {

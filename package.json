@@ -6,7 +6,7 @@
   "scripts": {
     "test-debug": "mocha --inspect-brk tests/*.js",
     "testfileService": "mocha tests/fileServiceTests.js",
-    "test": "mocha tests/*.js"
+    "test": "mocha testing/test1.js"
   },
   "repository": {
     "type": "git",
