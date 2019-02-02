@@ -92,8 +92,6 @@ var GetBlocksWithAddress = (async (address) => {
     return blocks;
 });
 
-
-
 var GetBlockHashesFromStartingBlock = (async (startingBlock) => {
     var db = await mongoose.GetDb();
     var blocks = db.collection('blocks').find({ "blockNumber": { "$gt": Number(startingBlock) } }, { blockNumber: 1, blockHash: 1 }).sort({ blockNumber: 1 }).toArray();
