@@ -19,7 +19,6 @@ var StartService = ((app, isDebug, callback) => {
     });
 
     app.post('/nodes/register', async (req, res) => {
-        debugger;
         var ip = req.ip;
         ip = ip.replace('::ffff:', ''); //for localhost debugging.
         var remotePort = req.body.remotePort

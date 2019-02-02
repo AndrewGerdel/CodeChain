@@ -1,6 +1,6 @@
 var requestPromise = require('request-promise');
 
-var UploadFile = (async (url, filename, filecontents, publickey, privatekey) => {
+var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey) => {
 
     var promise = new Promise((resolve, reject) => {
         const data = JSON.stringify({
@@ -11,7 +11,7 @@ var UploadFile = (async (url, filename, filecontents, publickey, privatekey) => 
         });
 
         const options = {
-            uri: url,
+            uri: `${baseUrl}/file/createSubmitRequest`,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -31,8 +31,7 @@ var UploadFile = (async (url, filename, filecontents, publickey, privatekey) => 
     return promise;
 });
 
-
-var CreateRequest = (async (baseUrl, filename, filecontents, privatekey) => {
+var CreateRequest = (async (baseUrl, filecontents, privatekey) => {
     var promise = new Promise((resolve, reject) => {
         try {
             const data = JSON.stringify({
@@ -54,7 +53,105 @@ var CreateRequest = (async (baseUrl, filename, filecontents, privatekey) => {
             });
         } catch (ex) {
             console.log('error' + ex);
-            
+
+            reject(ex);
+        }
+    });
+    return promise;
+});
+
+var SubmitRequest = (async (baseUrl, filename, signature, publickey, filecontents, salt, memo) => {
+    var promise = new Promise((resolve, reject) => {
+        try {
+            const data = JSON.stringify({
+                filename: filename,
+                signature: signature,
+                publickey: publickey,
+                filecontents: filecontents,
+                salt: salt,
+                memo: memo
+            });
+            const options = {
+                uri: `${baseUrl}/file/submitRequest`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
+                body: data
+            }
+            requestPromise(options, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(body);
+                }
+            });
+        } catch (ex) {
+            console.log('error' + ex);
+
+            reject(ex);
+        }
+    });
+    return promise;
+});
+
+var CreateEncryptedRequest = (async (baseUrl, filecontents, privatekey, publickey) => {
+    var promise = new Promise((resolve, reject) => {
+        try {
+            const data = JSON.stringify({
+                filecontents: filecontents,
+                privatekey: privatekey,
+                publickey: publickey
+            });
+            const options = {
+                uri: `${baseUrl}/file/createEncryptedRequest`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
+                body: data
+            }
+            requestPromise(options, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(body);
+                }
+            });
+        } catch (ex) {
+            console.log('error' + ex);
+
+            reject(ex);
+        }
+    });
+    return promise;
+});
+
+
+var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, filecontents, salt, memo) => {
+    var promise = new Promise((resolve, reject) => {
+        try {
+
+            const data = JSON.stringify({
+                filename: filename,
+                signature: signature,
+                publickey: publickey,
+                filecontents: filecontents,
+                salt: salt,
+                memo: memo
+            });
+            const options = {
+                uri: `${baseUrl}/file/submitRequestEncrypted`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
+                body: data
+            }
+            requestPromise(options, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(body);
+                }
+            });
+        } catch (ex) {
+            console.log('error' + ex);
+
             reject(ex);
         }
     });
@@ -64,5 +161,8 @@ var CreateRequest = (async (baseUrl, filename, filecontents, privatekey) => {
 
 module.exports = {
     UploadFile,
-    CreateRequest
+    CreateRequest,
+    CreateEncryptedRequest,
+    SubmitRequest,
+    SubmitEncryptedRequest
 }

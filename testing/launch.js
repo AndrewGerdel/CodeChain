@@ -27,7 +27,7 @@ var TestFileContents = {
 
 var CreateSubmitRequestTest = (async () => {
     var keypair1 = await genKeyPair.GenerateKeyPair();
-    var uploadResult = await uploadFile.UploadFile(`${baseUri}/file/createSubmitRequest`, 'TestFile1.txt', TestFileContents.TestFile1, keypair1.PublicKey, keypair1.PrivateKey);
+    var uploadResult = await uploadFile.UploadFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair1.PublicKey, keypair1.PrivateKey);
     var uploadResultObj = JSON.parse(uploadResult);
     if (uploadResultObj.Success) {
         SuccessConsoleLog('Successfully uploaded file via createSubmitRequest');
@@ -36,14 +36,39 @@ var CreateSubmitRequestTest = (async () => {
     }
 });
 
-var CreateRequestTest = (async () => {
+var CreateAndSubmitRequestTest = (async () => {
     var keypair1 = await genKeyPair.GenerateKeyPair();
-    var uploadResult = await uploadFile.CreateRequest(baseUri, 'TestFile2.txt', TestFileContents.TestFile1, keypair1.PrivateKey);
+    var creqteRequestResult = await uploadFile.CreateRequest(baseUri, TestFileContents.TestFile1, keypair1.PrivateKey);
+    var creqteRequestResultObj = JSON.parse(creqteRequestResult);
+    if (creqteRequestResultObj.Success && creqteRequestResultObj.Signature.length > 0) {
+        SuccessConsoleLog('Successfully created a Submit Request');
+        var submitResult = await uploadFile.SubmitRequest(baseUri, "TestFile1.txt", creqteRequestResultObj.Signature, keypair1.PublicKey, TestFileContents.TestFile1, creqteRequestResultObj.Salt, "Submitted via test launcher.");
+        var submitResultObj = JSON.parse(submitResult);
+        if (submitResultObj.Success) {
+            SuccessConsoleLog('Successfully submitted a file');
+        } else {
+            FailConsoleLog('Failure submitting file.' + submitResultObj.ErrorMessage);
+        }
+    } else {
+        FailConsoleLog('Failure creating Submit Request.' + creqteRequestResultObj.ErrorMessage);
+    }
+});
+
+var CreateAndSubmitEncryptedRequestTest = (async () => {
+    var keypair1 = await genKeyPair.GenerateKeyPair();
+    var uploadResult = await uploadFile.CreateEncryptedRequest(baseUri, TestFileContents.TestFile1, keypair1.PrivateKey, keypair1.PublicKey);
     var uploadResultObj = JSON.parse(uploadResult);
     if (uploadResultObj.Success && uploadResultObj.Signature.length > 0) {
-        SuccessConsoleLog('Successfully created a Submit Request');
+        SuccessConsoleLog('Successfully created an Encrypted Submit Request');
+        var submitResult = await uploadFile.SubmitEncryptedRequest(baseUri, "TestFile1.txt", uploadResultObj.Signature, keypair1.PublicKey, TestFileContents.TestFile1, uploadResultObj.Salt, "Submitted via test launcher.");
+        var submitResultObj = JSON.parse(submitResult);
+        if (submitResultObj.Success) {
+            SuccessConsoleLog('Successfully submitted an encrypted file');
+        } else {
+            FailConsoleLog('Failure submitting encrypted file.' + submitResultObj.ErrorMessage);
+        }
     } else {
-        FailConsoleLog('Failure creating Submit Request.' + uploadResultObj.ErrorMessage);
+        FailConsoleLog('Failure creating Encrypted Submit Request.' + uploadResultObj.ErrorMessage);
     }
 });
 
@@ -66,7 +91,8 @@ mongoose.GetDb().then((db) => {
 
     server.StartServer(async () => {
         CreateSubmitRequestTest();
-        CreateRequestTest();
+        CreateAndSubmitRequestTest();
+        CreateAndSubmitEncryptedRequestTest();
     });
 });
 
@@ -80,10 +106,8 @@ mongoose.GetDb().then((db) => {
 // setTimeout(function (uploadResultObj) {
 //     var url = `${baseUri}/file/get`;
 //     downloadFile.DownloadFile(url, uploadResultObj.Hash).then((r1) => {
-//         debugger;
 //         var r2 = JSON.parse(r1);
 //         //assert.fail('this s a test');
-//         debugger;
 //         if (!r2.Success) {
 //             FailConsoleLog('Failed to download file. ' + r2.ErrorMessage);
 //             return;
