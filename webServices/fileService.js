@@ -194,7 +194,7 @@ var StartService = ((app) => {
             //For now this is just a random hash.  In the future, we could want to add additional functionality. 
             var random = crypto.randomBytes(16);
             var randomHash = await hash.CreateSha256Hash(random.toString('hex'));
-            response.send({ Hash: randomHash.toString('hex') });
+            response.send({ Success: true, Hash: randomHash.toString('hex') });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }
@@ -202,9 +202,15 @@ var StartService = ((app) => {
 
     app.get('/file/getRepo', async (request, response) => {
         try {
-            //  request.query.repohash
             var repo = await blockController.GetRepoFromBlock(request.query.repohash);
-            response.send(repo);
+
+            for (var i = 0; i < repo.length; i++) {
+                var buff = new Buffer.from(repo[i].FileContents, 'base64');
+                var inflated = zlib.inflateSync(buff);
+                repo[i].FileContents = inflated;
+            }
+
+            response.send({ Success: true, Repo: repo });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }

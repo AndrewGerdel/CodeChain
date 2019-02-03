@@ -1,13 +1,14 @@
 var requestPromise = require('request-promise');
+var request = require('request');
 
-var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey) => {
-
+var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey, repo) => {
     var promise = new Promise((resolve, reject) => {
         const data = JSON.stringify({
             filename: filename,
             filecontents: filecontents,
             publickey: publickey,
-            privatekey: privatekey
+            privatekey: privatekey,
+            repo: repo
         });
 
         const options = {
@@ -189,12 +190,25 @@ var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, en
     return promise;
 });
 
+var GetRepoHash = (async(baseUrl) => {
+    var promise = new Promise((resolve, reject) => {
+        request(`${baseUrl}/file/getNewRepoHash`, (err, res, body) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+    return promise;
+});
 
 module.exports = {
     UploadFile,
     CreateRequest,
     CreateEncryptedRequest,
     SubmitRequest,
-    SubmitEncryptedRequest, 
-    UploadEncryptedFile
+    SubmitEncryptedRequest,
+    UploadEncryptedFile,
+    GetRepoHash
 }

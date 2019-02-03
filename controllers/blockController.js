@@ -308,7 +308,9 @@ var GetRepoFromBlock = (async (repohash) => {
         var block = blocks[bl];
         var jsonQueryResult = jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
         for (js = 0; js < jsonQueryResult.references[0].length; js++) {
-            results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
+            if (jsonQueryResult.references[0][js].repo) {
+                results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
+            }
         }
     }
     return results;

@@ -22,7 +22,8 @@ process.env.FIXEDDIFFICULTY = "0xfffffffffffffffffffffffffffffffffffffffffffffff
 var baseUri = `http://localhost:${process.env.PORT}`;
 
 var TestFileContents = {
-    TestFile1: "Test file one contents."
+    TestFile1: "Test file one contents.",
+    TestFile2: "Test file two contents."
 };
 
 
@@ -86,7 +87,7 @@ var CreateAndSubmitEncryptedRequestTest = (async (keypair) => {
 
 var DownloadFileTest = (async (hash) => {
     var downloadResult = await downloadFile.DownloadFile(baseUri, hash);
-    
+
     var downloadResultObj = JSON.parse(downloadResult);
     if (downloadResultObj.Success) {
         let buff = new Buffer.from(downloadResultObj.FileContents, 'base64');
@@ -97,7 +98,32 @@ var DownloadFileTest = (async (hash) => {
             FailConsoleLog(`Downloaded file but contents did not match.`);// ${TestFileContents.TestFile1} vs ${text}`);
         }
     } else {
-        FailConsoleLog('Error downloading file ' + hash);
+        FailConsoleLog('Error downloading file ' + hash + downloadResultObj.ErrorMessage);
+    }
+});
+
+var DownloadRepoHash = (async (repoHash) => {
+    var downloadResult = await downloadFile.DownloadRepo(baseUri, repoHash);
+    debugger;
+    
+    var downloadResultObj = JSON.parse(downloadResult);
+    if (downloadResultObj.Success) {
+        let buff = new Buffer.from(downloadResultObj.Repo[0].FileContents, 'base64');
+        let text = buff.toString('ascii');
+        if (TestFileContents.TestFile1 == text) {
+            SuccessConsoleLog('Successfully downloaded repo file #1 ');
+        } else {
+            FailConsoleLog(`Downloaded repo file #1 but contents did not match. ${TestFileContents.TestFile1} vs ${text}`);
+        }
+        let buff2 = new Buffer.from(downloadResultObj.Repo[1].FileContents, 'base64');
+        let text2 = buff2.toString('ascii');
+        if (TestFileContents.TestFile2 == text2) {
+            SuccessConsoleLog('Successfully downloaded repo file #2');
+        } else {
+            FailConsoleLog(`Downloaded repo file #2 but contents did not match. ${TestFileContents.TestFile1} vs ${text}`);
+        }
+    } else {
+        FailConsoleLog('Error downloading repo ' + repoHash + downloadResultObj.ErrorMessage);
     }
 });
 
@@ -118,6 +144,24 @@ var DownloadEncryptedFileTest = (async (hash, privatekey) => {
     }
 });
 
+
+var CreateSubmitRepoRequestTest = (async (keypair) => {
+    debugger;
+    var repohash = await uploadFile.GetRepoHash(baseUri);
+    var repohashObj = JSON.parse(repohash);
+    var repo = {Name: 'My Repository', Hash: repohashObj.Hash, File: '.'};
+    var uploadResult1 = await uploadFile.UploadFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair.PublicKey, keypair.PrivateKey, repo);
+    var uploadResult2 = await uploadFile.UploadFile(baseUri, 'TestFile2.txt', TestFileContents.TestFile2, keypair.PublicKey, keypair.PrivateKey, repo);
+    var uploadResultObj1 = JSON.parse(uploadResult1);
+    var uploadResultObj2 = JSON.parse(uploadResult2);
+    if (uploadResultObj1.Success && uploadResultObj2.Success) {
+        SuccessConsoleLog('Successfully uploaded two files in a repo via createSubmitRequest');
+        return repohashObj.Hash;
+    } else {
+        FailConsoleLog('Failure uploading two files in a repo.');
+    }
+});
+
 var SuccessConsoleLog = ((text) => {
     console.log(`\x1b[32m${text}\x1b[0m`);
 });
@@ -125,6 +169,7 @@ var SuccessConsoleLog = ((text) => {
 var FailConsoleLog = ((text) => {
     console.log(`\x1b[31m${text}\x1b[0m`);
 });
+
 
 var server = require('../server');
 var mongoose = require('../db/mongoose');
@@ -141,19 +186,17 @@ mongoose.GetDb().then((db) => {
         var hash2 = await CreateAndSubmitRequestTest(keypair);
         var hash3 = await CreateAndSubmitEncryptedRequestTest(keypair);
         var hash4 = await CreateSubmitEncryptedRequestTest(keypair);
+        var repoHash = await CreateSubmitRepoRequestTest(keypair);
 
-        setTimeout(async (hash1, hash2, hash3, hash4) => {
+        setTimeout(async (hash1, hash2, hash3, hash4, repoHash) => {
             DownloadFileTest(hash1);
             DownloadFileTest(hash2);
             DownloadEncryptedFileTest(hash3, keypair.PrivateKey);
             DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
-        }, 10000, hash1, hash2, hash3, hash4);
+            DownloadRepoHash(repoHash);
+        }, 10000, hash1, hash2, hash3, hash4, repoHash);
     });
 });
-
-
-
-
 
 
 
