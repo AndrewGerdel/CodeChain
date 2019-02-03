@@ -40,11 +40,12 @@ var StartService = ((app) => {
             var salt = crypto.randomBytes(16).toString('hex');
             var buff = zlib.deflateSync(fileContents);
             let base64data = buff.toString('base64');
+            debugger;
 
             const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
 
             var signature = await hash.SignMessage(privateKey, `${salt}${encrypted}${repo}`);
-            response.send({ Success: true, Signature: signature, Salt: salt });
+            response.send({ Success: true, Signature: signature, Salt: salt, Encrypted: encrypted });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }
@@ -79,13 +80,9 @@ var StartService = ((app) => {
             var signature = request.body.signature;
             var publicKey = request.body.publickey;
             var repo = request.body.repo;
-            var fileContents = request.body.filecontents;
+            var encrypted = request.body.encrypted;
             var salt = request.body.salt;
-            var buff = zlib.deflateSync(fileContents);
-            let base64data = buff.toString('base64');
             let memo = request.body.memo;
-debugger;
-            const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
 
             blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo, memo);

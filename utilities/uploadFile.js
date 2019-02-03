@@ -124,7 +124,7 @@ var CreateEncryptedRequest = (async (baseUrl, filecontents, privatekey, publicke
 });
 
 
-var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, filecontents, salt, memo) => {
+var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, encrypted, salt, memo) => {
     var promise = new Promise((resolve, reject) => {
         try {
 
@@ -132,7 +132,7 @@ var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, fi
                 filename: filename,
                 signature: signature,
                 publickey: publickey,
-                filecontents: filecontents,
+                encrypted: encrypted,
                 salt: salt,
                 memo: memo
             });

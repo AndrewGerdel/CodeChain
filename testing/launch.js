@@ -60,7 +60,7 @@ var CreateAndSubmitEncryptedRequestTest = (async () => {
     var uploadResultObj = JSON.parse(uploadResult);
     if (uploadResultObj.Success && uploadResultObj.Signature.length > 0) {
         SuccessConsoleLog('Successfully created an Encrypted Submit Request');
-        var submitResult = await uploadFile.SubmitEncryptedRequest(baseUri, "TestFile1.txt", uploadResultObj.Signature, keypair1.PublicKey, TestFileContents.TestFile1, uploadResultObj.Salt, "Submitted via test launcher.");
+        var submitResult = await uploadFile.SubmitEncryptedRequest(baseUri, "TestFile1.txt", uploadResultObj.Signature, keypair1.PublicKey, uploadResultObj.Encrypted, uploadResultObj.Salt, "Submitted via test launcher.");
         var submitResultObj = JSON.parse(submitResult);
         if (submitResultObj.Success) {
             SuccessConsoleLog('Successfully submitted an encrypted file');
