@@ -23,7 +23,7 @@ var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, pu
         repo: {
           name: repo.Name,
           hash: repo.Hash,
-          file: repo.File
+          directory: repo.Directory
         }
       },
       signature: signature,

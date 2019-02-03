@@ -88,7 +88,7 @@ var CreateAndSubmitEncryptedRequestTest = (async (keypair) => {
 var CreateAndSubmitEncryptedRequestRepoTest = (async (keypair) => {
     var repohash = await uploadFile.GetRepoHash(baseUri);
     var repohashObj = JSON.parse(repohash);
-    var repo = { Name: 'My Repository2', Hash: repohashObj.Hash, File: '/subdir' };
+    var repo = { Name: 'My Repository2', Hash: repohashObj.Hash, Directory: '/subdir' };
 
     var uploadResult = await uploadFile.CreateEncryptedRequest(baseUri, TestFileContents.TestFile1, keypair.PrivateKey, keypair.PublicKey, repo);
     var uploadResultObj = JSON.parse(uploadResult);
@@ -184,7 +184,7 @@ var DownloadEncryptedFileTest = (async (hash, privatekey) => {
 var CreateSubmitRepoRequestTest = (async (keypair) => {
     var repohash = await uploadFile.GetRepoHash(baseUri);
     var repohashObj = JSON.parse(repohash);
-    var repo = { Name: 'My Repository', Hash: repohashObj.Hash, File: '.' };
+    var repo = { Name: 'My Repository', Hash: repohashObj.Hash, Directory: '.' };
     var uploadResult1 = await uploadFile.UploadFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair.PublicKey, keypair.PrivateKey, repo);
     var uploadResult2 = await uploadFile.UploadFile(baseUri, 'TestFile2.txt', TestFileContents.TestFile2, keypair.PublicKey, keypair.PrivateKey, repo);
     var uploadResultObj1 = JSON.parse(uploadResult1);

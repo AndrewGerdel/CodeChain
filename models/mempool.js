@@ -27,7 +27,7 @@ var MemPool = mongoose.model('MemPool', {
         require: false,
         trim: true
       },
-      file:{
+      directory:{
         type: String,
         require: false,
         trim: true
