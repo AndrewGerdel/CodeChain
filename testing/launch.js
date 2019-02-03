@@ -208,13 +208,25 @@ var FailConsoleLog = ((text) => {
 var GetFileListTest = (async (address) => {
     var fileList = await downloadFile.GetFileList(baseUri, address);
     var fileListObj = JSON.parse(fileList);
-    debugger;
     if (fileListObj.Success && fileListObj.Files.length > 0) {
         SuccessConsoleLog(`Successfully retrieved list of ${fileListObj.Files.length} files for address ${address}`);
     }else{
         FailConsoleLog(`Could not download file list of address ${address}`)
     }
 });
+
+var GetRepoListTest = (async (address) => {
+    var repoList = await downloadFile.GetRepoList(baseUri, address);
+    var repoListObj = JSON.parse(repoList);
+
+debugger;
+    if (repoListObj.Success && repoListObj.Repos.length > 0) {
+        SuccessConsoleLog(`Successfully retrieved list of ${repoListObj.Repos.length} files for address ${address}`);
+    }else{
+        FailConsoleLog(`Could not download repo list of address ${address}`)
+    }
+});
+
 
 
 var server = require('../server');
@@ -243,6 +255,7 @@ mongoose.GetDb().then((db) => {
             DownloadRepoHash(repoHash);
             DownloadRepoEncrypted(keypair, encryptedRepo);
             GetFileListTest(keypair.Address);
+            GetRepoListTest(keypair.Address);
         }, 10000, hash1, hash2, hash3, hash4, repoHash, encryptedRepo);
     });
 });

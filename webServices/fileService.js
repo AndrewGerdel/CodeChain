@@ -227,8 +227,6 @@ var StartService = ((app) => {
 
     app.get('/file/getFileList', async (request, response) => {
         try {
-            debugger;
-
             var files = await blockController.GetFilesByAddress(request.query.address);
             response.send({ Success: true, Files: files });
         } catch (ex) {
@@ -238,7 +236,7 @@ var StartService = ((app) => {
     app.get('/file/getRepoList', async (request, response) => {
         try {
             var repo = await blockController.GetReposByAddress(request.query.address);
-            response.send(repo);
+            response.send({ Success: true, Repos: repo });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }

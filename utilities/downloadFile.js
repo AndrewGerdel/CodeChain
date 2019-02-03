@@ -94,10 +94,25 @@ var GetFileList = ((baseUrl, address) => {
 });
 
 
+var GetRepoList = ((baseUrl, address) => {
+    var promise = new Promise((resolve, reject) => {
+        request(`${baseUrl}/file/getRepoList?address=${address}`, (err, res, body) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+    return promise;
+});
+
+
 module.exports = {
     DownloadFile,
     DownloadEncryptedFile, 
     DownloadRepo,
     DownloadRepoEncrypted,
-    GetFileList
+    GetFileList,
+    GetRepoList
 }
