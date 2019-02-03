@@ -205,6 +205,17 @@ var FailConsoleLog = ((text) => {
     console.log(`\x1b[31m${text}\x1b[0m`);
 });
 
+var GetFileListTest = (async (address) => {
+    var fileList = await downloadFile.GetFileList(baseUri, address);
+    var fileListObj = JSON.parse(fileList);
+    debugger;
+    if (fileListObj.Success && fileListObj.Files.length > 0) {
+        SuccessConsoleLog(`Successfully retrieved list of ${fileListObj.Files.length} files for address ${address}`);
+    }else{
+        FailConsoleLog(`Could not download file list of address ${address}`)
+    }
+});
+
 
 var server = require('../server');
 var mongoose = require('../db/mongoose');
@@ -231,6 +242,7 @@ mongoose.GetDb().then((db) => {
             DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
             DownloadRepoHash(repoHash);
             DownloadRepoEncrypted(keypair, encryptedRepo);
+            GetFileListTest(keypair.Address);
         }, 10000, hash1, hash2, hash3, hash4, repoHash, encryptedRepo);
     });
 });

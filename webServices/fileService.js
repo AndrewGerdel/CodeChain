@@ -202,7 +202,6 @@ var StartService = ((app) => {
 
     app.get('/file/getRepo', async (request, response) => {
         try {
-            debugger;
             var repo = await blockController.GetRepoFromBlock(request.query.repohash);
             for (var i = 0; i < repo.length; i++) {
                 var buff = new Buffer.from(repo[i].FileContents, 'base64');
@@ -228,8 +227,10 @@ var StartService = ((app) => {
 
     app.get('/file/getFileList', async (request, response) => {
         try {
-            var repo = await blockController.GetFilesByAddress(request.query.address);
-            response.send(repo);
+            debugger;
+
+            var files = await blockController.GetFilesByAddress(request.query.address);
+            response.send({ Success: true, Files: files });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }
