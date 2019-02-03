@@ -31,6 +31,37 @@ var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey)
     return promise;
 });
 
+
+var UploadEncryptedFile = (async (baseUrl, filename, filecontents, publickey, privatekey) => {
+    var promise = new Promise((resolve, reject) => {
+        const data = JSON.stringify({
+            filename: filename,
+            filecontents: filecontents,
+            publickey: publickey,
+            privatekey: privatekey
+        });
+
+        const options = {
+            uri: `${baseUrl}/file/createSubmitRequestEncrypted`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length
+            },
+            body: data
+        }
+
+        requestPromise(options, (err, res, body) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+    return promise;
+});
+
 var CreateRequest = (async (baseUrl, filecontents, privatekey) => {
     var promise = new Promise((resolve, reject) => {
         try {
@@ -164,5 +195,6 @@ module.exports = {
     CreateRequest,
     CreateEncryptedRequest,
     SubmitRequest,
-    SubmitEncryptedRequest
+    SubmitEncryptedRequest, 
+    UploadEncryptedFile
 }

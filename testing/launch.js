@@ -36,6 +36,17 @@ var CreateSubmitRequestTest = (async () => {
     }
 });
 
+var CreateSubmitEncryptedRequestTest = (async () => {
+    var keypair1 = await genKeyPair.GenerateKeyPair();
+    var uploadResult = await uploadFile.UploadEncryptedFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair1.PublicKey, keypair1.PrivateKey);
+    var uploadResultObj = JSON.parse(uploadResult);
+    if (uploadResultObj.Success) {
+        SuccessConsoleLog('Successfully uploaded file via createSubmitRequestEncrypted');
+    } else {
+        FailConsoleLog('Failure uploading file to createSubmitRequestEncrypted.');
+    }
+});
+
 var CreateAndSubmitRequestTest = (async () => {
     var keypair1 = await genKeyPair.GenerateKeyPair();
     var creqteRequestResult = await uploadFile.CreateRequest(baseUri, TestFileContents.TestFile1, keypair1.PrivateKey);
@@ -93,6 +104,7 @@ mongoose.GetDb().then((db) => {
         CreateSubmitRequestTest();
         CreateAndSubmitRequestTest();
         CreateAndSubmitEncryptedRequestTest();
+        CreateSubmitEncryptedRequestTest();
     });
 });
 
