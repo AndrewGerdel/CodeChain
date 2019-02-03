@@ -37,7 +37,7 @@ var BreakMemPoolItemsToSize = (async (memPoolItemsFromDb, difficulty, lastBlock)
         blockLogger.WriteLog(`MempoolItems found: ${memPoolItemsFromDb.length}. Working on them now...`, true);
         var maxBlockSizeBytes = await CalculateTargetBlockSizeBytes(lastBlock[0].blockNumber + 1);
         var blockReward = await CalculateBlockReward(lastBlock[0].blockNumber + 1);
-        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.publicKey, blockReward);
+        var miningReward = await memPoolRepository.CreateMiningRewardMemPoolItem(new Date(), config.mining.address, blockReward);
         memPoolItems.push(miningReward);
         for (memPoolCounter = 0; memPoolCounter < memPoolItemsFromDb.length; memPoolCounter++) {
             var element = memPoolItemsFromDb[memPoolCounter];

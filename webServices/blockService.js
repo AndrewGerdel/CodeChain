@@ -88,7 +88,7 @@ var StartService = ((app, isDebug, callback) => {
 });
 
 function StartOrForkProcess(isDebug, callback) {
-  if (!config.mining.publicKey || config.mining.publicKey == '') {
+  if (!config.mining.address || config.mining.address == '') {
     blockLogger.WriteLog('Public key not set in config. Mining will not start.', true);
   } else {
     if (isDebug) {

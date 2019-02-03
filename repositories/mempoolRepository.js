@@ -10,7 +10,7 @@ mongoose.GetDb().then((db) => {
 });
 
 var AddCodeFileMemPoolItem = (async (fileName, base64FileContents, signature, publicKey, salt, dateAdded, hash, repo, memo) => {
-  
+
   var address = await hashUtil.CreateSha256Hash(publicKey);
   var signatureHash = await hashUtil.CreateSha256Hash(signature);
 
@@ -90,7 +90,7 @@ var AddTransactionMemPoolItem = (async (from, to, amount, signature, publicKey, 
 
 var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, publicKey, salt, dateAdded, hash, memo) => {
 
-  
+
   var address = await hashUtil.CreateSha256Hash(publicKey);
   if (address.toString('hex') != from) {
     //safety check
@@ -111,7 +111,7 @@ var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, p
     publicKey: publicKey,
     address: from,
     hash: hash,
-    salt: salt, 
+    salt: salt,
     memo: memo
   });
   memPool.save();
@@ -119,9 +119,9 @@ var AddMessageMemPoolItem = (async (from, to, encryptedMessageText, signature, p
 });
 
 //Gets all mempool items.
-var GetMemPoolItems = (async() => {
+var GetMemPoolItems = (async () => {
   var db = await mongoose.GetDb();
-  return db.collection('mempools').find({  }).sort({ dateAdded: 1 }).toArray();
+  return db.collection('mempools').find({}).sort({ dateAdded: 1 }).toArray();
 });
 
 //Deletes by hash all memPoolItems in the list
@@ -151,6 +151,9 @@ var CreateMiningRewardMemPoolItem = (async (dateAdded, address, blockReward, mem
   var memPoolItemHash = await hashUtil.CreateSha256Hash(`${address}${dateAdded}${salt.toString('hex')}`);
   var signatureHash = await hashUtil.CreateSha256Hash(memPoolItemHash.toString('hex'));  //meaningless, but required for the unique index
 
+  if (process.env.MININGADDRESS) //only set by test process. 
+    address = process.env.MININGADDRESS;
+    
   var memPool = new MemPool({
     type: filetypes.MiningReward,
     dateAdded: dateAdded,

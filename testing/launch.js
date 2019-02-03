@@ -4,17 +4,13 @@ var downloadFile = require('../utilities/downloadFile');
 var assert = require('assert');
 var fs = require('fs');
 
-//Create a new, empty database.
-var now = new Date();
-var databaseName = `CodeChainTest`;
-
 //get more details on unhandled rejection errors, because they can be cryptic
 process.on('unhandledRejection', (reason, p) => {
     FailConsoleLog('Failure: ' + JSON.stringify(p) + reason);
 });
 
-
-//set flags to get us in test mode. 
+//Use the test database and settings
+var databaseName = `CodeChainTest`;
 process.env.DATABASE = databaseName;
 process.env.PORT = 3000;
 process.env.DISABLENETWORKSYNC = true;
@@ -25,7 +21,6 @@ var TestFileContents = {
     TestFile1: "Test file one contents.",
     TestFile2: "Test file two contents."
 };
-
 
 var CreateSubmitRequestTest = (async (keypair) => {
     var uploadResult = await uploadFile.UploadFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair.PublicKey, keypair.PrivateKey);
@@ -210,7 +205,7 @@ var GetFileListTest = (async (address) => {
     var fileListObj = JSON.parse(fileList);
     if (fileListObj.Success && fileListObj.Files.length > 0) {
         SuccessConsoleLog(`Successfully retrieved list of ${fileListObj.Files.length} files for address ${address}`);
-    }else{
+    } else {
         FailConsoleLog(`Could not download file list of address ${address}`)
     }
 });
@@ -219,10 +214,10 @@ var GetRepoListTest = (async (address) => {
     var repoList = await downloadFile.GetRepoList(baseUri, address);
     var repoListObj = JSON.parse(repoList);
 
-debugger;
+    debugger;
     if (repoListObj.Success && repoListObj.Repos.length > 0) {
         SuccessConsoleLog(`Successfully retrieved list of ${repoListObj.Repos.length} files for address ${address}`);
-    }else{
+    } else {
         FailConsoleLog(`Could not download repo list of address ${address}`)
     }
 });
@@ -231,12 +226,15 @@ debugger;
 
 var server = require('../server');
 var mongoose = require('../db/mongoose');
-mongoose.GetDb().then((db) => {
+mongoose.GetDb().then(async (db) => {
     //clean out the test db on each run.
     db.collection('blocks').drop().then(() => { }, (err) => { });
     db.collection('mempools').drop().then(() => { }, (err) => { });
     db.collection('nodes').drop().then(() => { }, (err) => { });
     db.collection('orphanedBlocks').drop().then(() => { }, (err) => { });
+
+    var miningKeypair = await genKeyPair.GenerateKeyPair();
+    process.env.MININGADDRESS = miningKeypair.Address;
 
     server.StartServer(async () => {
         var keypair = await genKeyPair.GenerateKeyPair();
