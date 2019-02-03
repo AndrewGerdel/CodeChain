@@ -85,6 +85,28 @@ var CreateAndSubmitEncryptedRequestTest = (async (keypair) => {
     }
 });
 
+var CreateAndSubmitEncryptedRequestRepoTest = (async (keypair) => {
+    var repohash = await uploadFile.GetRepoHash(baseUri);
+    var repohashObj = JSON.parse(repohash);
+    var repo = { Name: 'My Repository2', Hash: repohashObj.Hash, File: '/subdir' };
+
+    var uploadResult = await uploadFile.CreateEncryptedRequest(baseUri, TestFileContents.TestFile1, keypair.PrivateKey, keypair.PublicKey, repo);
+    var uploadResultObj = JSON.parse(uploadResult);
+    if (uploadResultObj.Success && uploadResultObj.Signature.length > 0) {
+        SuccessConsoleLog('Successfully created an Encrypted Submit Request');
+        var submitResult = await uploadFile.SubmitEncryptedRequest(baseUri, "TestFile1.txt", uploadResultObj.Signature, keypair.PublicKey, uploadResultObj.Encrypted, uploadResultObj.Salt, "Submitted via test launcher with repo.", repo);
+        var submitResultObj = JSON.parse(submitResult);
+        if (submitResultObj.Success) {
+            SuccessConsoleLog('Successfully submitted an encrypted file in a repo');
+            return repohashObj.Hash;
+        } else {
+            FailConsoleLog('Failure submitting encrypted file in a repo.' + submitResultObj.ErrorMessage);
+        }
+    } else {
+        FailConsoleLog('Failure creating Encrypted Submit Request in a repo.' + uploadResultObj.ErrorMessage);
+    }
+});
+
 var DownloadFileTest = (async (hash) => {
     var downloadResult = await downloadFile.DownloadFile(baseUri, hash);
 
@@ -104,8 +126,6 @@ var DownloadFileTest = (async (hash) => {
 
 var DownloadRepoHash = (async (repoHash) => {
     var downloadResult = await downloadFile.DownloadRepo(baseUri, repoHash);
-    debugger;
-    
     var downloadResultObj = JSON.parse(downloadResult);
     if (downloadResultObj.Success) {
         let buff = new Buffer.from(downloadResultObj.Repo[0].FileContents, 'base64');
@@ -124,6 +144,22 @@ var DownloadRepoHash = (async (repoHash) => {
         }
     } else {
         FailConsoleLog('Error downloading repo ' + repoHash + downloadResultObj.ErrorMessage);
+    }
+});
+
+var DownloadRepoEncrypted = (async (keypair, repoHash) => {
+    var downloadResult = await downloadFile.DownloadRepoEncrypted(baseUri, repoHash, keypair.PrivateKey);
+    var downloadResultObj = JSON.parse(downloadResult);
+    if (downloadResultObj.Success) {
+        let buff = new Buffer.from(downloadResultObj.Repo[0].FileContents, 'base64');
+        let text = buff.toString('ascii');
+        if (TestFileContents.TestFile1 == text) {
+            SuccessConsoleLog('Successfully downloaded encrypted repo file.');
+        } else {
+            FailConsoleLog(`Downloaded encrypted repo file #1 but contents did not match. ${TestFileContents.TestFile1} vs ${text}`);
+        }
+    } else {
+        FailConsoleLog('Error downloading encrypted repo ' + repoHash + downloadResultObj.ErrorMessage);
     }
 });
 
@@ -146,10 +182,9 @@ var DownloadEncryptedFileTest = (async (hash, privatekey) => {
 
 
 var CreateSubmitRepoRequestTest = (async (keypair) => {
-    debugger;
     var repohash = await uploadFile.GetRepoHash(baseUri);
     var repohashObj = JSON.parse(repohash);
-    var repo = {Name: 'My Repository', Hash: repohashObj.Hash, File: '.'};
+    var repo = { Name: 'My Repository', Hash: repohashObj.Hash, File: '.' };
     var uploadResult1 = await uploadFile.UploadFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair.PublicKey, keypair.PrivateKey, repo);
     var uploadResult2 = await uploadFile.UploadFile(baseUri, 'TestFile2.txt', TestFileContents.TestFile2, keypair.PublicKey, keypair.PrivateKey, repo);
     var uploadResultObj1 = JSON.parse(uploadResult1);
@@ -187,6 +222,7 @@ mongoose.GetDb().then((db) => {
         var hash3 = await CreateAndSubmitEncryptedRequestTest(keypair);
         var hash4 = await CreateSubmitEncryptedRequestTest(keypair);
         var repoHash = await CreateSubmitRepoRequestTest(keypair);
+        var encryptedRepo = await CreateAndSubmitEncryptedRequestRepoTest(keypair);
 
         setTimeout(async (hash1, hash2, hash3, hash4, repoHash) => {
             DownloadFileTest(hash1);
@@ -194,7 +230,8 @@ mongoose.GetDb().then((db) => {
             DownloadEncryptedFileTest(hash3, keypair.PrivateKey);
             DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
             DownloadRepoHash(repoHash);
-        }, 10000, hash1, hash2, hash3, hash4, repoHash);
+            DownloadRepoEncrypted(keypair, encryptedRepo);
+        }, 10000, hash1, hash2, hash3, hash4, repoHash, encryptedRepo);
     });
 });
 

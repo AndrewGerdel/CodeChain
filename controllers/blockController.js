@@ -1,6 +1,7 @@
 
 var MemPoolController = require('./memPoolController.js');
 var crypto = require('crypto');
+var crypto2 = require('crypto2');
 var hexToDec = require('hex-to-dec');
 var decToHex = require('dec-to-hex');
 var memPoolRepository = require('../repositories/mempoolRepository.js');
@@ -9,8 +10,8 @@ var config = require('../config.json');
 var mempoolFileTypes = require('../enums/mempoolFiletypes');
 var transactionRepository = require('../repositories/transactionRepository');
 var hash = require('../utilities/hash');
-let jsonQuery = require('json-query')
-let blockLogger = require('../loggers/blockProcessLog');
+var jsonQuery = require('json-query')
+var blockLogger = require('../loggers/blockProcessLog');
 
 const targetBlockTimeMs = 30000; //target a 30-second block time. 
 
@@ -308,8 +309,10 @@ var GetRepoFromBlock = (async (repohash) => {
         var block = blocks[bl];
         var jsonQueryResult = jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
         for (js = 0; js < jsonQueryResult.references[0].length; js++) {
-            if (jsonQueryResult.references[0][js].repo) {
-                results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
+            if (jsonQueryResult.references[0][js].repo && jsonQueryResult.references[0][js].repo.hash == repohash) {
+                if (jsonQueryResult.references[0][js].repo) {
+                    results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: jsonQueryResult.references[0][js].fileContents, Path: jsonQueryResult.references[0][js].repo.file });
+                }
             }
         }
     }
@@ -323,8 +326,10 @@ var GetEncryptedRepoFromBlock = (async (repohash, privateKey) => {
         var block = blocks[bl];
         var jsonQueryResult = jsonQuery('data.fileData[repo.hash=' + repohash + ']', { data: block });
         for (js = 0; js < jsonQueryResult.references[0].length; js++) {
-            var decrypted = await crypto2.decrypt.rsa(jsonQueryResult.references[0][js].fileContents, privateKey);
-            results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: decrypted, Path: jsonQueryResult.references[0][js].repo.file });
+            if (jsonQueryResult.references[0][js].repo && jsonQueryResult.references[0][js].repo.hash == repohash) {
+                var decrypted = await crypto2.decrypt.rsa(jsonQueryResult.references[0][js].fileContents, privateKey);
+                results.push({ FileName: jsonQueryResult.references[0][js].fileName, FileContents: decrypted, Path: jsonQueryResult.references[0][js].repo.file });
+            }
         }
     }
     return results;

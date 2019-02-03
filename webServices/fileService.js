@@ -202,8 +202,8 @@ var StartService = ((app) => {
 
     app.get('/file/getRepo', async (request, response) => {
         try {
+            debugger;
             var repo = await blockController.GetRepoFromBlock(request.query.repohash);
-
             for (var i = 0; i < repo.length; i++) {
                 var buff = new Buffer.from(repo[i].FileContents, 'base64');
                 var inflated = zlib.inflateSync(buff);
@@ -219,8 +219,8 @@ var StartService = ((app) => {
     app.get('/file/getRepoEncrypted', async (request, response) => {
         try {
             var privateKey = request.body.privatekey;
-            var repo = await blockController.GetRepoFromBlockEncrypted(request.body.repohash, privateKey);
-            response.send(repo);
+            var repo = await blockController.GetEncryptedRepoFromBlock(request.body.repohash, privateKey);
+            response.send({ Success: true, Repo: repo });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
         }

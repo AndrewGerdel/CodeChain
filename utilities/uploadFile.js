@@ -125,13 +125,14 @@ var SubmitRequest = (async (baseUrl, filename, signature, publickey, filecontent
     return promise;
 });
 
-var CreateEncryptedRequest = (async (baseUrl, filecontents, privatekey, publickey) => {
+var CreateEncryptedRequest = (async (baseUrl, filecontents, privatekey, publickey, repo) => {
     var promise = new Promise((resolve, reject) => {
         try {
             const data = JSON.stringify({
                 filecontents: filecontents,
                 privatekey: privatekey,
-                publickey: publickey
+                publickey: publickey, 
+                repo: repo
             });
             const options = {
                 uri: `${baseUrl}/file/createEncryptedRequest`,
@@ -156,7 +157,7 @@ var CreateEncryptedRequest = (async (baseUrl, filecontents, privatekey, publicke
 });
 
 
-var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, encrypted, salt, memo) => {
+var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, encrypted, salt, memo, repo) => {
     var promise = new Promise((resolve, reject) => {
         try {
 
@@ -166,7 +167,8 @@ var SubmitEncryptedRequest = (async (baseUrl, filename, signature, publickey, en
                 publickey: publickey,
                 encrypted: encrypted,
                 salt: salt,
-                memo: memo
+                memo: memo,
+                repo: repo
             });
             const options = {
                 uri: `${baseUrl}/file/submitRequestEncrypted`,

@@ -57,9 +57,33 @@ var DownloadRepo = ((baseUrl, repoHash) => {
     return promise;
 });
 
+var DownloadRepoEncrypted = ((baseUrl, repohash, privatekey) => {
+    var promise = new Promise((resolve, reject) => {
+        const data = JSON.stringify({
+            privatekey: privatekey,
+            repohash: repohash
+        });
+        const options = {
+            uri: `${baseUrl}/file/getRepoEncrypted`,
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
+            body: data
+        }
+        request(options, (err, res, body) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(body);
+            }
+        });
+    });
+    return promise;
+});
+
 
 module.exports = {
     DownloadFile,
     DownloadEncryptedFile, 
-    DownloadRepo
+    DownloadRepo,
+    DownloadRepoEncrypted
 }
