@@ -38,12 +38,9 @@ var StartService = ((app) => {
             var repo = request.body.repo;
 
             var salt = crypto.randomBytes(16).toString('hex');
-            var buff = zlib.deflateSync(fileContents);
+            let buff = new Buffer.from(fileContents);
             let base64data = buff.toString('base64');
-            debugger;
-
             const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
-
             var signature = await hash.SignMessage(privateKey, `${salt}${encrypted}${repo}`);
             response.send({ Success: true, Signature: signature, Salt: salt, Encrypted: encrypted });
         } catch (ex) {
@@ -102,8 +99,6 @@ var StartService = ((app) => {
             var repo = request.body.repo;
             let memo = request.body.memo;
 
-            
-
             var salt = crypto.randomBytes(16).toString('hex');
             var buff = zlib.deflateSync(fileContents);
             let base64data = buff.toString('base64');
@@ -153,9 +148,14 @@ var StartService = ((app) => {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
                     data: block
                 });
-                response.send({ Success: true, FileContents: jsonQueryResult.value.fileData.fileContents, FileName: jsonQueryResult.value.fileData.fileName, 
-                    Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, 
-                    Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo });
+
+                var buff = new Buffer.from(jsonQueryResult.value.fileData.fileContents, 'base64');
+                var inflated = zlib.inflateSync(buff);
+                response.send({
+                    Success: true, FileContents: inflated.toString('base64'), FileName: jsonQueryResult.value.fileData.fileName,
+                    Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt,
+                    Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo
+                });
             } else {
                 response.send({ Success: false, ErrorMessage: `File not found. Hash ${request.query.filehash}` });
             }
@@ -175,9 +175,11 @@ var StartService = ((app) => {
 
                 const decrypted = await crypto2.decrypt.rsa(jsonQueryResult.value.fileData.fileContents, privateKey);
 
-                response.send({ Success: true, FileContents: decrypted, FileName: jsonQueryResult.value.fileData.fileName, 
-                    Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt, 
-                    Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo  });
+                response.send({
+                    Success: true, FileContents: decrypted, FileName: jsonQueryResult.value.fileData.fileName,
+                    Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt,
+                    Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo
+                });
             } else {
                 response.send({ Success: false, ErrorMessage: "File not found" });
             }

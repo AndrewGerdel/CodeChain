@@ -1,12 +1,12 @@
+var requestPromise = require('request-promise');
 var request = require('request');
 
-var DownloadFile = ((uri, filehash) => {
+var DownloadFile = ((baseUrl, filehash) => {
     var promise = new Promise((resolve, reject) => {
-        request(uri + '?filehash=' + filehash, (err, res, body) => {
+        request(`${baseUrl}/file/get?filehash=${filehash}`, (err, res, body) => {
             if (err) {
                 reject(err);
             } else {
-                // var bodyObj = JSON.parse(body);
                 resolve(body);
             }
         });
@@ -14,6 +14,38 @@ var DownloadFile = ((uri, filehash) => {
     return promise;
 });
 
+var DownloadEncryptedFile = ((baseUrl, filehash, privatekey) => {
+
+    var promise = new Promise((resolve, reject) => {
+        try {
+
+            const data = JSON.stringify({
+                privatekey: privatekey,
+                filehash: filehash
+            });
+            const options = {
+                uri: `${baseUrl}/file/getEncrypted`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': data.length },
+                body: data
+            }
+            requestPromise(options, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(body);
+                }
+            });
+        } catch (ex) {
+            console.log('error' + ex);
+            reject(ex);
+        }
+    });
+    return promise;
+});
+
+
 module.exports = {
-    DownloadFile
+    DownloadFile,
+    DownloadEncryptedFile
 }
