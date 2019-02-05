@@ -364,7 +364,7 @@ var ValidateLocalBlockchain = (async (lowBlockNumber, highBlockNumber) => {
 });
 
 var AddBlock = (async (block) => {
-    var result = await blockRepository.AddBlock(block);
+    var result = await blockRepository.AddIncomingBlock(block);
     return result;
 });
 

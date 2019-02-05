@@ -1,10 +1,10 @@
 //Simple but functional proof of concept to submit a file to the CodeChain Network.
-var request = require('request');
 var fs = require('fs');
 var path = require('path');
 var yargs = require('yargs');
+var decryptFile = require('../utilities/decryptFile');
 
-var nodeEndpoint = "http://127.0.0.1:65340/file/createSubmitRequest"
+var nodeEndpoint = "http://127.0.0.1:65340"
 
 var file = yargs.argv.file;
 if (!file) {
@@ -33,14 +33,26 @@ if (!fs.existsSync(private))
     throw new Error(`${private} does not exist`);
 
 var filename = path.basename(file);
-var filecontents = fs.readFileSync(file);
+var filecontents = fs.readFileSync(file).toString();//('base64');
+console.log('FILE CONTENTS ARE', filecontents);
+
 var publickey = fs.readFileSync(public).toString();
-var privatekey = fs.readFileSync(private).toString();
 
-var uploadFile = require('../utilities/uploadFile');
-uploadFile.UploadFile(nodeEndpoint, filename, filecontents, publickey, privatekey).then((result) => {
-    console.log(result);
-}).catch((ex) => {
-    console.log('Error: ', ex);
+decryptFile.DecryptFile(private, (decryptResult) => {
+    if(decryptResult.Success){
+        var privatekey = decryptResult.DecryptedResult;// fs.readFileSync(private).toString();
+
+        var uploadFile = require('../utilities/uploadFile');
+
+        uploadFile.UploadFile(nodeEndpoint, filename, filecontents, publickey, privatekey).then((result) => {
+            console.log(result);
+        }).catch((ex) => {
+            console.log('Error: ', ex);
+        });
+    }else{
+        console.log("Could not decrypt private key file. Error: ", decryptResult.ErrorMessage);
+        
+    }
+    
+    
 });
-

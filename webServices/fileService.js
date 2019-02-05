@@ -92,12 +92,15 @@ var StartService = ((app) => {
     //Creates and submits a signed request.  Should be called on a secure node as private key is required. 
     app.post('/file/createSubmitRequest', async (request, response) => {
         try {
+            debugger;
             var filename = request.body.filename;
             var fileContents = request.body.filecontents;
             var publicKey = request.body.publickey;
             var privateKey = request.body.privatekey;
             var repo = request.body.repo;
             let memo = request.body.memo;
+
+            console.log('filecontents on POST is: ', fileContents);
 
             var salt = crypto.randomBytes(16).toString('hex');
             var buff = zlib.deflateSync(fileContents);
@@ -143,16 +146,18 @@ var StartService = ((app) => {
 
     app.get('/file/get', async (request, response) => {
         try {
+            debugger;
             var block = await blockController.GetFileFromBlock(request.query.filehash);
             if (block.length > 0) {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
                     data: block
                 });
-
                 var buff = new Buffer.from(jsonQueryResult.value.fileData.fileContents, 'base64');
                 var inflated = zlib.inflateSync(buff);
-                response.send({
-                    Success: true, FileContents: inflated.toString('base64'), FileName: jsonQueryResult.value.fileData.fileName,
+
+                console.log('inflated on GET is: ', inflated.toString('base64'));
+                
+                response.send({Success: true, FileContents: inflated.toString('base64'), FileName: jsonQueryResult.value.fileData.fileName,
                     Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt,
                     Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo
                 });

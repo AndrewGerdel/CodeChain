@@ -3,7 +3,7 @@ var fs = require('fs');
 var yargs = require('yargs');
 var downloadFile = require('../utilities/downloadFile');
 
-var nodeEndpoint = "http://127.0.0.1:65340/file/get";
+var baseUrl = "http://127.0.0.1:65340";
 var destination = "c:\\FakeRepo\\";
 
 if (!yargs.argv.filehash) {
@@ -11,16 +11,16 @@ if (!yargs.argv.filehash) {
     return;
 }
 
-downloadFile.DownloadFile(yargs.argv.filehash).then((bodyObj) => {
-    //console.log(bodyObj.FileContents);
-    let buff = new Buffer.from(bodyObj.FileContents, 'base64');
+downloadFile.DownloadFile(baseUrl, yargs.argv.filehash).then((body) => {
+    var bodyObj = JSON.parse(body);
+     let buff = new Buffer.from(bodyObj.FileContents, 'base64');
     // let text = buff.toString('ascii');
     var saveToFilePath = destination + bodyObj.FileName;
     if (fs.existsSync(saveToFilePath)) {
         console.log('File already exists. Will not overwrite ', saveToFilePath);
         return;
     }
-    fs.writeFile(saveToFilePath, buff, function (err) {
+    fs.writeFile(saveToFilePath, buff.toString('ascii'), function (err) {
         if (err) {
             return console.log(err);
         }
@@ -28,7 +28,7 @@ downloadFile.DownloadFile(yargs.argv.filehash).then((bodyObj) => {
     });
 }).catch((ex) => {
     console.log('Error: ', ex);
-    
+
 })
 
 

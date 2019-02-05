@@ -5,7 +5,7 @@ var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey,
     var promise = new Promise((resolve, reject) => {
         const data = JSON.stringify({
             filename: filename,
-            filecontents: filecontents,
+            filecontents: filecontents,//.toString('base64'),
             publickey: publickey,
             privatekey: privatekey,
             repo: repo
@@ -20,7 +20,6 @@ var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey,
             },
             body: data
         }
-
         requestPromise(options, (err, res, body) => {
             if (err) {
                 reject(err);

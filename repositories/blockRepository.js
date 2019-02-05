@@ -1,7 +1,9 @@
 var { Block } = require('../models/block.js');
 var mongoose = require('../db/mongoose.js');
 var memPoolRepository = require('./mempoolRepository.js');
+var usageRepository = require('./usageRepository');
 var blockLogger = require('../loggers/blockProcessLog');
+var mempoolFiletypes = require('../enums/mempoolFiletypes');
 
 mongoose.GetDb().then((db) => {
     db.collection("blocks").createIndex({ "blockNumber": 1 }, { unique: true });
@@ -27,12 +29,17 @@ var CreateNewBlock = ((hash, blockNumber, previousBlockHash, memPoolItems, milli
     memPoolRepository.DeleteMemPoolItems(memPoolItems)
         .then((result) => {
         })
-        .catch((error) => { blockLogger.WriteLog('Error clearing mempool' + error); })
+        .catch((error) => { blockLogger.WriteLog('Error clearing mempool' + error); });
 
+    memPoolItems.forEach((item) => {
+        if (item.type == mempoolFiletypes.File) {
+            usageRepository.AddUsageByAddress(item.address, item.fileData.fileContents.length, item.type, item.hash);
+        }
+    });
     return newBlock;
 });
 
-var AddBlock = (async (block) => {
+var AddIncomingBlock = (async (block) => {
     var newBlock = new Block({
         blockHash: block.blockHash,
         blockNumber: block.blockNumber,
@@ -48,6 +55,12 @@ var AddBlock = (async (block) => {
     memPoolRepository.DeleteMemPoolItems(block.data)
         .then((result) => { blockLogger.WriteLog(`Cleared ${block.data.length} mempool items`); })
         .catch((error) => { blockLogger.WriteLog('Error clearing mempool' + error); })
+
+    block.data.forEach((item) => {
+        if (item.type == mempoolFiletypes.File) {
+            usageRepository.AddUsageByAddress(item.address, item.fileData.fileContents.length, item.type, item.hash);
+        }
+    });
 
     return newBlock;
 });
@@ -135,7 +148,7 @@ module.exports = {
     GetLastBlock,
     GetFileFromBlock,
     GetRepoFromBlock,
-    AddBlock,
+    AddIncomingBlock,
     GetBlocksFromStartingBlock,
     GetBlocks,
     GetBlock,
