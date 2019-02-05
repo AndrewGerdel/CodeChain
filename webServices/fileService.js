@@ -5,7 +5,6 @@ let jsonQuery = require('json-query')
 let crypto = require('crypto');
 let crypto2 = require('crypto2');
 let blockLogger = require('../loggers/blockProcessLog');
-var zlib = require('zlib');
 
 var StartService = ((app) => {
 
@@ -15,14 +14,9 @@ var StartService = ((app) => {
             var fileContents = request.body.filecontents;
             var privateKey = request.body.privatekey;
             var repo = request.body.repo;
-
-            // var repoName = request.body.repoName;
-            // var repoHash = request.body.repoHash;
             var salt = crypto.randomBytes(16).toString('hex');
-            var buff = zlib.deflateSync(fileContents);
-            let base64data = buff.toString('base64');
 
-            var signature = await hash.SignMessage(privateKey, `${salt}${base64data}${repo}`);
+            var signature = await hash.SignMessage(privateKey, `${salt}${fileContents}${repo}`);
             response.send({ Success: true, Signature: signature, Salt: salt });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -36,11 +30,8 @@ var StartService = ((app) => {
             var privateKey = request.body.privatekey;
             var publicKey = request.body.publickey;
             var repo = request.body.repo;
-
             var salt = crypto.randomBytes(16).toString('hex');
-            let buff = new Buffer.from(fileContents);
-            let base64data = buff.toString('base64');
-            const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
+            const encrypted = await crypto2.encrypt.rsa(fileContents, publicKey);
             var signature = await hash.SignMessage(privateKey, `${salt}${encrypted}${repo}`);
             response.send({ Success: true, Signature: signature, Salt: salt, Encrypted: encrypted });
         } catch (ex) {
@@ -59,11 +50,8 @@ var StartService = ((app) => {
             var salt = request.body.salt;
             let memo = request.body.memo;
 
-            var buff = zlib.deflateSync(fileContents);
-            let base64data = buff.toString('base64');
-
             blockLogger.WriteLog(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo, memo);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, fileContents, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });
@@ -80,7 +68,6 @@ var StartService = ((app) => {
             var encrypted = request.body.encrypted;
             var salt = request.body.salt;
             let memo = request.body.memo;
-
             blockLogger.WriteLog(`Received file ${filename}`);
             var result = await memPoolController.AddCodeFileToMemPool(filename, salt, encrypted, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
@@ -92,7 +79,6 @@ var StartService = ((app) => {
     //Creates and submits a signed request.  Should be called on a secure node as private key is required. 
     app.post('/file/createSubmitRequest', async (request, response) => {
         try {
-            debugger;
             var filename = request.body.filename;
             var fileContents = request.body.filecontents;
             var publicKey = request.body.publickey;
@@ -100,16 +86,12 @@ var StartService = ((app) => {
             var repo = request.body.repo;
             let memo = request.body.memo;
 
-            console.log('filecontents on POST is: ', fileContents);
-
             var salt = crypto.randomBytes(16).toString('hex');
-            var buff = zlib.deflateSync(fileContents);
-            let base64data = buff.toString('base64');
 
-            var signature = await hash.SignMessage(privateKey, `${salt}${base64data}${repo}`);
+            var signature = await hash.SignMessage(privateKey, `${salt}${fileContents}${repo}`);
 
             blockLogger.WriteLog(`Received file ${filename}`);
-            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, base64data, signature, publicKey, repo, memo);
+            var result = await memPoolController.AddCodeFileToMemPool(filename, salt, fileContents, signature, publicKey, repo, memo);
             response.send({ Success: true, Hash: result.hash });
 
         } catch (ex) {
@@ -127,11 +109,9 @@ var StartService = ((app) => {
             var privateKey = request.body.privatekey;
             var repo = request.body.repo;
             var salt = crypto.randomBytes(16).toString('hex');
-            let buff = new Buffer.from(fileContents);
-            let base64data = buff.toString('base64');
             let memo = request.body.memo;
 
-            const encrypted = await crypto2.encrypt.rsa(base64data, publicKey);
+            const encrypted = await crypto2.encrypt.rsa(fileContents, publicKey);
             var signature = await hash.SignMessage(privateKey, `${salt}${encrypted}${repo}`);
 
             blockLogger.WriteLog(`Received file ${filename}`);
@@ -146,18 +126,14 @@ var StartService = ((app) => {
 
     app.get('/file/get', async (request, response) => {
         try {
-            debugger;
             var block = await blockController.GetFileFromBlock(request.query.filehash);
             if (block.length > 0) {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.query.filehash + ']', {
                     data: block
                 });
-                var buff = new Buffer.from(jsonQueryResult.value.fileData.fileContents, 'base64');
-                var inflated = zlib.inflateSync(buff);
+                var fileContents = jsonQueryResult.value.fileData.fileContents;
 
-                console.log('inflated on GET is: ', inflated.toString('base64'));
-                
-                response.send({Success: true, FileContents: inflated.toString('base64'), FileName: jsonQueryResult.value.fileData.fileName,
+                response.send({Success: true, FileContents: fileContents, FileName: jsonQueryResult.value.fileData.fileName,
                     Signature: jsonQueryResult.value.signature, DateAdded: jsonQueryResult.value.dateAdded, Salt: jsonQueryResult.value.salt,
                     Repo: jsonQueryResult.value.fileData.repo, Memo: jsonQueryResult.value.memo
                 });
@@ -208,12 +184,6 @@ var StartService = ((app) => {
     app.get('/file/getRepo', async (request, response) => {
         try {
             var repo = await blockController.GetRepoFromBlock(request.query.repohash);
-            for (var i = 0; i < repo.length; i++) {
-                var buff = new Buffer.from(repo[i].FileContents, 'base64');
-                var inflated = zlib.inflateSync(buff);
-                repo[i].FileContents = inflated;
-            }
-
             response.send({ Success: true, Repo: repo });
         } catch (ex) {
             response.send({ Success: false, ErrorMessage: ex.toString() });

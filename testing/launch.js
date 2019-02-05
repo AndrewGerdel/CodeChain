@@ -34,7 +34,6 @@ var CreateSubmitRequestTest = (async (keypair) => {
 });
 
 var CreateSubmitRequestPictureTest = (async (keypair) => {
-    debugger;
     let fishContents = fs.readFileSync('./testing/testFiles/fishPic.jpg');
     var uploadResult = await uploadFile.UploadFile(baseUri, 'FishPic.jpg', fishContents.toString('base64'), keypair.PublicKey, keypair.PrivateKey);
     var uploadResultObj = JSON.parse(uploadResult);
@@ -52,16 +51,12 @@ var DownloadFilePicTest = (async (hash) => {
 
     var downloadResultObj = JSON.parse(downloadResult);
     if (downloadResultObj.Success) {
-        debugger;
-        let buff = new Buffer.from(downloadResultObj.FileContents, 'base64');
-        fs.writeFileSync('./testing/testFiles/results/fishPic1.jpg', buff);
-        fs.writeFileSync('./testing/testFiles/results/fishPic2.jpg', downloadResultObj.FileContents);
-        // let text = buff.toString('ascii');
-        // if (TestFileContents.TestFile1 == text) {
-        //     SuccessConsoleLog('Successfully downloaded file ' + hash);
-        // } else {
-        //     FailConsoleLog(`Downloaded file but contents did not match.`);// ${TestFileContents.TestFile1} vs ${text}`);
-        // }
+        console.log('Fish pic results:', downloadResultObj.FileContents);
+        
+        let fileContents = new Buffer.from(downloadResultObj.FileContents, 'base64');
+        var writeFilePath = './testing/testFiles/results/fishPic1.jpg';
+        fs.writeFileSync(writeFilePath, fileContents);
+        SuccessConsoleLog(`Downloaded fishPic.  Ensure file is valid: ${writeFilePath}`);
     } else {
         FailConsoleLog('Error downloading file ' + hash + downloadResultObj.ErrorMessage);
     }
@@ -147,7 +142,7 @@ var DownloadFileTest = (async (hash) => {
         if (TestFileContents.TestFile1 == text) {
             SuccessConsoleLog('Successfully downloaded file ' + hash);
         } else {
-            FailConsoleLog(`Downloaded file but contents did not match.`);// ${TestFileContents.TestFile1} vs ${text}`);
+            FailConsoleLog(`Downloaded file but contents did not match. Downloaded text: ${text}`);// ${TestFileContents.TestFile1} vs ${text}`);
         }
     } else {
         FailConsoleLog('Error downloading file ' + hash + downloadResultObj.ErrorMessage);
@@ -198,12 +193,13 @@ var DownloadEncryptedFileTest = (async (hash, privatekey) => {
     var downloadResult = await downloadFile.DownloadEncryptedFile(baseUri, hash, privatekey);
     var downloadResultObj = JSON.parse(downloadResult);
     if (downloadResultObj.Success) {
+        debugger;
         let buff = new Buffer.from(downloadResultObj.FileContents, 'base64');
         let text = buff.toString('ascii');
         if (TestFileContents.TestFile1 == text) {
             SuccessConsoleLog('Successfully downloaded encrypted file ' + hash);
         } else {
-            FailConsoleLog(`Downloaded encrypted file but contents did not match.`);// ${TestFileContents.TestFile1} vs ${text}`);
+            FailConsoleLog(`Downloaded encrypted file but contents did not match. Downloaded ${text}`);// ${TestFileContents.TestFile1} vs ${text}`);
         }
     } else {
         FailConsoleLog('Error downloading encrypted file ' + hash);
@@ -272,30 +268,26 @@ mongoose.GetDb().then(async (db) => {
     process.env.MININGADDRESS = miningKeypair.Address;
 
     server.StartServer(async () => {
-         var keypair = await genKeyPair.GenerateKeyPair();
-        // var hash1 = await CreateSubmitRequestTest(keypair);
-        // var hash2 = await CreateAndSubmitRequestTest(keypair);
-        // var hash3 = await CreateAndSubmitEncryptedRequestTest(keypair);
-        // var hash4 = await CreateSubmitEncryptedRequestTest(keypair);
-        // var repoHash = await CreateSubmitRepoRequestTest(keypair);
-        // var encryptedRepo = await CreateAndSubmitEncryptedRequestRepoTest(keypair);
+        var keypair = await genKeyPair.GenerateKeyPair();
+        var hash1 = await CreateSubmitRequestTest(keypair);
+        var hash2 = await CreateAndSubmitRequestTest(keypair);
+        var hash3 = await CreateAndSubmitEncryptedRequestTest(keypair);
+        var hash4 = await CreateSubmitEncryptedRequestTest(keypair);
+        var repoHash = await CreateSubmitRepoRequestTest(keypair);
+        var encryptedRepo = await CreateAndSubmitEncryptedRequestRepoTest(keypair);
         var fishPicResult = await CreateSubmitRequestPictureTest(keypair);
 
-        // hash1, hash2, hash3, hash4, repoHash, 
-        console.log('fishPicResult is', fishPicResult);
-        
-        setTimeout(async (fishPicResult) => {
-            // DownloadFileTest(hash1);
-            // DownloadFileTest(hash2);
-            // DownloadEncryptedFileTest(hash3, keypair.PrivateKey);
-            // DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
-            // DownloadRepoHash(repoHash);
-            // DownloadRepoEncrypted(keypair, encryptedRepo);
-            // GetFileListTest(keypair.Address);
-            // GetRepoListTest(keypair.Address);
+        setTimeout(async (hash1, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult) => {
+            DownloadFileTest(hash1);
+            DownloadFileTest(hash2);
+            DownloadEncryptedFileTest(hash3, keypair.PrivateKey);
+            DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
+            DownloadRepoHash(repoHash);
+            DownloadRepoEncrypted(keypair, encryptedRepo);
+            GetFileListTest(keypair.Address);
+            GetRepoListTest(keypair.Address);
             DownloadFilePicTest(fishPicResult);
-        }, 10000,  fishPicResult);
-    // }, 10000, hash1, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult);
+        }, 25000, hash1, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult);
     });
 });
 

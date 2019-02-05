@@ -1,7 +1,7 @@
 
 var CreateConfigFile = (async () => {
     const readline = require('readline');
-    var generateKey = require('../clientTools/generateKeypair');
+    var generateKey = require('../utilities/generateKeypair');
     var fs = require('fs');
     var crypto = require('crypto');
     var hash = require('../utilities/hash');
@@ -27,13 +27,32 @@ var CreateConfigFile = (async () => {
                 }
                   rl.question(`Enter a password for the private key file. If you forget this password or lose this file you will lose all your funds: `, async (password1) => {
                     rl.question(`Enter the password again: `, async (password2) => {
+
                         if (password1 != password2) {
                             console.log('Passwords do not match.');
-                            rl.close();
-                            return;
+                           
                         } else {
                             var result = await generateKey.GenerateKeyPair(password1);
+                            var configObj = {
+                                "database": {
+                                    "host": dbServer,
+                                    "database": databaseName
+                                  },
+                                  "network": {
+                                    "myPort": port,
+                                    "myProtocol": "http",
+                                    "myUid": crypto.randomBytes(16).toString('hex')
+                                  },
+                                  "mining": {
+                                    "address": result.Address
+                                  }
+                            };
+                            fs.writeFileSync('config.json', JSON.stringify(configObj));
+                            console.log('Setup complete. Created file config.json. Run startServer.js to start.');
+                            rl.close();
                         }
+                        rl.close();
+                        return;
                     });
                 });
             });
