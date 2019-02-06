@@ -3,11 +3,9 @@ var request = require('request');
 
 var UploadFile = (async (baseUrl, filename, filecontents, publickey, privatekey, repo) => {
     var promise = new Promise((resolve, reject) => {
-        var buff= new Buffer.from(filecontents);
-        var base64data = buff.toString('base64');
         const data = JSON.stringify({
             filename: filename,
-            filecontents: base64data,
+            filecontents: filecontents,
             publickey: publickey,
             privatekey: privatekey,
             repo: repo

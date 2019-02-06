@@ -9,11 +9,12 @@ var transactionRepository = require('../repositories/transactionRepository');
 var blockLogger = require('../loggers/blockProcessLog');
 
 //Adds a file to the mempool, from the fileService
-var AddCodeFileToMemPool = (async (fileName, salt, base64FileContents, signature, publicKey, repo, memo) => {
-  var verified = await hashUtil.VerifyMessage(publicKey, signature, salt + base64FileContents + repo);
+var AddCodeFileToMemPool = (async (fileName, salt, fileContents, signature, publicKey, repo, memo) => {
+  var verified = await hashUtil.VerifyMessage(publicKey, signature, salt + fileContents + repo);
   if (!verified) {
     throw new Error("Invalid signature");
   }
+  var base64FileContents = new Buffer.from(fileContents, 'base64');
   var dateNow = new Date();
   var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + salt + memo);
   var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signature, publicKey, salt, dateNow, hash.toString("hex"), repo, memo);

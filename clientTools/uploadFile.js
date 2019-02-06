@@ -33,10 +33,8 @@ if (!fs.existsSync(private))
     throw new Error(`${private} does not exist`);
 
 var filename = path.basename(file);
-var filecontents = fs.readFileSync(file).toString();//('base64');
-console.log('FILE CONTENTS ARE', filecontents);
-
-var publickey = fs.readFileSync(public).toString();
+var filecontents = fs.readFileSync(file);
+var publickey = fs.readFileSync(public);
 
 decryptFile.DecryptFile(private, (decryptResult) => {
     if(decryptResult.Success){

@@ -23,6 +23,7 @@ var TestFileContents = {
 };
 
 var CreateSubmitRequestTest = (async (keypair) => {
+    debugger;
     var uploadResult = await uploadFile.UploadFile(baseUri, 'TestFile1.txt', TestFileContents.TestFile1, keypair.PublicKey, keypair.PrivateKey);
     var uploadResultObj = JSON.parse(uploadResult);
     if (uploadResultObj.Success) {
@@ -35,7 +36,7 @@ var CreateSubmitRequestTest = (async (keypair) => {
 
 var CreateSubmitRequestPictureTest = (async (keypair) => {
     let fishContents = fs.readFileSync('./testing/testFiles/fishPic.jpg');
-    var uploadResult = await uploadFile.UploadFile(baseUri, 'FishPic.jpg', fishContents.toString('base64'), keypair.PublicKey, keypair.PrivateKey);
+    var uploadResult = await uploadFile.UploadFile(baseUri, 'FishPic.jpg', fishContents, keypair.PublicKey, keypair.PrivateKey);
     var uploadResultObj = JSON.parse(uploadResult);
     if (uploadResultObj.Success) {
         SuccessConsoleLog('Successfully uploaded file via createSubmitRequest');
@@ -270,24 +271,24 @@ mongoose.GetDb().then(async (db) => {
     server.StartServer(async () => {
         var keypair = await genKeyPair.GenerateKeyPair();
         var hash1 = await CreateSubmitRequestTest(keypair);
-        var hash2 = await CreateAndSubmitRequestTest(keypair);
-        var hash3 = await CreateAndSubmitEncryptedRequestTest(keypair);
-        var hash4 = await CreateSubmitEncryptedRequestTest(keypair);
-        var repoHash = await CreateSubmitRepoRequestTest(keypair);
-        var encryptedRepo = await CreateAndSubmitEncryptedRequestRepoTest(keypair);
-        var fishPicResult = await CreateSubmitRequestPictureTest(keypair);
+        // var hash2 = await CreateAndSubmitRequestTest(keypair);
+        // var hash3 = await CreateAndSubmitEncryptedRequestTest(keypair);
+        // var hash4 = await CreateSubmitEncryptedRequestTest(keypair);
+        // var repoHash = await CreateSubmitRepoRequestTest(keypair);
+        // var encryptedRepo = await CreateAndSubmitEncryptedRequestRepoTest(keypair);
+        // var fishPicResult = await CreateSubmitRequestPictureTest(keypair);
 
-        setTimeout(async (hash1, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult) => {
+        setTimeout(async (hash1) => {//}, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult) => {
             DownloadFileTest(hash1);
-            DownloadFileTest(hash2);
-            DownloadEncryptedFileTest(hash3, keypair.PrivateKey);
-            DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
-            DownloadRepoHash(repoHash);
-            DownloadRepoEncrypted(keypair, encryptedRepo);
-            GetFileListTest(keypair.Address);
-            GetRepoListTest(keypair.Address);
-            DownloadFilePicTest(fishPicResult);
-        }, 25000, hash1, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult);
+            // DownloadFileTest(hash2);
+            // DownloadEncryptedFileTest(hash3, keypair.PrivateKey);
+            // DownloadEncryptedFileTest(hash4, keypair.PrivateKey);
+            // DownloadRepoHash(repoHash);
+            // DownloadRepoEncrypted(keypair, encryptedRepo);
+            // GetFileListTest(keypair.Address);
+            // GetRepoListTest(keypair.Address);
+            // DownloadFilePicTest(fishPicResult);
+        }, 25000, hash1);//, hash2, hash3, hash4, repoHash, encryptedRepo, fishPicResult);
     });
 });
 
