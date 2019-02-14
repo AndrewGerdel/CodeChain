@@ -67,10 +67,8 @@ var UploadEncryptedFile = (async (baseUrl, filename, filecontents, publickey, pr
 var CreateRequest = (async (baseUrl, filecontents, privatekey) => {
     var promise = new Promise((resolve, reject) => {
         try {
-            var buff= new Buffer.from(filecontents);
-            var base64data = buff.toString('base64');
             const data = JSON.stringify({
-                filecontents: base64data,
+                filecontents: filecontents,
                 privatekey: privatekey
             });
             const options = {
@@ -98,13 +96,11 @@ var CreateRequest = (async (baseUrl, filecontents, privatekey) => {
 var SubmitRequest = (async (baseUrl, filename, signature, publickey, filecontents, salt, memo) => {
     var promise = new Promise((resolve, reject) => {
         try {
-            var buff= new Buffer.from(filecontents);
-            var base64data = buff.toString('base64');
             const data = JSON.stringify({
                 filename: filename,
                 signature: signature,
                 publickey: publickey,
-                filecontents: base64data,
+                filecontents: filecontents,
                 salt: salt,
                 memo: memo
             });
@@ -133,10 +129,10 @@ var SubmitRequest = (async (baseUrl, filename, signature, publickey, filecontent
 var CreateEncryptedRequest = (async (baseUrl, filecontents, privatekey, publickey, repo) => {
     var promise = new Promise((resolve, reject) => {
         try {
-            var buff= new Buffer.from(filecontents);
-            var base64data = buff.toString('base64');
+            // var buff= new Buffer.from(filecontents);
+            // var base64data = buff.toString('base64');
             const data = JSON.stringify({
-                filecontents: base64data,
+                filecontents: filecontents,
                 privatekey: privatekey,
                 publickey: publickey, 
                 repo: repo

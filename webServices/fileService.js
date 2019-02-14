@@ -79,6 +79,7 @@ var StartService = ((app) => {
     //Creates and submits a signed request.  Should be called on a secure node as private key is required. 
     app.post('/file/createSubmitRequest', async (request, response) => {
         try {
+            debugger;
             var filename = request.body.filename;
             var fileContents = request.body.filecontents;
             var publicKey = request.body.publickey;
@@ -148,7 +149,9 @@ var StartService = ((app) => {
     app.post('/file/getEncrypted', async (request, response) => {
         try {
             var block = await blockController.GetFileFromBlock(request.body.filehash);
+            
             var privateKey = request.body.privatekey;
+            console.log('hey private key is ', privateKey);
             if (block.length > 0) {
                 var jsonQueryResult = jsonQuery('data[hash=' + request.body.filehash + ']', {
                     data: block

@@ -14,9 +14,10 @@ var AddCodeFileToMemPool = (async (fileName, salt, fileContents, signature, publ
   if (!verified) {
     throw new Error("Invalid signature");
   }
-  var base64FileContents = new Buffer.from(fileContents, 'base64');
-  var dateNow = new Date();
+  var buff = new Buffer.from(fileContents);
+  var base64FileContents = buff.toString('base64')
   var hash = await hashUtil.CreateSha256Hash(fileName + base64FileContents + signature + salt + memo);
+  var dateNow = new Date();
   var mempoolItem = await memPoolRepository.AddCodeFileMemPoolItem(fileName, base64FileContents, signature, publicKey, salt, dateNow, hash.toString("hex"), repo, memo);
   BroadcastMempoolItemToRandomNodes(mempoolItem);
   return mempoolItem;
